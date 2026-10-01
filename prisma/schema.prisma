@@ -1,0 +1,188 @@
+// PROFINDER — Database Schema
+// Prisma + SQLite (swap to PostgreSQL for production)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model University {
+  id            String   @id @default(cuid())
+  name          String
+  nameZh        String?
+  country       String   @default("China")
+  province      String?
+  city          String?
+  officialUrl   String?
+  description   String?
+  agencyNumber  String?
+  logoUrl       String?
+  verifiedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  programs      Program[]
+  professors    Professor[]
+  scholarships  Scholarship[]
+}
+
+model Program {
+  id                   String   @id @default(cuid())
+  universityId         String
+  degree               String
+  major                String
+  teachingLang         String?
+  requirements         String?
+  programUrl           String?
+  deadline             String?
+  openingDate          String?
+  scholarshipDeadline  String?
+  tuition              String?
+  applicationFee       String?
+  duration             String?
+  englishReq           String?
+  ielts                String?
+  toefl                String?
+  gpaRequirement       String?
+  cscType              String?
+  supervisorRequired   String?
+  applicationUrl       String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  university           University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@index([universityId])
+  @@index([degree])
+  @@index([major])
+}
+
+model Professor {
+  id                String   @id @default(cuid())
+  universityId      String
+  name              String
+  nameZh            String?
+  position          String?
+  school            String?
+  department        String?
+  email             String?
+  profileUrl        String?
+  researchInterests String?
+  publications      String?
+  profileIsPersonal Boolean  @default(false)
+  dataStatus        String   @default("unverified") // verified | unverified | needs_review | outdated
+  verifiedAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  university        University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  researchAreas     ProfessorResearchArea[]
+  applications      Application[]
+  savedBy           SavedProfessor[]
+}
+
+model ResearchArea {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  keywords    String?
+  parentId    String?
+  createdAt   DateTime @default(now())
+
+  professors  ProfessorResearchArea[]
+}
+
+model ProfessorResearchArea {
+  professorId    String
+  researchAreaId String
+
+  professor      Professor    @relation(fields: [professorId], references: [id], onDelete: Cascade)
+  researchArea   ResearchArea @relation(fields: [researchAreaId], references: [id], onDelete: Cascade)
+
+  @@id([professorId, researchAreaId])
+}
+
+model Scholarship {
+  id            String   @id @default(cuid())
+  universityId  String?
+  name          String
+  type          String?
+  requirements  String?
+  deadline      String?
+  officialUrl   String?
+  advantages    String?
+  coverage      String?
+  dataStatus    String   @default("unverified")
+  createdAt     DateTime @default(now())
+
+  university    University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
+}
+
+model Student {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  passwordHash       String
+  name               String?
+  degree             String?
+  major              String?
+  academicBackground String?
+  researchInterests  String?
+  skills             String?
+  projects           String?
+  cvText             String?
+  preferredCountries String?
+  preferredUniversities String?
+  plan               String   @default("free") // free | pro
+  role               String   @default("student") // student | admin
+  resetToken         String?
+  resetTokenExp      DateTime?
+  nationality        String?
+  gpa                String?
+  phone              String?
+  resumeText         String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  applications       Application[]
+  savedProfessors    SavedProfessor[]
+}
+
+model SavedProfessor {
+  id          String   @id @default(cuid())
+  studentId   String
+  professorId String
+  createdAt   DateTime @default(now())
+
+  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  professor   Professor @relation(fields: [professorId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, professorId])
+}
+
+model Application {
+  id            String   @id @default(cuid())
+  studentId     String
+  universityId  String?
+  professorId   String?
+  programId     String?
+  scholarship          String?
+  degree               String?
+  programName          String?
+  status               String   @default("Saved")
+  contactStatus        String?
+  deadline             String?
+  followUpDate         String?
+  scholarshipDeadline  String?
+  applicationUrl       String?
+  notes                String?
+  documentsJson        String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  student       Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  professor     Professor? @relation(fields: [professorId], references: [id], onDelete: SetNull)
+}
