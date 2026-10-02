@@ -19,13 +19,14 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
-    "next": "14.2.35",
     "mammoth": "^1.8.0",
-    "pdf-parse": "^1.1.1",
-    "nodemailer": "^6.9.16",
+    "next": "14.2.35",
     "next-auth": "^4.24.11",
+    "nodemailer": "^6.9.16",
+    "pdf-parse": "^1.1.1",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "stripe": "^17.7.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

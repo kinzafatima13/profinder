@@ -153,6 +153,7 @@ export default function TrackerPage() {
           </Link>
         </div>
       ) : (
+        <>
         <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
           {["All", ...STATUSES].map((status) => {
             const count = status === "All" ? apps.length : apps.filter((row) => row.status === status).length;
@@ -212,6 +213,8 @@ export default function TrackerPage() {
             </article>
           ))}
         </div>
+        </>
+      )}
 
       <section className="mt-12">
         <h2 className="text-lg font-bold text-[var(--navy)]">CSC workspace</h2>
