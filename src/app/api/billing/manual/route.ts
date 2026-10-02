@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const method = String(body.method || "bank");
-  const tier = ["pro-monthly", "premium-monthly", "premium-yearly"].includes(body.tier) ? body.tier : "pro-monthly";
+  const tier = ["pro-monthly", "pro-yearly", "premium-yearly"].includes(body.tier) ? body.tier : "pro-monthly";
   const reference = String(body.reference || "").trim();
   if (reference.length < 4) {
     return NextResponse.json({ error: "Enter the payment reference from JazzCash, EasyPaisa, or your bank transfer." }, { status: 400 });

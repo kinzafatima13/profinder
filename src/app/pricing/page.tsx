@@ -11,9 +11,9 @@ const METHODS = [
 ];
 
 const PLANS = [
-  { id: "pro-monthly", name: "Pro · monthly", price: "Rs 2,800", period: "/ month", detail: "All matches, email drafts, and resume comparison.", amount: "Rs 2,800" },
-  { id: "premium-monthly", name: "Premium · monthly", price: "Rs 4,500", period: "/ month", detail: "Everything in Pro, plus priority review.", amount: "Rs 4,500" },
-  { id: "premium-yearly", name: "Premium · yearly", price: "Rs 22,000", period: "/ year", detail: "Premium for 12 months. Rs 1,833 a month.", amount: "Rs 22,000" },
+  { id: "pro-monthly", name: "Pro · monthly", price: "Rs 2,800", period: "/ month", detail: "Start now. All matches, email drafts, and resume comparison.", amount: "Rs 2,800", badge: "" },
+  { id: "pro-yearly", name: "Pro · yearly", price: "Rs 24,000", period: "/ year", detail: "Same Pro tools for 12 months. Rs 2,000 a month.", amount: "Rs 24,000", badge: "Save 29%" },
+  { id: "premium-yearly", name: "Premium · yearly", price: "Rs 36,000", period: "/ year", detail: "The full year, with priority payment review. Rs 3,000 a month.", amount: "Rs 36,000", badge: "Best value" },
 ];
 
 export default function PricingPage() {
@@ -54,7 +54,7 @@ export default function PricingPage() {
           <button key={item.id} type="button" onClick={() => setTier(item.id)} className={`rounded-2xl border p-5 text-left ${tier === item.id ? "border-[var(--teal)] bg-emerald-50/50" : "border-gray-200 bg-white"}`}>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase text-gray-500">{item.name}</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">{item.name} {item.badge && <span className="ml-2 rounded-full bg-[var(--navy)] px-2 py-0.5 text-[10px] text-white">{item.badge}</span>}</p>
                 <p className="mt-1 text-3xl font-bold text-[var(--navy)]">{item.price} <span className="text-base font-normal text-gray-500">{item.period}</span></p>
                 <p className="mt-2 text-sm text-gray-600">{item.detail}</p>
               </div>
