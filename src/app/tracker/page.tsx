@@ -122,7 +122,7 @@ export default function TrackerPage() {
           <h1 className="section-title">Application Tracker</h1>
           <p className="mt-1 text-gray-600">
             {apps.length} tracked · Plan:{" "}
-            <span className="font-medium capitalize">{plan}</span>
+            <span className="font-medium capitalize">{plan === "pro" ? "Pro" : plan === "free" ? "Free" : "Upgrade pending"}</span>
             {plan === "free" && (
               <Link href="/pricing" className="ml-2 text-[var(--teal)] hover:underline">
                 Upgrade for unlimited
@@ -152,7 +152,18 @@ export default function TrackerPage() {
           </Link>
         </div>
       ) : (
-        <div className="mt-8 space-y-4">
+        <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
+          {STATUSES.map((status) => {
+            const count = apps.filter((row) => row.status === status).length;
+            if (!count) return null;
+            return (
+              <span key={status} className="shrink-0 rounded-full bg-white px-3 py-1 text-xs text-gray-600 shadow-sm">
+                {status} · {count}
+              </span>
+            );
+          })}
+        </div>
+        <div className="mt-4 space-y-4">
           {apps.map((row) => (
             <article key={row.id} className="card p-4 sm:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
