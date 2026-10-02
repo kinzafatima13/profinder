@@ -1,3 +1,37 @@
+
+function sourceDisplay(profileUrl: string | null, dataStatus: string) {
+  if (!profileUrl) {
+    return {
+      source: "Not recorded",
+      verification: "Verification source unavailable",
+      href: null as string | null,
+      tone: "text-gray-600",
+    };
+  }
+  if (profileUrl.includes("openalex.org")) {
+    return {
+      source: "OpenAlex",
+      verification: "Academic database source — not independently verified",
+      href: profileUrl,
+      tone: "text-amber-800",
+    };
+  }
+  if (dataStatus === "verified") {
+    return {
+      source: "Official university faculty page",
+      verification: "Verified from official university source",
+      href: profileUrl,
+      tone: "text-emerald-800",
+    };
+  }
+  return {
+    source: "Recorded profile URL",
+    verification: "Not independently verified",
+    href: profileUrl,
+    tone: "text-gray-700",
+  };
+}
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
@@ -93,6 +127,24 @@ export default async function ProfessorDetailPage({ params }: Props) {
             {prof.university.city ? ` · ${prof.university.city}` : ""}
           </p>
           {prof.school && <p className="mt-1 text-sm text-gray-500">{prof.school}</p>}
+
+          {(() => {
+            const source = sourceDisplay(prof.profileUrl, prof.dataStatus);
+            return (
+              <section className="mt-4 max-w-xl rounded-lg border border-gray-200 bg-white p-4 text-sm">
+                <p className="font-semibold text-[var(--navy)]">Source</p>
+                {source.href ? (
+                  <a href={source.href} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block break-all text-[var(--teal)] hover:underline">
+                    {source.source}
+                  </a>
+                ) : (
+                  <p className="mt-1 text-gray-700">{source.source}</p>
+                )}
+                <p className="mt-3 font-semibold text-[var(--navy)]">Verification</p>
+                <p className={`mt-1 ${source.tone}`}>{source.verification}</p>
+              </section>
+            );
+          })()}
 
           <div className="mt-3 flex flex-wrap gap-2 text-xs">
             <span className="badge-navy">{statusLabel}</span>
