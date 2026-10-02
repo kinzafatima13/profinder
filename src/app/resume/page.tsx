@@ -23,6 +23,7 @@ export default function ResumePage() {
   const [error, setError] = useState("");
   const [meta, setMeta] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -40,6 +41,7 @@ export default function ResumePage() {
     setPreview(data.preview || "");
     setMeta(`${data.shown} of ${data.total} supervisor comparisons shown on the ${data.plan} plan.`);
     setSuggestions(data.suggestions || []);
+    setDraft(data.draft || "");
   }
 
   return (
@@ -62,6 +64,15 @@ export default function ResumePage() {
           </ul>
         </section>
       )}
+      {draft && <button type="button" className="btn-secondary mt-4" onClick={() => {
+        const blob = new Blob([draft], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "profinder-resume-draft.txt";
+        link.click();
+        URL.revokeObjectURL(url);
+      }}>Download new resume draft</button>}
       <div className="mt-6 grid gap-4">
         {rows.map((row) => (
           <article key={row.id} className="rounded-2xl border border-gray-200 bg-white p-5">
