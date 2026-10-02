@@ -100,7 +100,7 @@ Demo account after a fresh seed only: `demo@profinder.app` / `demo1234`. The com
 
 ### Current database
 
-`prisma/dev.db` is the working SQLite file. As of commit `679ddcf` it has 8 universities and 189 professors: Tsinghua 135, Peking 12, HIT 28, plus the earlier sample professors. The other 98 universities are in `data/universities.json` only, not in this database.
+`prisma/dev.db` is the working SQLite file. It has 104 universities and 1,152 professors. 18 universities have professors; the other 86 are listed with none yet. Do not replace this file with an older copy.
 
 `prisma/schema.prisma` is ahead of the SQLite file. Do not run `prisma db push` unless you intend to add the newer columns. It is not required to start the app against the current file.
 

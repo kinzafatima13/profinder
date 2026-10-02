@@ -7,6 +7,7 @@ export default async function HomePage() {
   let uniCount = 0;
   let profCount = 0;
   let areaCount = 0;
+  let dbFile = "";
 
   try {
     [uniCount, profCount, areaCount] = await Promise.all([
@@ -14,6 +15,8 @@ export default async function HomePage() {
       prisma.professor.count(),
       prisma.researchArea.count(),
     ]);
+    const rows = await prisma.$queryRawUnsafe<Array<{ file: string }>>("PRAGMA database_list");
+    dbFile = rows?.[0]?.file ?? "";
   } catch {
     // DB not ready yet
   }
@@ -69,6 +72,7 @@ export default async function HomePage() {
               </div>
             </div>
           )}
+          <p className="mt-4 text-xs text-gray-400">Database file: {dbFile || "not opened"} · {uniCount} universities · {profCount} professors</p>
         </div>
       </section>
 
