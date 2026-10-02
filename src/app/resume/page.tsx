@@ -22,6 +22,7 @@ export default function ResumePage() {
   const [preview, setPreview] = useState("");
   const [error, setError] = useState("");
   const [meta, setMeta] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -38,6 +39,7 @@ export default function ResumePage() {
     setRows(data.results || []);
     setPreview(data.preview || "");
     setMeta(`${data.shown} of ${data.total} supervisor comparisons shown on the ${data.plan} plan.`);
+    setSuggestions(data.suggestions || []);
   }
 
   return (
@@ -52,6 +54,14 @@ export default function ResumePage() {
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
       {meta && <p className="mt-4 text-sm text-gray-500">{meta}</p>}
       {preview && <p className="mt-2 max-w-3xl text-xs text-gray-500">Text used for comparison: {preview}</p>}
+      {suggestions.length > 0 && (
+        <section className="mt-6 max-w-3xl rounded-2xl border border-gray-200 bg-white p-5">
+          <h2 className="font-semibold text-[var(--navy)]">Ways to strengthen the resume</h2>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-gray-700">
+            {suggestions.map((item) => <li key={item}>{item}</li>)}
+          </ul>
+        </section>
+      )}
       <div className="mt-6 grid gap-4">
         {rows.map((row) => (
           <article key={row.id} className="rounded-2xl border border-gray-200 bg-white p-5">

@@ -59,9 +59,17 @@ export async function POST(req: NextRequest) {
   })).sort((a, b) => b.match.score - a.match.score);
 
   const isPro = student.plan === "pro";
+  const top = ranked[0];
+  const suggestions = [
+    resumeText.length < 400 ? "The extracted text is short. Add projects, tools, and research keywords." : "The file has enough text to compare.",
+    top ? `The closest supervisor is ${top.name} at ${top.university}, with ${top.match.score}% overlap.` : "No supervisor comparison was available.",
+    top?.interests ? `If this direction fits, name these interests in your projects: ${top.interests}.` : "Add the research topics you actually want to study.",
+    "Keep the original file. These are suggestions, not a rewritten resume.",
+  ];
   return NextResponse.json({
     plan: isPro ? "pro" : "free",
     preview: resumeText.slice(0, 400),
+    suggestions,
     shown: isPro ? ranked.length : 3,
     total: ranked.length,
     results: ranked.slice(0, isPro ? ranked.length : 3),
