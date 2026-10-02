@@ -43,7 +43,8 @@ export async function POST(req: NextRequest) {
   try {
     const sent = await sendCode(email, code);
     if (!sent) {
-      if (process.env.NODE_ENV !== "production") {
+      const allowLocal = process.env.NODE_ENV !== "production" || process.env.ALLOW_DEV_RESET === "true";
+      if (allowLocal) {
         return NextResponse.json({
           ok: true,
           message: "No mailbox is configured, so the code is shown here. It expires in 15 minutes.",
