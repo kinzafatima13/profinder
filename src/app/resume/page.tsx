@@ -2,7 +2,19 @@
 
 import { useState } from "react";
 
-type Row = { id: string; name: string; university: string; match: { score: number; explanation: string } };
+type Row = {
+  id: string;
+  name: string;
+  university: string;
+  department?: string | null;
+  interests?: string | null;
+  match: {
+    score: number;
+    explanation: string;
+    reasons?: string[];
+    breakdown?: Record<string, number>;
+  };
+};
 
 export default function ResumePage() {
   const [file, setFile] = useState<File | null>(null);
@@ -25,26 +37,40 @@ export default function ResumePage() {
     if (!res.ok) return setError(data.error || "Upload failed");
     setRows(data.results || []);
     setPreview(data.preview || "");
-    setMeta(`${data.shown} of ${data.total} matches shown on the ${data.plan} plan.`);
+    setMeta(`${data.shown} of ${data.total} supervisor comparisons shown on the ${data.plan} plan.`);
   }
 
   return (
     <div className="page-container py-10">
-      <h1 className="section-title">Upload resume</h1>
-      <p className="mt-2 max-w-2xl text-sm text-gray-600">Upload a PDF, DOCX, or TXT file. Text is extracted from the file. Free accounts see 3 professor matches.</p>
-      <form onSubmit={submit} className="mt-6 max-w-xl space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--teal)]">Supervisor fit</p>
+      <h1 className="section-title mt-2">Compare your resume</h1>
+      <p className="mt-2 max-w-2xl text-sm text-gray-600">Upload a PDF, DOCX, or TXT file. The text is compared with supervisor research. The resume file is not rewritten.</p>
+      <form onSubmit={submit} className="mt-6 max-w-xl rounded-2xl border border-gray-200 bg-white p-5 space-y-3">
         <input className="input" type="file" accept=".pdf,.docx,.txt,application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
-        <button className="btn-primary" disabled={loading}>{loading ? "Reading file..." : "Upload and compare"}</button>
+        <button className="btn-primary" disabled={loading}>{loading ? "Comparing..." : "Compare with supervisors"}</button>
       </form>
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
       {meta && <p className="mt-4 text-sm text-gray-500">{meta}</p>}
-      {preview && <p className="mt-2 text-xs text-gray-500">Extracted text preview: {preview}</p>}
-      <div className="mt-4 space-y-3">
+      {preview && <p className="mt-2 max-w-3xl text-xs text-gray-500">Text used for comparison: {preview}</p>}
+      <div className="mt-6 grid gap-4">
         {rows.map((row) => (
-          <article key={row.id} className="card p-4">
-            <a className="font-semibold text-[var(--navy)]" href={`/professors/${row.id}`}>{row.name}</a>
-            <p className="text-sm text-gray-500">{row.university} · {row.match.score}%</p>
-            <p className="mt-1 text-sm">{row.match.explanation}</p>
+          <article key={row.id} className="rounded-2xl border border-gray-200 bg-white p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <a className="text-lg font-semibold text-[var(--navy)]" href={`/professors/${row.id}`}>{row.name}</a>
+                <p className="text-sm text-gray-500">{row.university}{row.department ? ` · ${row.department}` : ""}</p>
+              </div>
+              <p className="text-2xl font-bold text-[var(--teal)]">{row.match.score}%</p>
+            </div>
+            <p className="mt-3 text-sm text-gray-700">{row.match.explanation}</p>
+            {row.interests && <p className="mt-2 text-sm text-gray-500">Supervisor interests: {row.interests}</p>}
+            {row.match.breakdown && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {Object.entries(row.match.breakdown).map(([key, value]) => (
+                  <span key={key} className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">{key} {value}%</span>
+                ))}
+              </div>
+            )}
           </article>
         ))}
       </div>

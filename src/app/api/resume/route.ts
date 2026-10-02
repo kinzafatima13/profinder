@@ -50,6 +50,8 @@ export async function POST(req: NextRequest) {
     id: p.id,
     name: p.name,
     university: p.university.name,
+    department: p.department,
+    interests: p.researchInterests,
     match: computeResearchMatch(
       { researchInterests: student.researchInterests, major: student.major, degree: student.degree, skills: student.skills, cvText: resumeText },
       { researchInterests: p.researchInterests, department: p.department, publications: p.publications, researchAreas: p.researchAreas.map((r) => ({ name: r.researchArea.name, keywords: r.researchArea.keywords })) }
