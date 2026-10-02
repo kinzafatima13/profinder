@@ -43,6 +43,13 @@ export async function POST(req: NextRequest) {
   try {
     const sent = await sendCode(email, code);
     if (!sent) {
+      if (process.env.NODE_ENV !== "production") {
+        return NextResponse.json({
+          ok: true,
+          message: "No mailbox is configured, so the code is shown here. It expires in 15 minutes.",
+          devCode: code,
+        });
+      }
       return NextResponse.json({
         error: "No sending mailbox is configured. Add SMTP_HOST, SMTP_USER, and SMTP_PASS.",
       }, { status: 503 });
