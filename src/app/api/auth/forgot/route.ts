@@ -32,17 +32,31 @@ export async function POST(req: NextRequest) {
   if (!student) return NextResponse.json({ ok: true, message: "If that account exists, a code was sent." });
 
   const code = String(crypto.randomInt(100000, 999999));
-  await prisma.student.update({
-    where: { id: student.id },
-    data: {
-      resetToken: crypto.createHash("sha256").update(code).digest("hex"),
-      resetTokenExp: new Date(Date.now() + 1000 * 60 * 15),
-    },
-  });
+  const tokenData = {
+    resetToken: crypto.createHash("sha256").update(code).digest("hex"),
+    resetTokenExp: new Date(Date.now() + 1000 * 60 * 15),
+  };
+  try {
+    await prisma.student.update({ where: { id: student.id }, data: tokenData });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (!message.includes("resetToken")) throw error;
+    await prisma.$executeRawUnsafe("ALTER TABLE Student ADD COLUMN resetToken TEXT");
+    await prisma.$executeRawUnsafe("ALTER TABLE Student ADD COLUMN resetTokenExp DATETIME");
+    await prisma.student.update({ where: { id: student.id }, data: tokenData });
+  }
 
   try {
     const sent = await sendCode(email, code);
     if (!sent) {
+      const allowLocal = process.env.NODE_ENV !== "production" || process.env.ALLOW_DEV_RESET === "true";
+      if (allowLocal) {
+        return NextResponse.json({
+          ok: true,
+          message: "No mailbox is configured, so the code is shown here. It expires in 15 minutes.",
+          devCode: code,
+        });
+      }
       return NextResponse.json({
         error: "No sending mailbox is configured. Add SMTP_HOST, SMTP_USER, and SMTP_PASS.",
       }, { status: 503 });

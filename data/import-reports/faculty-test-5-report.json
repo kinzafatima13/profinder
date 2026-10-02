@@ -1,0 +1,50 @@
+{
+  "note": "Extraction only. Not imported into Prisma. SJTU and Beihang produced no person records.",
+  "report": [
+    {
+      "university": "Tsinghua University",
+      "faculty_page_found": true,
+      "professors_discovered": 136,
+      "professors_added": 0,
+      "professors_updated": 0,
+      "faculty_page_url": "https://www.cs.tsinghua.edu.cn/szzk/jzgml.htm",
+      "status": "extracted; not imported"
+    },
+    {
+      "university": "Peking University",
+      "faculty_page_found": true,
+      "professors_discovered": 12,
+      "professors_added": 0,
+      "professors_updated": 0,
+      "faculty_page_url": "https://cs.pku.edu.cn/szdw/jyxl/amz/ALL/7.htm",
+      "status": "partial page only; not imported"
+    },
+    {
+      "university": "Harbin Institute of Technology",
+      "faculty_page_found": true,
+      "professors_discovered": 25,
+      "professors_added": 0,
+      "professors_updated": 0,
+      "faculty_page_url": "https://software.hit.edu.cn/12762/list.htm",
+      "status": "software school professor page; not imported"
+    },
+    {
+      "university": "Shanghai Jiao Tong University",
+      "faculty_page_found": true,
+      "professors_discovered": 0,
+      "professors_added": 0,
+      "professors_updated": 0,
+      "faculty_page_url": "https://www.cs.sjtu.edu.cn/jiaoshiml.html",
+      "status": "needs_review: JavaScript directory, no static person records"
+    },
+    {
+      "university": "Beihang University",
+      "faculty_page_found": false,
+      "professors_discovered": 0,
+      "professors_added": 0,
+      "professors_updated": 0,
+      "faculty_page_url": "https://shi.buaa.edu.cn/xyjslb.jsp?urltype=tsites.CollegeTeacherList&wbtreeid=1001&id=1039",
+      "status": "needs_review: no person records in static HTML"
+    }
+  ]
+}

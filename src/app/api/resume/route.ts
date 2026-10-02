@@ -50,6 +50,8 @@ export async function POST(req: NextRequest) {
     id: p.id,
     name: p.name,
     university: p.university.name,
+    department: p.department,
+    interests: p.researchInterests,
     match: computeResearchMatch(
       { researchInterests: student.researchInterests, major: student.major, degree: student.degree, skills: student.skills, cvText: resumeText },
       { researchInterests: p.researchInterests, department: p.department, publications: p.publications, researchAreas: p.researchAreas.map((r) => ({ name: r.researchArea.name, keywords: r.researchArea.keywords })) }
@@ -57,9 +59,25 @@ export async function POST(req: NextRequest) {
   })).sort((a, b) => b.match.score - a.match.score);
 
   const isPro = student.plan === "pro";
+  const top = ranked[0];
+  const suggestions = [
+    resumeText.length < 400 ? "The extracted text is short. Add projects, tools, and research keywords." : "The file has enough text to compare.",
+    top ? `The closest supervisor is ${top.name} at ${top.university}, with ${top.match.score}% overlap.` : "No supervisor comparison was available.",
+    top?.interests ? `If this direction fits, name these interests in your projects: ${top.interests}.` : "Add the research topics you actually want to study.",
+    "Keep the original file. These are suggestions, not a rewritten resume.",
+  ];
   return NextResponse.json({
     plan: isPro ? "pro" : "free",
     preview: resumeText.slice(0, 400),
+    suggestions,
+    draft: [
+      "RESUME DRAFT",
+      "",
+      resumeText.slice(0, 2500),
+      "",
+      "Suggested additions",
+      ...suggestions.map((item) => `- ${item}`),
+    ].join("\n"),
     shown: isPro ? ranked.length : 3,
     total: ranked.length,
     results: ranked.slice(0, isPro ? ranked.length : 3),

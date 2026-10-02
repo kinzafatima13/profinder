@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   if (!student?.plan.startsWith("pending:")) return NextResponse.json({ error: "No pending payment" }, { status: 404 });
   await prisma.student.update({
     where: { id: student.id },
-    data: { plan: body.action === "approve" ? "pro" : "free" },
+    data: { plan: body.action === "approve" ? (student.plan.split(":")[2] || "pro") : "free" },
   });
   return NextResponse.json({ ok: true });
 }

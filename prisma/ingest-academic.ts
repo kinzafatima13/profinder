@@ -86,6 +86,8 @@ async function main() {
     const institutionId = shortId(institution.id)!;
     await prisma.university.update({ where: { id: uniRow.id }, data: { openAlexId: institutionId } });
     console.log("institution", name, institutionId);
+    let uniAdded = 0;
+    let uniUpdated = 0;
 
     const authorsRes = await getJson<{ results: any[] }>(
       `/authors?filter=${encodeURIComponent(`last_known_institutions.id:${institutionId}`)}&per-page=${PER_UNIVERSITY}&sort=cited_by_count:desc`
@@ -111,17 +113,17 @@ async function main() {
         orcid: author.orcid,
         openAlexId: author.openAlexId,
         publicationCount: author.worksCount,
-        researchInterests: author.topics.map((t) => t.name).join(", "),
-        dataSource: "openalex",
-        dataStatus: "unverified",
+        researchInterests: existing?.researchInterests || author.topics.map((t) => t.name).join(", "),
+        dataSource: existing?.dataSource || "openalex",
+        dataStatus: existing?.dataStatus === "verified" ? "verified" : "unverified",
         lastSyncedAt: new Date(),
         profileUrl: existing?.profileUrl || author.sourceUrl,
       };
       const professor = existing
         ? await prisma.professor.update({ where: { id: existing.id }, data })
         : await prisma.professor.create({ data: { ...data, name: author.name, universityId: uniRow.id } });
-      if (existing) updated += 1;
-      else added += 1;
+      if (existing) { updated += 1; uniUpdated += 1; }
+      else { added += 1; uniAdded += 1; }
 
       await prisma.professorSource.create({
         data: { professorId: professor.id, source: "openalex", externalId: author.openAlexId, sourceUrl: author.sourceUrl },

@@ -21,10 +21,14 @@ type AppRow = {
   id: string;
   status: string;
   notes: string | null;
+  deadline: string | null;
+  followUpDate: string | null;
+  scholarship: string | null;
+  applicationUrl: string | null;
   professor: {
     id: string;
     name: string;
-    university: { name: string; city: string | null };
+    university: { name: string; city: string | null; agencyNumber: string | null };
   } | null;
 };
 
@@ -34,6 +38,7 @@ export default function TrackerPage() {
   const [plan, setPlan] = useState("free");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -67,6 +72,15 @@ export default function TrackerPage() {
       body: JSON.stringify({ id, status }),
     });
     if (res.ok) load();
+  }
+
+  async function saveDetails(id: string, details: { notes: string; deadline: string; followUpDate: string; scholarship: string; applicationUrl: string }) {
+    const res = await fetch("/api/applications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, ...details }),
+    });
+    if (!res.ok) setError("Could not save tracker details.");
   }
 
   async function remove(id: string) {
@@ -109,7 +123,7 @@ export default function TrackerPage() {
           <h1 className="section-title">Application Tracker</h1>
           <p className="mt-1 text-gray-600">
             {apps.length} tracked · Plan:{" "}
-            <span className="font-medium capitalize">{plan}</span>
+            <span className="font-medium capitalize">{plan === "pro" ? "Pro" : plan === "free" ? "Free" : "Upgrade pending"}</span>
             {plan === "free" && (
               <Link href="/pricing" className="ml-2 text-[var(--teal)] hover:underline">
                 Upgrade for unlimited
@@ -139,68 +153,77 @@ export default function TrackerPage() {
           </Link>
         </div>
       ) : (
-        <div className="mt-8 overflow-x-auto">
-          <table className="w-full min-w-[700px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 text-gray-500">
-                <th className="pb-3 pr-4 font-medium">University</th>
-                <th className="pb-3 pr-4 font-medium">Professor</th>
-                <th className="pb-3 pr-4 font-medium">Status</th>
-                <th className="pb-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {apps.map((row) => (
-                <tr key={row.id} className="border-b border-gray-100">
-                  <td className="py-3 pr-4 font-medium text-[var(--navy)]">
-                    {row.professor?.university.name ?? "—"}
-                  </td>
-                  <td className="py-3 pr-4">
-                    {row.professor ? (
-                      <Link
-                        href={`/professors/${row.professor.id}`}
-                        className="text-[var(--teal)] hover:underline"
-                      >
-                        {row.professor.name}
-                      </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td className="py-3 pr-4">
-                    <select
-                      className="input max-w-[180px] py-1.5"
-                      value={row.status}
-                      onChange={(e) => updateStatus(row.id, e.target.value)}
-                    >
-                      {STATUSES.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="py-3">
-                    <button
-                      onClick={() => remove(row.id)}
-                      className="text-xs text-red-600 hover:underline"
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <>
+        <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
+          {["All", ...STATUSES].map((status) => {
+            const count = status === "All" ? apps.length : apps.filter((row) => row.status === status).length;
+            if (status !== "All" && !count) return null;
+            const active = statusFilter === status;
+            return (
+              <button key={status} type="button" onClick={() => setStatusFilter(status)} className={`shrink-0 rounded-full px-3 py-1 text-xs shadow-sm ${active ? "bg-[var(--navy)] text-white" : "bg-white text-gray-600"}`}>
+                {status} · {count}
+              </button>
+            );
+          })}
         </div>
+        <div className="mt-4 space-y-4">
+          {apps.filter((row) => statusFilter === "All" || row.status === statusFilter).map((row) => (
+            <article key={row.id} className="card p-4 sm:p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="font-medium text-[var(--navy)]">{row.professor?.university.name ?? "University not linked"}</p>
+                  {row.professor ? (
+                    <Link href={`/professors/${row.professor.id}`} className="text-[var(--teal)] hover:underline">
+                      {row.professor.name}
+                    </Link>
+                  ) : (
+                    <p className="text-sm text-gray-500">Professor not linked</p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 sm:items-end">
+                  <select className="input w-full py-1.5 sm:w-52" value={row.status} onChange={(e) => updateStatus(row.id, e.target.value)}>
+                    {STATUSES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  <button className="text-left text-xs text-red-600 hover:underline sm:text-right" onClick={() => remove(row.id)}>Remove</button>
+                </div>
+              </div>
+              <form
+                className="mt-4 grid gap-3 sm:grid-cols-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = new FormData(e.currentTarget);
+                  saveDetails(row.id, {
+                    notes: String(form.get("notes") || ""),
+                    deadline: String(form.get("deadline") || ""),
+                    followUpDate: String(form.get("followUpDate") || ""),
+                    scholarship: String(form.get("scholarship") || ""),
+                    applicationUrl: String(form.get("applicationUrl") || ""),
+                  });
+                }}
+              >
+                <input className="input" name="deadline" defaultValue={row.deadline ?? ""} placeholder="Deadline" />
+                <input className="input" name="followUpDate" defaultValue={row.followUpDate ?? ""} placeholder="Follow-up date" />
+                <input className="input" name="scholarship" defaultValue={row.scholarship ?? ""} placeholder="Scholarship" />
+                <input className="input" name="applicationUrl" defaultValue={row.applicationUrl ?? ""} placeholder="Application link" />
+                <textarea className="input min-h-20 sm:col-span-2" name="notes" defaultValue={row.notes ?? ""} placeholder="Notes" />
+                <button className="btn-secondary w-full sm:col-span-2 sm:w-auto" type="submit">Save details</button>
+              </form>
+            </article>
+          ))}
+        </div>
+        </>
       )}
 
       <section className="mt-12">
         <h2 className="text-lg font-bold text-[var(--navy)]">CSC workspace</h2>
-        <p className="mt-2 text-sm text-gray-600">
-          Track agency numbers, documents, and deadlines alongside professor
-          outreach — expand this section as you grow the China CSC workflow.
-        </p>
+        <p className="mt-2 text-sm text-gray-600">Agency numbers already stored for the universities in this tracker. Confirm each code on the official CSC notice before applying.</p>
+        <div className="mt-4 space-y-2">
+          {apps.length === 0 ? <p className="text-sm text-gray-500">Save a professor to see the university agency number here.</p> : apps.map((row) => (
+            <p key={row.id} className="text-sm text-gray-700">{row.professor?.university.name ?? "University not linked"} · {row.professor?.university.agencyNumber ? `Agency ${row.professor.university.agencyNumber}` : "Agency number not recorded"}</p>
+          ))}
+        </div>
       </section>
     </div>
   );
