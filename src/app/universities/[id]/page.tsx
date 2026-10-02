@@ -115,22 +115,28 @@ export default async function UniversityDetailPage({ params }: Props) {
         <h2 className="text-xl font-bold text-[var(--navy)]">
           Professors ({uni.professors.length})
         </h2>
-        <div className="mt-4 grid gap-5 sm:grid-cols-2">
-          {uni.professors.map((p) => (
-            <ProfessorCard
-              key={p.id}
-              id={p.id}
-              name={p.name}
-              nameZh={p.nameZh}
-              position={p.position}
-              department={p.department}
-              universityName={uni.name}
-              universityCity={uni.city}
-              researchAreas={p.researchAreas.map((r) => r.researchArea.name)}
-              researchInterests={p.researchInterests}
-            />
-          ))}
-        </div>
+        {uni.professors.length === 0 ? (
+          <p className="mt-3 max-w-2xl rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-600">
+            Verified faculty data is not available for this university yet. The university remains listed so programs and official links can still be reviewed. No faculty records are created until an official directory or academic source is imported.
+          </p>
+        ) : (
+          <div className="mt-4 grid gap-5 sm:grid-cols-2">
+            {uni.professors.map((p) => (
+              <ProfessorCard
+                key={p.id}
+                id={p.id}
+                name={p.name}
+                nameZh={p.nameZh}
+                position={p.position}
+                department={p.department}
+                universityName={uni.name}
+                universityCity={uni.city}
+                researchAreas={p.researchAreas.map((r) => r.researchArea.name)}
+                researchInterests={p.researchInterests}
+              />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
