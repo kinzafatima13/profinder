@@ -1,0 +1,27 @@
+{
+  "createdUniversities": [
+    "Tsinghua University",
+    "Peking University"
+  ],
+  "officialUrlSource": "阳光高考 listings already verified in prior session; JSON officialUrl was the shared campuschina placeholder and was not copied",
+  "report": {
+    "Tsinghua University": {
+      "added": 135,
+      "updated": 0,
+      "skipped_duplicate": 1,
+      "failed": 0
+    },
+    "Peking University": {
+      "added": 12,
+      "updated": 0,
+      "skipped_duplicate": 0,
+      "failed": 0
+    }
+  },
+  "professorCounts": {
+    "Tsinghua University": 135,
+    "Peking University": 12,
+    "Harbin Institute of Technology": 28
+  },
+  "totalProfessors": 189
+}
