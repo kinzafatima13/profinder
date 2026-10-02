@@ -28,7 +28,7 @@ type AppRow = {
   professor: {
     id: string;
     name: string;
-    university: { name: string; city: string | null };
+    university: { name: string; city: string | null; agencyNumber: string | null };
   } | null;
 };
 
@@ -38,6 +38,7 @@ export default function TrackerPage() {
   const [plan, setPlan] = useState("free");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -153,18 +154,19 @@ export default function TrackerPage() {
         </div>
       ) : (
         <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
-          {STATUSES.map((status) => {
-            const count = apps.filter((row) => row.status === status).length;
-            if (!count) return null;
+          {["All", ...STATUSES].map((status) => {
+            const count = status === "All" ? apps.length : apps.filter((row) => row.status === status).length;
+            if (status !== "All" && !count) return null;
+            const active = statusFilter === status;
             return (
-              <span key={status} className="shrink-0 rounded-full bg-white px-3 py-1 text-xs text-gray-600 shadow-sm">
+              <button key={status} type="button" onClick={() => setStatusFilter(status)} className={`shrink-0 rounded-full px-3 py-1 text-xs shadow-sm ${active ? "bg-[var(--navy)] text-white" : "bg-white text-gray-600"}`}>
                 {status} · {count}
-              </span>
+              </button>
             );
           })}
         </div>
         <div className="mt-4 space-y-4">
-          {apps.map((row) => (
+          {apps.filter((row) => statusFilter === "All" || row.status === statusFilter).map((row) => (
             <article key={row.id} className="card p-4 sm:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
@@ -213,10 +215,12 @@ export default function TrackerPage() {
 
       <section className="mt-12">
         <h2 className="text-lg font-bold text-[var(--navy)]">CSC workspace</h2>
-        <p className="mt-2 text-sm text-gray-600">
-          Track agency numbers, documents, and deadlines alongside professor
-          outreach — expand this section as you grow the China CSC workflow.
-        </p>
+        <p className="mt-2 text-sm text-gray-600">Agency numbers already stored for the universities in this tracker. Confirm each code on the official CSC notice before applying.</p>
+        <div className="mt-4 space-y-2">
+          {apps.length === 0 ? <p className="text-sm text-gray-500">Save a professor to see the university agency number here.</p> : apps.map((row) => (
+            <p key={row.id} className="text-sm text-gray-700">{row.professor?.university.name ?? "University not linked"} · {row.professor?.university.agencyNumber ? `Agency ${row.professor.university.agencyNumber}` : "Agency number not recorded"}</p>
+          ))}
+        </div>
       </section>
     </div>
   );
