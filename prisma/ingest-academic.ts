@@ -63,6 +63,7 @@ async function findExisting(universityId: string, author: { openAlexId: string; 
 }
 
 async function main() {
+  console.log("starting import");
   const file = path.join(process.cwd(), "data", "ingest-targets.json");
   const names = JSON.parse(fs.readFileSync(file, "utf8")) as string[];
   let added = 0;
