@@ -1,0 +1,39 @@
+{
+  "databaseUniversities": [
+    "Beijing University of Posts and Telecommunications",
+    "Harbin Institute of Technology",
+    "Nanjing University of Science and Technology",
+    "University of Electronic Science and Technology of China",
+    "Xidian University",
+    "Zhejiang University"
+  ],
+  "professorsBefore": 17,
+  "professorsAfter": 42,
+  "note": "Shared directory URLs were not used as identity. No schema change. No deletes.",
+  "report": {
+    "Tsinghua University": {
+      "discovered": 136,
+      "added": 0,
+      "updated": 0,
+      "skipped_duplicate": 0,
+      "failed": 136,
+      "reason": "university name not in prisma/dev.db; no university created"
+    },
+    "Peking University": {
+      "discovered": 12,
+      "added": 0,
+      "updated": 0,
+      "skipped_duplicate": 0,
+      "failed": 12,
+      "reason": "university name not in prisma/dev.db; no university created"
+    },
+    "Harbin Institute of Technology": {
+      "discovered": 25,
+      "added": 25,
+      "updated": 0,
+      "skipped_duplicate": 0,
+      "failed": 0,
+      "reason": ""
+    }
+  }
+}
