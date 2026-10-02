@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const method = String(body.method || "bank");
+  const tier = ["pro-monthly", "premium-monthly", "premium-yearly"].includes(body.tier) ? body.tier : "pro-monthly";
   const reference = String(body.reference || "").trim();
   if (reference.length < 4) {
     return NextResponse.json({ error: "Enter the payment reference from JazzCash, EasyPaisa, or your bank transfer." }, { status: 400 });
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
 
   await prisma.student.update({
     where: { id: student.id },
-    data: { plan: `pending:${method}:${reference}`.slice(0, 180) },
+    data: { plan: `pending:${method}:${tier}:${reference}`.slice(0, 180) },
   });
   return NextResponse.json({
     status: "pending",
