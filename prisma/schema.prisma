@@ -11,19 +11,28 @@ datasource db {
 }
 
 model University {
-  id            String   @id @default(cuid())
-  name          String
-  nameZh        String?
-  country       String   @default("China")
-  province      String?
-  city          String?
-  officialUrl   String?
-  description   String?
-  agencyNumber  String?
-  logoUrl       String?
-  verifiedAt    DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  name                String
+  nameZh              String?
+  country             String   @default("China")
+  province            String?
+  city                String?
+  officialUrl         String?
+  sourceUrl           String?
+  description         String?
+  agencyNumber        String?
+  openAlexId          String?
+  logoUrl             String?
+  dataStatus          String   @default("unverified") // verified | unverified | needs_review | outdated
+  dataSource          String?
+  applicationUrl      String?
+  applicationFee      String?
+  applicationDeadline String?
+  scholarshipUrl      String?
+  scholarshipDeadline String?
+  verifiedAt          DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   programs      Program[]
   professors    Professor[]
@@ -65,16 +74,28 @@ model Professor {
   id                String   @id @default(cuid())
   universityId      String
   name              String
+  firstName         String?
+  lastName          String?
   nameZh            String?
   position          String?
   school            String?
   department        String?
+  country           String?
   email             String?
   profileUrl        String?
+  personalWebsite   String?
   researchInterests String?
+  researchKeywords  String?
+  lab               String?
   publications      String?
+  publicationCount  Int?
+  orcid             String?
+  openAlexId        String?
+  semanticScholarId String?
   profileIsPersonal Boolean  @default(false)
   dataStatus        String   @default("unverified") // verified | unverified | needs_review | outdated
+  dataSource        String?
+  lastSyncedAt      DateTime?
   verifiedAt        DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -83,6 +104,14 @@ model Professor {
   researchAreas     ProfessorResearchArea[]
   applications      Application[]
   savedBy           SavedProfessor[]
+  publicationRows   Publication[]
+  sources           ProfessorSource[]
+  topics            ProfessorTopic[]
+
+  @@index([orcid])
+  @@index([openAlexId])
+  @@index([semanticScholarId])
+  @@index([universityId])
 }
 
 model ResearchArea {
@@ -185,4 +214,57 @@ model Application {
 
   student       Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
   professor     Professor? @relation(fields: [professorId], references: [id], onDelete: SetNull)
+}
+
+model Publication {
+  id                    String   @id @default(cuid())
+  professorId           String
+  title                 String
+  year                  Int?
+  authors               String?
+  venue                 String?
+  citationCount         Int?
+  abstract              String?
+  doi                   String?
+  openAlexWorkId        String?
+  semanticScholarPaperId String?
+  sourceUrl             String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  professor             Professor @relation(fields: [professorId], references: [id], onDelete: Cascade)
+
+  @@index([professorId])
+  @@index([doi])
+  @@index([openAlexWorkId])
+}
+
+model ProfessorSource {
+  id          String   @id @default(cuid())
+  professorId String
+  source      String
+  externalId  String?
+  sourceUrl   String?
+  fetchedAt   DateTime @default(now())
+
+  professor   Professor @relation(fields: [professorId], references: [id], onDelete: Cascade)
+
+  @@index([professorId])
+  @@index([source, externalId])
+}
+
+model Topic {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  openAlexTopicId String?
+  professors     ProfessorTopic[]
+}
+
+model ProfessorTopic {
+  professorId String
+  topicId     String
+  professor   Professor @relation(fields: [professorId], references: [id], onDelete: Cascade)
+  topic       Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([professorId, topicId])
 }

@@ -26,6 +26,7 @@ export type ProfessorProfile = {
   researchInterests?: string | null;
   department?: string | null;
   publications?: string | null;
+  topics?: string[] | null;
   researchAreas?: { name: string; keywords?: string | null }[];
   position?: string | null;
 };
@@ -38,6 +39,7 @@ export type MatchResult = {
     interestOverlap: number;
     areaOverlap: number;
     topicOverlap: number;
+    publicationOverlap: number;
     majorRelevance: number;
     degreeRelevance: number;
   };
@@ -111,15 +113,20 @@ export function computeResearchMatch(
   const keywordTokens = tokenize(
     (professor.researchAreas ?? []).map((a) => a.keywords ?? "").join(" ")
   );
+  const storedTopics = tokenize((professor.topics ?? []).join(" "));
+  const paperTokens = tokenize(professor.publications);
+  const hasPapers = paperTokens.size > 0;
   const topicTokens = new Set([
     ...profInterest,
     ...keywordTokens,
-    ...tokenize(professor.publications),
+    ...storedTopics,
+    ...paperTokens,
   ]);
 
   const interestOverlap = jaccard(interestTokens, profInterest);
-  const areaOverlap = jaccard(new Set([...interestTokens, ...backgroundTokens]), new Set([...areaTokens, ...keywordTokens]));
+  const areaOverlap = jaccard(new Set([...interestTokens, ...backgroundTokens]), new Set([...areaTokens, ...keywordTokens, ...storedTopics]));
   const topicOverlap = jaccard(studentAll, topicTokens.size ? topicTokens : profInterest);
+  const publicationOverlap = hasPapers ? jaccard(studentAll, paperTokens) : 0;
 
   const major = (student.major ?? "").toLowerCase();
   const dept = `${professor.department ?? ""} ${areaNames.join(" ")} ${professor.researchInterests ?? ""}`.toLowerCase();
@@ -136,12 +143,9 @@ export function computeResearchMatch(
   else if (degree.includes("master")) degreeRelevance = 0.8;
   else if (degree) degreeRelevance = 0.5;
 
-  const scoreRaw =
-    interestOverlap * 0.4 +
-    areaOverlap * 0.2 +
-    topicOverlap * 0.2 +
-    majorRelevance * 0.1 +
-    degreeRelevance * 0.1;
+  const scoreRaw = hasPapers
+    ? interestOverlap * 0.4 + areaOverlap * 0.15 + topicOverlap * 0.2 + publicationOverlap * 0.15 + majorRelevance * 0.05 + degreeRelevance * 0.05
+    : interestOverlap * 0.4 + areaOverlap * 0.2 + topicOverlap * 0.2 + majorRelevance * 0.1 + degreeRelevance * 0.1;
 
   const incomplete = missing.includes("research interests");
   const score = incomplete ? 0 : Math.round(Math.min(99, Math.max(0, scoreRaw * 100)));
@@ -177,6 +181,7 @@ export function computeResearchMatch(
       interestOverlap: Math.round(interestOverlap * 100),
       areaOverlap: Math.round(areaOverlap * 100),
       topicOverlap: Math.round(topicOverlap * 100),
+      publicationOverlap: Math.round(publicationOverlap * 100),
       majorRelevance: Math.round(majorRelevance * 100),
       degreeRelevance: Math.round(degreeRelevance * 100),
     },

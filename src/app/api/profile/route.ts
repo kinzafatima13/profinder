@@ -26,6 +26,7 @@ export async function GET() {
   const student = await currentStudent();
   if (!student) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { passwordHash: _pw, ...safe } = student;
+  void _pw;
   return NextResponse.json({ profile: safe });
 }
 
@@ -62,5 +63,6 @@ export async function PATCH(req: NextRequest) {
     data,
   });
   const { passwordHash: _pw, ...safe } = updated;
+  void _pw;
   return NextResponse.json({ profile: safe });
 }

@@ -12,6 +12,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:setup": "prisma db push && tsx prisma/seed.ts",
     "db:studio": "prisma studio",
+    "seed:taxonomy": "tsx prisma/seed-taxonomy.ts",
+    "import:universities": "tsx scripts/import-pipeline.ts",
     "test": "tsx --test src/lib/matching.test.ts"
   },
   "dependencies": {

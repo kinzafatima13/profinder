@@ -30,7 +30,11 @@ export async function POST(req: NextRequest) {
     }
 
     const professors = await prisma.professor.findMany({
-      include: { university: true, researchAreas: { include: { researchArea: true } } },
+      include: {
+        university: true,
+        researchAreas: { include: { researchArea: true } },
+        topics: { include: { topic: true } },
+      },
     });
 
     const results = professors
@@ -49,6 +53,7 @@ export async function POST(req: NextRequest) {
           department: p.department,
           position: p.position,
           publications: p.publications,
+          topics: p.topics.map((t) => t.topic.name),
           researchAreas: p.researchAreas.map((r) => ({
             name: r.researchArea.name,
             keywords: r.researchArea.keywords,
