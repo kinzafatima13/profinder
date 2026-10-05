@@ -24,6 +24,7 @@ type AppRow = {
   deadline: string | null;
   followUpDate: string | null;
   scholarship: string | null;
+  programName: string | null;
   applicationUrl: string | null;
   professor: {
     id: string;
@@ -186,13 +187,13 @@ export default function TrackerPage() {
             <article key={row.id} className="card p-4 sm:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <p className="font-medium text-[var(--navy)]">{row.professor?.university.name ?? "University not linked"}</p>
+                  <p className="font-medium text-[var(--navy)]">{row.professor?.university.name ?? row.programName ?? row.scholarship ?? "Saved item"}</p>
                   {row.professor ? (
                     <Link href={`/professors/${row.professor.id}`} className="text-[var(--teal)] hover:underline">
                       {row.professor.name}
                     </Link>
                   ) : (
-                    <p className="text-sm text-gray-500">Professor not linked</p>
+                    <p className="text-sm text-gray-500">{row.programName || row.scholarship || "No professor linked"}</p>
                   )}
                   <p className="mt-2 text-sm text-gray-700">Next: {nextAction(row.status)}</p>
                 </div>

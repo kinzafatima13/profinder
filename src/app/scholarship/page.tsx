@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import EligibilityButton from "@/components/EligibilityButton";
+import SaveOpportunityButton from "@/components/SaveOpportunityButton";
 
 type Uni = { id: string; name: string };
 type Sch = {
@@ -123,6 +124,7 @@ export default function ScholarshipPage() {
             <p className="mt-1 text-sm text-gray-700">{row.advantages || "Advantages not listed"}</p>
             <p className="mt-1 text-sm text-gray-500">{row.requirements}</p>
             <EligibilityButton kind="scholarship" id={row.id} />
+            <SaveOpportunityButton scholarshipId={row.id} label="Save scholarship" />
             {row.officialUrl && <a className="mt-2 inline-block text-sm text-[var(--teal)]" href={row.officialUrl} target="_blank" rel="noreferrer">Official source</a>}
           </article>
         ))}

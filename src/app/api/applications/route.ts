@@ -52,7 +52,74 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const professorId = typeof body.professorId === "string" ? body.professorId : "";
-  if (!professorId) return NextResponse.json({ error: "professorId required" }, { status: 400 });
+  const programId = typeof body.programId === "string" ? body.programId : "";
+  const scholarshipId = typeof body.scholarshipId === "string" ? body.scholarshipId : "";
+  if (!professorId && !programId && !scholarshipId) {
+    return NextResponse.json({ error: "Choose a professor, program, or scholarship." }, { status: 400 });
+  }
+
+  if (student.plan !== "pro") {
+    const count = await prisma.application.count({ where: { studentId: student.id } });
+    const existingPreview = professorId
+      ? await prisma.application.findFirst({ where: { studentId: student.id, professorId } })
+      : programId
+        ? await prisma.application.findFirst({ where: { studentId: student.id, programId } })
+        : null;
+    if (!existingPreview && count >= FREE_LIMIT) {
+      return NextResponse.json(
+        {
+          error: "Free plan allows up to 5 tracked applications. Upgrade to Pro for unlimited tracking.",
+          code: "PLAN_LIMIT",
+        },
+        { status: 403 }
+      );
+    }
+  }
+
+  const status = STATUSES.includes(body.status) ? body.status : "Saved";
+
+  if (programId) {
+    const program = await prisma.program.findUnique({ where: { id: programId }, include: { university: true } });
+    if (!program) return NextResponse.json({ error: "Program not found" }, { status: 404 });
+    const existing = await prisma.application.findFirst({
+      where: { studentId: student.id, programId },
+      include: { professor: { include: { university: true } } },
+    });
+    if (existing) return NextResponse.json({ application: existing, alreadyExists: true });
+    const application = await prisma.application.create({
+      data: {
+        studentId: student.id,
+        programId,
+        universityId: program.universityId,
+        programName: `${program.degree} · ${program.major}`,
+        deadline: program.deadline,
+        status,
+      },
+      include: { professor: { include: { university: true } } },
+    });
+    return NextResponse.json({ application });
+  }
+
+  if (scholarshipId) {
+    const scholarship = await prisma.scholarship.findUnique({ where: { id: scholarshipId } });
+    if (!scholarship) return NextResponse.json({ error: "Scholarship not found" }, { status: 404 });
+    const existing = await prisma.application.findFirst({
+      where: { studentId: student.id, scholarship: scholarship.name, universityId: scholarship.universityId },
+      include: { professor: { include: { university: true } } },
+    });
+    if (existing) return NextResponse.json({ application: existing, alreadyExists: true });
+    const application = await prisma.application.create({
+      data: {
+        studentId: student.id,
+        universityId: scholarship.universityId,
+        scholarship: scholarship.name,
+        deadline: scholarship.deadline,
+        status,
+      },
+      include: { professor: { include: { university: true } } },
+    });
+    return NextResponse.json({ application });
+  }
 
   const professor = await prisma.professor.findUnique({ where: { id: professorId } });
   if (!professor) return NextResponse.json({ error: "Professor not found" }, { status: 404 });
@@ -65,20 +132,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ application: existing, alreadyExists: true });
   }
 
-  if (student.plan !== "pro") {
-    const count = await prisma.application.count({ where: { studentId: student.id } });
-    if (count >= FREE_LIMIT) {
-      return NextResponse.json(
-        {
-          error: "Free plan allows up to 5 tracked applications. Upgrade to Pro for unlimited tracking.",
-          code: "PLAN_LIMIT",
-        },
-        { status: 403 }
-      );
-    }
-  }
-
-  const status = STATUSES.includes(body.status) ? body.status : "Saved";
   const application = await prisma.application.create({
     data: {
       studentId: student.id,

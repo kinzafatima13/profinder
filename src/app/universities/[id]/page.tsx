@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import ProfessorCard from "@/components/ProfessorCard";
+import SaveOpportunityButton from "@/components/SaveOpportunityButton";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function UniversityDetailPage({ params }: Props) {
         include: {
           researchAreas: { include: { researchArea: true } },
         },
-        orderBy: { name: "asc" },
+        orderBy: [{ dataStatus: "desc" }, { name: "asc" }],
       },
     },
   });
@@ -35,6 +36,9 @@ export default async function UniversityDetailPage({ params }: Props) {
         {uni.nameZh && <p className="text-lg text-gray-400">{uni.nameZh}</p>}
         <p className="mt-1 text-gray-600">
           {[uni.city, uni.province, uni.country].filter(Boolean).join(" · ")}
+        </p>
+        <p className="mt-2 text-sm text-gray-600">
+          Source status: {uni.dataStatus}. {uni.officialUrl ? "Official site is linked." : "No official site is stored."}
         </p>
         {uni.agencyNumber && (
           <span className="mt-2 inline-block badge-navy">
@@ -72,6 +76,7 @@ export default async function UniversityDetailPage({ params }: Props) {
                   <th className="pb-2 pr-4 font-medium">Major</th>
                   <th className="pb-2 pr-4 font-medium">Language</th>
                   <th className="pb-2 font-medium">Deadline</th>
+                  <th className="pb-2 font-medium"></th>
                 </tr>
               </thead>
               <tbody>
@@ -80,7 +85,8 @@ export default async function UniversityDetailPage({ params }: Props) {
                     <td className="py-3 pr-4 font-medium text-[var(--navy)]">{p.degree}</td>
                     <td className="py-3 pr-4">{p.major}</td>
                     <td className="py-3 pr-4">{p.teachingLang ?? "—"}</td>
-                    <td className="py-3 text-gray-500">{p.deadline ?? "—"}</td>
+                    <td className="py-3 text-amber-800">Unverified · {p.deadline ?? "No date stored"}</td>
+                    <td className="py-3"><SaveOpportunityButton programId={p.id} label="Save program" /></td>
                   </tr>
                 ))}
               </tbody>
@@ -100,8 +106,12 @@ export default async function UniversityDetailPage({ params }: Props) {
                 {s.type && <span className="badge-teal">{s.type}</span>}
               </div>
               {s.deadline && (
-                <p className="mt-1 text-xs text-gray-500">Deadline: {s.deadline}</p>
+                <p className="mt-1 text-xs text-amber-800">Unverified · {s.deadline}</p>
               )}
+              {s.officialUrl && (
+                <a href={s.officialUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm text-[var(--teal)]">Official source</a>
+              )}
+              <SaveOpportunityButton scholarshipId={s.id} label="Save scholarship" />
               {s.requirements && (
                 <p className="mt-2 text-sm text-gray-600">{s.requirements}</p>
               )}
@@ -133,6 +143,8 @@ export default async function UniversityDetailPage({ params }: Props) {
                 universityCity={uni.city}
                 researchAreas={p.researchAreas.map((r) => r.researchArea.name)}
                 researchInterests={p.researchInterests}
+                verified={p.dataStatus === "verified"}
+                email={p.email}
               />
             ))}
           </div>
