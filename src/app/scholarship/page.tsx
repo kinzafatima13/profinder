@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import EligibilityButton from "@/components/EligibilityButton";
 
 type Uni = { id: string; name: string };
 type Sch = {
@@ -80,6 +81,7 @@ export default function ScholarshipPage() {
                   <li key={reason.text}>{reason.tone === "ok" ? "Yes — " : "Check — "}{reason.text}</li>
                 ))}
               </ul>
+              <EligibilityButton kind="program" id={item.id} />
             </article>
           ))}
           {matches.slice(0, 4).map((item) => (
@@ -92,6 +94,7 @@ export default function ScholarshipPage() {
                   <li key={reason.text}>{reason.tone === "ok" ? "Yes — " : "Check — "}{reason.text}</li>
                 ))}
               </ul>
+              <EligibilityButton kind="scholarship" id={item.id} />
             </article>
           ))}
         </div>
@@ -119,6 +122,7 @@ export default function ScholarshipPage() {
             <p className="mt-2 text-sm">Apply window: {row.deadline || "Not available"}</p>
             <p className="mt-1 text-sm text-gray-700">{row.advantages || "Advantages not listed"}</p>
             <p className="mt-1 text-sm text-gray-500">{row.requirements}</p>
+            <EligibilityButton kind="scholarship" id={row.id} />
             {row.officialUrl && <a className="mt-2 inline-block text-sm text-[var(--teal)]" href={row.officialUrl} target="_blank" rel="noreferrer">Official source</a>}
           </article>
         ))}

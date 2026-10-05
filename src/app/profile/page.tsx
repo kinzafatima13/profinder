@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { scoreProfile } from "@/lib/profile-score";
 
 type Profile = {
   name: string | null;
@@ -95,6 +96,18 @@ export default function ProfilePage() {
     <div className="page-container py-10">
       <h1 className="section-title">Your research profile</h1>
       <p className="mt-1 text-gray-600">Used for research matching and outreach drafts. Email: {profile.email}</p>
+      {(() => {
+        const fit = scoreProfile(profile);
+        return (
+          <section className="mt-6 max-w-3xl rounded-xl border border-gray-100 bg-white p-5">
+            <p className="text-sm text-gray-500">Profile score</p>
+            <p className="text-4xl font-bold text-[var(--navy)]">{fit.score}%</p>
+            <p className="mt-2 text-sm text-gray-700">Next: {fit.next}</p>
+            <p className="mt-2 text-sm text-gray-600">On file: {fit.strengths.join(", ") || "nothing yet"}.</p>
+            <p className="mt-1 text-sm text-amber-800">Missing: {fit.gaps.join(", ") || "none"}.</p>
+          </section>
+        );
+      })()}
       <form onSubmit={save} className="mt-6 grid max-w-3xl gap-4">
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         {message && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{message}</p>}

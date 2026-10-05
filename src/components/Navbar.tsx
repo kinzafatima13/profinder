@@ -8,6 +8,7 @@ const links = [
   { href: "/universities", label: "Universities" },
   { href: "/professors", label: "Professors" },
   { href: "/find", label: "Find Professors" },
+  { href: "/topics", label: "Topics" },
   { href: "/search", label: "Search" },
   { href: "/tracker", label: "Tracker" },
   { href: "/scholarship", label: "Scholarship" },

@@ -39,6 +39,7 @@ import { authOptions } from "@/lib/auth";
 import { computeResearchMatch, profileGaps } from "@/lib/matching";
 import SaveToTrackerButton from "@/components/SaveToTrackerButton";
 import EmailGeneratorButton from "@/components/EmailGeneratorButton";
+import ProposalButton from "@/components/ProposalButton";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +63,14 @@ export default async function ProfessorDetailPage({ params }: Props) {
     },
   });
   if (!prof) notFound();
+
+  const publicationRecords = prof.dataStatus === "verified"
+    ? await prisma.publication.findMany({
+        where: { professorId: prof.id },
+        orderBy: [{ year: "desc" }, { title: "asc" }],
+        take: 8,
+      })
+    : [];
 
   const session = await getServerSession(authOptions);
   const student = session?.user?.email
@@ -212,10 +221,30 @@ export default async function ProfessorDetailPage({ params }: Props) {
 
           <section className="mt-8">
             <h2 className="text-lg font-bold text-[var(--navy)]">Publications</h2>
-            {papers.length === 0 ? (
-              <p className="mt-2 text-sm text-gray-600">Individual publications are not on file. Do not treat this profile as a publication list.</p>
+            <p className="mt-2 text-sm text-gray-600">
+              {prof.researchInterests
+                ? `Stored research text: ${prof.researchInterests}. This is not a generated summary of papers.`
+                : "No research summary is stored, so none was generated."}
+            </p>
+            <p className="mt-2 text-sm text-gray-600">
+              {prof.orcid ? `ORCID ${prof.orcid}` : "ORCID is not stored."}
+              {typeof prof.publicationCount === "number" ? ` · Stored count ${prof.publicationCount}` : " · No stored publication count."}
+            </p>
+            {prof.dataStatus !== "verified" && (
+              <p className="mt-2 text-sm text-amber-800">Linked paper records are hidden until this professor is verified. A paper is not shown just because a database name matched.</p>
+            )}
+            {papers.length === 0 && publicationRecords.length === 0 ? (
+              <p className="mt-2 text-sm text-gray-600">Individual publications are not on file.</p>
             ) : (
               <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-gray-700">
+                {publicationRecords.map((paper) => (
+                  <li key={paper.id}>
+                    {paper.title}
+                    {paper.year ? ` (${paper.year})` : ""}
+                    {paper.venue ? ` · ${paper.venue}` : ""}
+                    {typeof paper.citationCount === "number" ? ` · ${paper.citationCount} citations stored` : ""}
+                  </li>
+                ))}
                 {papers.map((paper, index) => (
                   <li key={`${index}-${paper}`}>{paper}</li>
                 ))}
@@ -261,6 +290,7 @@ export default async function ProfessorDetailPage({ params }: Props) {
               </Link>
               <SaveToTrackerButton professorId={prof.id} />
               <EmailGeneratorButton professorId={prof.id} />
+              <ProposalButton professorId={prof.id} />
             </div>
           </div>
         </div>
