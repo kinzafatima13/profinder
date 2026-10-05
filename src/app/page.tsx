@@ -7,13 +7,17 @@ export default async function HomePage() {
   let uniCount = 0;
   let profCount = 0;
   let areaCount = 0;
+  let verifiedCount = 0;
+  let emailCount = 0;
   let dbFile = "";
 
   try {
-    [uniCount, profCount, areaCount] = await Promise.all([
+    [uniCount, profCount, areaCount, verifiedCount, emailCount] = await Promise.all([
       prisma.university.count(),
       prisma.professor.count(),
       prisma.researchArea.count(),
+      prisma.professor.count({ where: { dataStatus: "verified" } }),
+      prisma.professor.count({ where: { AND: [{ email: { not: null } }, { NOT: { email: "" } }] } }),
     ]);
     const rows = await prisma.$queryRawUnsafe<Array<{ file: string }>>("PRAGMA database_list");
     dbFile = rows?.[0]?.file ?? "";
@@ -65,6 +69,7 @@ export default async function HomePage() {
               <div className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
                 <div className="text-2xl font-bold text-[var(--navy)]">{profCount}</div>
                 <div className="text-xs text-gray-500">Professors</div>
+                <div className="mt-1 text-xs text-[var(--teal)]">{verifiedCount} verified · {emailCount} emails</div>
               </div>
               <div className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
                 <div className="text-2xl font-bold text-[var(--navy)]">{areaCount}</div>

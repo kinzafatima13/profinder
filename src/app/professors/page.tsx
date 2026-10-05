@@ -56,7 +56,7 @@ export default async function ProfessorsPage({
       university: true,
       researchAreas: { include: { researchArea: true } },
     },
-    orderBy: [{ name: "asc" }, { id: "asc" }],
+    orderBy: [{ dataStatus: "desc" }, { name: "asc" }, { id: "asc" }],
     skip: (page - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
   });
@@ -73,6 +73,7 @@ export default async function ProfessorsPage({
           <p className="mt-1 text-gray-600">
             {total} professor{total !== 1 ? "s" : ""} found
             {total > 0 ? ` · showing ${start}–${end}` : ""}
+            {" · verified faculty first"}
           </p>
         </div>
 
@@ -120,6 +121,8 @@ export default async function ProfessorsPage({
               universityCity={p.university.city}
               researchAreas={p.researchAreas.map((r) => r.researchArea.name)}
               researchInterests={p.researchInterests}
+              verified={p.dataStatus === "verified"}
+              email={p.email}
             />
           ))}
         </div>

@@ -11,6 +11,8 @@ type Props = {
   researchAreas: string[];
   researchInterests?: string | null;
   matchScore?: number | null;
+  verified?: boolean;
+  email?: string | null;
 };
 
 function matchClass(score: number) {
@@ -30,6 +32,8 @@ export default function ProfessorCard({
   researchAreas,
   researchInterests,
   matchScore,
+  verified,
+  email,
 }: Props) {
   return (
     <div className="card flex flex-col p-5">
@@ -54,6 +58,8 @@ export default function ProfessorCard({
             {universityName}
             {universityCity && ` · ${universityCity}`}
           </p>
+          {verified && <p className="mt-1 text-xs font-semibold text-[var(--teal)]">Verified</p>}
+          {email && <p className="mt-1 break-all text-xs text-gray-600">{email}</p>}
         </div>
         {typeof matchScore === "number" && (
           <div className="text-right">
