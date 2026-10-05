@@ -37,6 +37,7 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { computeResearchMatch, profileGaps } from "@/lib/matching";
+import { assessTarget, fundingStatement, newestStoredYear, timelineGroups } from "@/lib/professor-assessment";
 import SaveToTrackerButton from "@/components/SaveToTrackerButton";
 import EmailGeneratorButton from "@/components/EmailGeneratorButton";
 import ProposalButton from "@/components/ProposalButton";
@@ -109,6 +110,20 @@ export default async function ProfessorDetailPage({ params }: Props) {
       )
     : null;
 
+  const papers = publicationLines(prof.publications);
+  const newestYear = newestStoredYear(prof.publications, publicationRecords.map((paper) => paper.year));
+  const target = assessTarget({
+    matchScore: match && !match.incomplete ? match.score : null,
+    verified: prof.dataStatus === "verified",
+    hasEmail: Boolean(prof.email?.trim()),
+    newestYear,
+  });
+  const funding = fundingStatement();
+  const timeline = timelineGroups([
+    ...publicationRecords.map((paper) => ({ title: paper.title, year: paper.year })),
+    ...papers.map((paper) => ({ title: paper, year: newestStoredYear(paper) })),
+  ]);
+
   const personalProfile = Boolean(prof.profileUrl && prof.profileIsPersonal);
   const statusLabel =
     prof.dataStatus === "verified"
@@ -118,7 +133,6 @@ export default async function ProfessorDetailPage({ params }: Props) {
       : prof.dataStatus === "outdated"
       ? "Possibly outdated"
       : "Unverified";
-  const papers = publicationLines(prof.publications);
 
   return (
     <div className="page-container py-10">
@@ -220,42 +234,42 @@ export default async function ProfessorDetailPage({ params }: Props) {
           </section>
 
           <section className="mt-8">
-            <h2 className="text-lg font-bold text-[var(--navy)]">Publications</h2>
+            <h2 className="text-lg font-bold text-[var(--navy)]">Funding</h2>
+            <p className="mt-2 text-sm font-semibold text-amber-800">{funding.status}</p>
+            <p className="mt-1 text-sm text-gray-700">{funding.text}</p>
+          </section>
+
+          <section className="mt-8">
+            <h2 className="text-lg font-bold text-[var(--navy)]">Research timeline</h2>
             <p className="mt-2 text-sm text-gray-600">
-              {prof.researchInterests
-                ? `Stored research text: ${prof.researchInterests}. This is not a generated summary of papers.`
-                : "No research summary is stored, so none was generated."}
+              {newestYear ? `Newest stored year: ${newestYear}.` : "No publication year is stored, so recent activity cannot be judged."}
+              {" "}Topics on file: {prof.researchInterests || "none"}.
             </p>
-            <p className="mt-2 text-sm text-gray-600">
-              {prof.orcid ? `ORCID ${prof.orcid}` : "ORCID is not stored."}
-              {typeof prof.publicationCount === "number" ? ` · Stored count ${prof.publicationCount}` : " · No stored publication count."}
-            </p>
-            {prof.dataStatus !== "verified" && (
-              <p className="mt-2 text-sm text-amber-800">Linked paper records are hidden until this professor is verified. A paper is not shown just because a database name matched.</p>
-            )}
-            {papers.length === 0 && publicationRecords.length === 0 ? (
-              <p className="mt-2 text-sm text-gray-600">Individual publications are not on file.</p>
+            {timeline.length === 0 ? (
+              <p className="mt-2 text-sm text-gray-600">No publication titles are stored.</p>
             ) : (
-              <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-gray-700">
-                {publicationRecords.map((paper) => (
-                  <li key={paper.id}>
-                    {paper.title}
-                    {paper.year ? ` (${paper.year})` : ""}
-                    {paper.venue ? ` · ${paper.venue}` : ""}
-                    {typeof paper.citationCount === "number" ? ` · ${paper.citationCount} citations stored` : ""}
-                  </li>
+              <div className="mt-3 space-y-4">
+                {timeline.map((group) => (
+                  <div key={group.year}>
+                    <p className="text-sm font-semibold text-[var(--navy)]">{group.year}</p>
+                    <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-gray-700">
+                      {group.titles.map((title) => (
+                        <li key={title}>{title}</li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-                {papers.map((paper, index) => (
-                  <li key={`${index}-${paper}`}>{paper}</li>
-                ))}
-              </ol>
+              </div>
+            )}
+            {prof.dataStatus !== "verified" && (
+              <p className="mt-2 text-sm text-amber-800">Papers linked only by a name match stay hidden.</p>
             )}
           </section>
         </div>
 
         <div className="lg:col-span-1">
           <div className="card sticky top-24 p-6">
-            <h2 className="text-lg font-bold text-[var(--navy)]">Your research match</h2>
+            <h2 className="text-lg font-bold text-[var(--navy)]">Research match score</h2>
             {!student && (
               <p className="mt-3 text-sm text-gray-600">
                 Sign in to see your personalized research match.
@@ -284,6 +298,14 @@ export default async function ProfessorDetailPage({ params }: Props) {
                 </ul>
               </>
             )}
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <p className="text-sm font-semibold text-[var(--navy)]">Target: {target.level} priority</p>
+              <ul className="mt-2 space-y-1 text-sm text-gray-700">
+                {target.reasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            </div>
             <div className="mt-4 space-y-2">
               <Link href={student ? "/profile" : "/login"} className="btn-secondary block text-center text-sm">
                 {student ? "Edit profile" : "Sign in"}

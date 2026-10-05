@@ -15,6 +15,7 @@ type MatchItem = {
   researchInterests: string | null;
   verified: boolean;
   email: string | null;
+  target: { level: "High" | "Medium" | "Low"; reasons: string[] };
   match: {
     score: number;
     explanation: string;
@@ -206,7 +207,8 @@ export default function FindProfessorsPage() {
                     <div className={`text-3xl font-bold ${matchClass(r.match.score)}`}>
                       {r.match.score}%
                     </div>
-                    <div className="text-xs text-gray-400">Match</div>
+                    <div className="text-xs text-gray-400">Research match</div>
+                    <p className="mt-2 text-sm font-semibold text-[var(--navy)]">{r.target.level} priority</p>
                     <Link
                       href={`/professors/${r.id}`}
                       className="btn-secondary mt-3 text-xs"

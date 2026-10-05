@@ -1,20 +1,37 @@
 import Link from "next/link";
+import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
+import { computeResearchMatch } from "@/lib/matching";
+import { assessTarget, newestStoredYear } from "@/lib/professor-assessment";
 import ProfessorCard from "@/components/ProfessorCard";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 24;
 
-type SearchParams = { area?: string; q?: string; page?: string; university?: string; verified?: string; email?: string };
+type SearchParams = {
+  area?: string;
+  q?: string;
+  page?: string;
+  university?: string;
+  verified?: string;
+  email?: string;
+  department?: string;
+  papers?: string;
+  funding?: string;
+};
 
-function pageHref(page: number, q?: string, area?: string, university?: string, verified?: string, email?: string) {
+function pageHref(page: number, filters: Omit<SearchParams, "page">) {
   const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  if (area) params.set("area", area);
-  if (university) params.set("university", university);
-  if (verified === "1") params.set("verified", "1");
-  if (email === "1") params.set("email", "1");
+  if (filters.q) params.set("q", filters.q);
+  if (filters.area) params.set("area", filters.area);
+  if (filters.university) params.set("university", filters.university);
+  if (filters.department) params.set("department", filters.department);
+  if (filters.verified === "1") params.set("verified", "1");
+  if (filters.email === "1") params.set("email", "1");
+  if (filters.papers === "1") params.set("papers", "1");
+  if (filters.funding) params.set("funding", filters.funding);
   if (page > 1) params.set("page", String(page));
   const query = params.toString();
   return query ? `/professors?${query}` : "/professors";
@@ -30,6 +47,9 @@ export default async function ProfessorsPage({
   const universityId = searchParams.university;
   const verifiedOnly = searchParams.verified === "1";
   const emailOnly = searchParams.email === "1";
+  const department = searchParams.department?.trim();
+  const papersOnly = searchParams.papers === "1";
+  const funding = searchParams.funding === "known" ? "known" : searchParams.funding === "unknown" ? "unknown" : "";
   const requested = Number(searchParams.page || "1");
   const where = {
     AND: [
@@ -41,8 +61,18 @@ export default async function ProfessorsPage({
           }
         : {},
       universityId ? { universityId } : {},
+      department ? { department: { contains: department } } : {},
       verifiedOnly ? { dataStatus: "verified" } : {},
       emailOnly ? { AND: [{ email: { not: null } }, { NOT: { email: "" } }] } : {},
+      papersOnly
+        ? {
+            OR: [
+              { AND: [{ publications: { not: null } }, { NOT: { publications: "" } }] },
+              { dataStatus: "verified", publicationRows: { some: {} } },
+            ],
+          }
+        : {},
+      funding === "known" ? { AND: [{ lab: { not: null } }, { NOT: { lab: "" } }] } : {},
       q
         ? {
             OR: [
@@ -72,6 +102,20 @@ export default async function ProfessorsPage({
 
   const areas = await prisma.researchArea.findMany({ orderBy: { name: "asc" } });
   const universities = await prisma.university.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } });
+  const session = await getServerSession(authOptions);
+  const student = session?.user?.email
+    ? await prisma.student.findUnique({ where: { email: session.user.email } })
+    : null;
+  const filters = {
+    q,
+    area: areaFilter,
+    university: universityId,
+    department,
+    verified: verifiedOnly ? "1" : "",
+    email: emailOnly ? "1" : "",
+    papers: papersOnly ? "1" : "",
+    funding,
+  };
   const start = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const end = total === 0 ? 0 : start + professors.length - 1;
 
@@ -113,6 +157,7 @@ export default async function ProfessorsPage({
               <option key={university.id} value={university.id}>{university.name}</option>
             ))}
           </select>
+          <input className="input w-full sm:max-w-[180px]" name="department" defaultValue={department ?? ""} placeholder="Department" />
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input type="checkbox" name="verified" value="1" defaultChecked={verifiedOnly} />
             Verified only
@@ -121,6 +166,15 @@ export default async function ProfessorsPage({
             <input type="checkbox" name="email" value="1" defaultChecked={emailOnly} />
             Has email
           </label>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" name="papers" value="1" defaultChecked={papersOnly} />
+            Has stored papers
+          </label>
+          <select name="funding" defaultValue={funding} className="input w-full sm:max-w-[180px]">
+            <option value="">Funding: any</option>
+            <option value="known">Funding on file</option>
+            <option value="unknown">Funding unknown</option>
+          </select>
           <button type="submit" className="btn-primary w-full sm:w-auto">
             Filter
           </button>
@@ -133,7 +187,36 @@ export default async function ProfessorsPage({
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {professors.map((p) => (
+          {professors.map((p) => {
+            const match = student?.researchInterests
+              ? computeResearchMatch(
+                  {
+                    researchInterests: student.researchInterests,
+                    major: student.major,
+                    degree: student.degree,
+                    skills: student.skills,
+                    academicBackground: student.academicBackground,
+                    projects: student.projects,
+                    cvText: student.cvText,
+                  },
+                  {
+                    researchInterests: p.researchInterests,
+                    department: p.department,
+                    publications: p.publications,
+                    researchAreas: p.researchAreas.map((area) => ({
+                      name: area.researchArea.name,
+                      keywords: area.researchArea.keywords,
+                    })),
+                  }
+                )
+              : null;
+            const target = assessTarget({
+              matchScore: match && !match.incomplete ? match.score : null,
+              verified: p.dataStatus === "verified",
+              hasEmail: Boolean(p.email?.trim()),
+              newestYear: newestStoredYear(p.publications),
+            });
+            return (
             <ProfessorCard
               key={p.id}
               id={p.id}
@@ -147,8 +230,11 @@ export default async function ProfessorsPage({
               researchInterests={p.researchInterests}
               verified={p.dataStatus === "verified"}
               email={p.email}
+              matchScore={match && !match.incomplete ? match.score : null}
+              priority={target.level}
             />
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -157,13 +243,13 @@ export default async function ProfessorsPage({
           {page <= 1 ? (
             <span className="btn-secondary pointer-events-none opacity-40">Previous</span>
           ) : (
-            <Link className="btn-secondary text-center" href={pageHref(page - 1, q, areaFilter, universityId, verifiedOnly ? "1" : "", emailOnly ? "1" : "")}>Previous</Link>
+            <Link className="btn-secondary text-center" href={pageHref(page - 1, filters)}>Previous</Link>
           )}
           <p className="text-center text-sm text-gray-600">Page {page} of {pageCount}</p>
           {page >= pageCount ? (
             <span className="btn-secondary pointer-events-none opacity-40">Next</span>
           ) : (
-            <Link className="btn-secondary text-center" href={pageHref(page + 1, q, areaFilter, universityId, verifiedOnly ? "1" : "", emailOnly ? "1" : "")}>Next</Link>
+            <Link className="btn-secondary text-center" href={pageHref(page + 1, filters)}>Next</Link>
           )}
         </nav>
       )}

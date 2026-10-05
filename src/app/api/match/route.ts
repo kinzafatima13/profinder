@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { computeResearchMatch } from "@/lib/matching";
+import { assessTarget, newestStoredYear } from "@/lib/professor-assessment";
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,19 +39,8 @@ export async function POST(req: NextRequest) {
     });
 
     const results = professors
-      .map((p) => ({
-        id: p.id,
-        name: p.name,
-        nameZh: p.nameZh,
-        position: p.position,
-        department: p.department,
-        universityName: p.university.name,
-        universityCity: p.university.city,
-        researchAreas: p.researchAreas.map((r) => r.researchArea.name),
-        researchInterests: p.researchInterests,
-        verified: p.dataStatus === "verified",
-        email: p.email,
-        match: computeResearchMatch(student, {
+      .map((p) => {
+        const match = computeResearchMatch(student, {
           researchInterests: p.researchInterests,
           department: p.department,
           position: p.position,
@@ -60,8 +50,28 @@ export async function POST(req: NextRequest) {
             name: r.researchArea.name,
             keywords: r.researchArea.keywords,
           })),
-        }),
-      }))
+        });
+        return {
+          id: p.id,
+          name: p.name,
+          nameZh: p.nameZh,
+          position: p.position,
+          department: p.department,
+          universityName: p.university.name,
+          universityCity: p.university.city,
+          researchAreas: p.researchAreas.map((r) => r.researchArea.name),
+          researchInterests: p.researchInterests,
+          verified: p.dataStatus === "verified",
+          email: p.email,
+          target: assessTarget({
+            matchScore: match.incomplete ? null : match.score,
+            verified: p.dataStatus === "verified",
+            hasEmail: Boolean(p.email?.trim()),
+            newestYear: newestStoredYear(p.publications),
+          }),
+          match,
+        };
+      })
       .filter((r) => !r.match.incomplete && r.match.score >= 15)
       .sort((a, b) => b.match.score - a.match.score)
       .slice(0, 20);
