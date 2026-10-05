@@ -65,7 +65,7 @@ export function assessTarget(input: {
 export function fundingStatement() {
   return {
     status: "Unknown" as const,
-    text: "No grant, active project, or funded-student record is stored. Funding is not inferred from a job title or a paper.",
+    text: "Not publicly verified. No grant, project, or funded-student record is stored.",
   };
 }
 

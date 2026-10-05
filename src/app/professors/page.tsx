@@ -72,7 +72,6 @@ export default async function ProfessorsPage({
             ],
           }
         : {},
-      funding === "known" ? { AND: [{ lab: { not: null } }, { NOT: { lab: "" } }] } : {},
       q
         ? {
             OR: [
@@ -170,11 +169,7 @@ export default async function ProfessorsPage({
             <input type="checkbox" name="papers" value="1" defaultChecked={papersOnly} />
             Has stored papers
           </label>
-          <select name="funding" defaultValue={funding} className="input w-full sm:max-w-[180px]">
-            <option value="">Funding: any</option>
-            <option value="known">Funding on file</option>
-            <option value="unknown">Funding unknown</option>
-          </select>
+          <p className="text-sm text-[var(--gray-500)]">Funding is not publicly verified, so it is not used as a filter.</p>
           <button type="submit" className="btn-primary w-full sm:w-auto">
             Filter
           </button>
@@ -230,6 +225,7 @@ export default async function ProfessorsPage({
               researchInterests={p.researchInterests}
               verified={p.dataStatus === "verified"}
               email={p.email}
+              recent={newestStoredYear(p.publications) ? `Newest stored year ${newestStoredYear(p.publications)}` : null}
               matchScore={match && !match.incomplete ? match.score : null}
               priority={target.level}
             />

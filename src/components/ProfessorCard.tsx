@@ -14,6 +14,7 @@ type Props = {
   matchScore?: number | null;
   verified?: boolean;
   email?: string | null;
+  recent?: string | null;
   priority?: "High" | "Medium" | "Low" | null;
 };
 
@@ -30,6 +31,7 @@ export default function ProfessorCard({
   matchScore,
   verified,
   email,
+  recent,
   priority,
 }: Props) {
   return (
@@ -55,9 +57,10 @@ export default function ProfessorCard({
             {universityName}
             {universityCity && ` · ${universityCity}`}
           </p>
-          {verified ? <p className="mt-2 text-xs font-medium text-[var(--ok)]">Verified</p> : <p className="mt-2 text-xs text-[var(--gray-500)]">Not verified from an official page</p>}
+          {verified ? <p className="mt-2 text-xs font-medium text-[var(--ok)]">Verified</p> : <p className="mt-2 text-xs text-[var(--gray-500)]">Unverified</p>}
+          <p className="mt-1 text-xs text-[var(--gray-500)]">{email?.trim() ? "Email on file" : "No public email"}</p>
+          <p className="mt-1 text-xs text-[var(--gray-500)]">{recent || "Recent activity not stored"}</p>
           {priority && <p className="mt-1 text-xs text-[var(--gray-500)]">{priority} priority</p>}
-          {email && <p className="mt-1 break-all text-xs text-[var(--gray-700)]">{email}</p>}
         </div>
         {typeof matchScore === "number" && <MatchScore score={matchScore} compact />}
       </div>

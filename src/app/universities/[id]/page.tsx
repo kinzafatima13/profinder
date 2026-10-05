@@ -39,8 +39,10 @@ export default async function UniversityDetailPage({ params }: Props) {
         <p className="mt-1 text-gray-600">
           {[uni.city, uni.province, uni.country].filter(Boolean).join(" · ")}
         </p>
-        <p className="mt-2 text-sm text-gray-600">
-          Source status: {uni.dataStatus}. {uni.officialUrl ? "Official site is linked." : "No official site is stored."}
+        <p className="mt-4 flex flex-wrap gap-3 text-sm">
+          <a href="#programs" className="text-[var(--teal)]">Programs</a>
+          <a href="#professors" className="text-[var(--teal)]">Professors</a>
+          <a href="#funding" className="text-[var(--teal)]">Funding</a>
         </p>
         {uni.agencyNumber && (
           <span className="mt-2 inline-block badge-navy">
@@ -65,7 +67,7 @@ export default async function UniversityDetailPage({ params }: Props) {
       )}
 
       {/* Programs */}
-      <section className="mt-12">
+      <section id="programs" className="mt-12">
         <h2 className="text-xl font-bold text-[var(--navy)]">Programs</h2>
         {uni.programs.length === 0 ? (
           <p className="mt-2 text-sm text-gray-500">No programs listed yet.</p>
@@ -98,8 +100,10 @@ export default async function UniversityDetailPage({ params }: Props) {
       </section>
 
       {/* Scholarships */}
-      <section className="mt-12">
-        <h2 className="text-xl font-bold text-[var(--navy)]">Scholarships</h2>
+      <section id="funding" className="mt-12">
+        <h2 className="text-xl font-bold text-[var(--navy)]">Funding</h2>
+        <p className="mt-2 text-sm text-[var(--gray-500)]">Amounts and deadlines below are unverified unless an official source is linked.</p>
+        {uni.scholarships.length === 0 && <p className="mt-3 text-sm text-[var(--gray-500)]">Not publicly verified.</p>}
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {uni.scholarships.map((s) => (
             <div key={s.id} className="card p-4">
@@ -123,7 +127,7 @@ export default async function UniversityDetailPage({ params }: Props) {
       </section>
 
       {/* Professors */}
-      <section className="mt-12">
+      <section id="professors" className="mt-12">
         <h2 className="text-xl font-bold text-[var(--navy)]">
           Professors ({uni.professors.length})
         </h2>
@@ -147,6 +151,7 @@ export default async function UniversityDetailPage({ params }: Props) {
                 researchInterests={p.researchInterests}
                 verified={p.dataStatus === "verified"}
                 email={p.email}
+                recent={p.publications ? "Stored research text on file" : null}
               />
             ))}
           </div>

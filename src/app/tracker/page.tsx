@@ -254,6 +254,7 @@ export default function TrackerPage() {
                   )}
                   <p className="mt-2 text-sm text-gray-700">Next: {planFor(row).next}</p>
                   <p className="mt-1 text-sm font-semibold text-[var(--navy)]">Readiness {scoreFor(row).score}%</p>
+                  <p className="mt-1 text-xs text-[var(--gray-500)]">What to check: {scoreFor(row).notes.filter((note) => /not|unknown|unverified|incomplete|missing/i.test(note)).join(" ") || "No stored gap."}</p>
                   <ul className="mt-2 space-y-1 text-xs text-gray-600">
                     {scoreFor(row).notes.map((note) => (
                       <li key={note}>{note}</li>

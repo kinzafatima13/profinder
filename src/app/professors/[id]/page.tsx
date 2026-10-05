@@ -38,6 +38,7 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { computeResearchMatch, profileGaps } from "@/lib/matching";
 import { assessTarget, fundingStatement, newestStoredYear, timelineGroups } from "@/lib/professor-assessment";
+import { isPro } from "@/lib/billing/usage";
 import MatchScore from "@/components/MatchScore";
 import SaveToTrackerButton from "@/components/SaveToTrackerButton";
 import EmailGeneratorButton from "@/components/EmailGeneratorButton";
@@ -79,6 +80,7 @@ export default async function ProfessorDetailPage({ params }: Props) {
     ? await prisma.student.findUnique({ where: { email: session.user.email } })
     : null;
 
+  const pro = student ? await isPro(student) : false;
   const gaps = student
     ? profileGaps({
         researchInterests: student.researchInterests,
@@ -211,6 +213,17 @@ export default async function ProfessorDetailPage({ params }: Props) {
             )}
           </div>
 
+          <section className="mt-8">
+            <h2 className="text-lg font-semibold text-[var(--navy)]">On file</h2>
+            <dl className="mt-3 space-y-2 text-sm text-[var(--gray-700)]">
+              <div><dt className="text-xs text-[var(--gray-500)]">Email</dt><dd>{prof.email?.trim() || "Not publicly verified"}</dd></div>
+              <div><dt className="text-xs text-[var(--gray-500)]">ORCID</dt><dd>{prof.orcid?.trim() || "Not publicly verified"}</dd></div>
+              <div><dt className="text-xs text-[var(--gray-500)]">Lab or group</dt><dd>{prof.lab?.trim() || "Not publicly verified"}</dd></div>
+              <div><dt className="text-xs text-[var(--gray-500)]">Supervision</dt><dd>Not publicly verified</dd></div>
+              <div><dt className="text-xs text-[var(--gray-500)]">Last updated</dt><dd>{prof.updatedAt.toISOString().slice(0, 10)}</dd></div>
+            </dl>
+          </section>
+
           <section className="mt-10">
             <h2 className="text-lg font-bold text-[var(--navy)]">Research areas</h2>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -285,8 +298,12 @@ export default async function ProfessorDetailPage({ params }: Props) {
             )}
             {match && !match.incomplete && (
               <div className="mt-4">
-                <MatchScore score={match.score} breakdown={match.breakdown} reasons={match.reasons} />
-                <p className="mt-3 text-sm text-[var(--gray-700)]">{match.explanation}</p>
+                <MatchScore
+                  score={match.score}
+                  breakdown={pro ? { ...match.breakdown, publicationOverlap: prof.publications?.trim() ? match.breakdown.publicationOverlap : null } : null}
+                  reasons={pro ? match.reasons : []}
+                />
+                {!pro && <p className="mt-3 text-sm text-[var(--gray-700)]">The score is visible. The breakdown is on Pro. <Link href="/pricing" className="text-[var(--teal)]">Go Pro</Link></p>}
               </div>
             )}
             <div className="mt-4 border-t border-gray-100 pt-4">
@@ -298,6 +315,7 @@ export default async function ProfessorDetailPage({ params }: Props) {
               </ul>
             </div>
             <div className="mt-4 space-y-2">
+              <p className="text-xs text-[var(--gray-500)]">Match, then draft, then copy. Mark Contacted on the tracker. Follow up only after you send it yourself.</p>
               <Link href={student ? "/profile" : "/login"} className="btn-secondary block text-center text-sm">
                 {student ? "Edit profile" : "Sign in"}
               </Link>

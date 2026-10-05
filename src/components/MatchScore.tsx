@@ -4,6 +4,7 @@ type Breakdown = {
   topicOverlap: number;
   majorRelevance: number;
   degreeRelevance: number;
+  publicationOverlap?: number | null;
 };
 
 function band(score: number) {
@@ -30,8 +31,9 @@ export default function MatchScore({
         ["Research overlap", breakdown.interestOverlap],
         ["Area overlap", breakdown.areaOverlap],
         ["Topic overlap", breakdown.topicOverlap],
+        ["Stored publications", breakdown.publicationOverlap ?? null],
         ["Major relevance", breakdown.majorRelevance],
-        ["Degree relevance", breakdown.degreeRelevance],
+        ["Degree on file", breakdown.degreeRelevance],
       ]
     : [];
 
@@ -57,11 +59,13 @@ export default function MatchScore({
             <li key={String(label)}>
               <div className="flex justify-between text-xs text-[var(--gray-700)]">
                 <span>{label}</span>
-                <span>{value}%</span>
+                <span>{value == null ? "Not on file" : `${value}%`}</span>
               </div>
-              <div className="mt-1 h-1.5 rounded-full bg-[var(--gray-100)]">
-                <div className="h-1.5 rounded-full bg-[var(--teal)]" style={{ width: `${Math.max(0, Math.min(100, Number(value)))}%` }} />
-              </div>
+              {value != null && (
+                <div className="mt-1 h-1.5 rounded-full bg-[var(--gray-100)]">
+                  <div className="h-1.5 rounded-full bg-[var(--teal)]" style={{ width: `${Math.max(0, Math.min(100, Number(value)))}%` }} />
+                </div>
+              )}
             </li>
           ))}
         </ul>
