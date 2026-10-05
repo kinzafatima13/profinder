@@ -1,4 +1,3 @@
-
 function sourceDisplay(profileUrl: string | null, dataStatus: string) {
   if (!profileUrl) {
     return {
@@ -44,6 +43,15 @@ import EmailGeneratorButton from "@/components/EmailGeneratorButton";
 export const dynamic = "force-dynamic";
 
 type Props = { params: { id: string } };
+
+function publicationLines(value: string | null) {
+  if (!value) return [];
+  return value
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.replace(/^\d+\.\s*/, ""));
+}
 
 export default async function ProfessorDetailPage({ params }: Props) {
   const prof = await prisma.professor.findUnique({
@@ -101,6 +109,7 @@ export default async function ProfessorDetailPage({ params }: Props) {
       : prof.dataStatus === "outdated"
       ? "Possibly outdated"
       : "Unverified";
+  const papers = publicationLines(prof.publications);
 
   return (
     <div className="page-container py-10">
@@ -203,9 +212,15 @@ export default async function ProfessorDetailPage({ params }: Props) {
 
           <section className="mt-8">
             <h2 className="text-lg font-bold text-[var(--navy)]">Publications</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              {prof.publications || "Individual publications are not on file. Do not treat this profile as a publication list."}
-            </p>
+            {papers.length === 0 ? (
+              <p className="mt-2 text-sm text-gray-600">Individual publications are not on file. Do not treat this profile as a publication list.</p>
+            ) : (
+              <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-gray-700">
+                {papers.map((paper, index) => (
+                  <li key={`${index}-${paper}`}>{paper}</li>
+                ))}
+              </ol>
+            )}
           </section>
         </div>
 
