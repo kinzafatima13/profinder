@@ -7,14 +7,16 @@ import { useSession, signOut } from "next-auth/react";
 const links = [
   { href: "/universities", label: "Universities" },
   { href: "/professors", label: "Professors" },
-  { href: "/find", label: "Find Professors" },
+  { href: "/find", label: "Find" },
+  { href: "/scholarship", label: "Scholarship" },
+  { href: "/tracker", label: "Tracker" },
+];
+
+const more = [
   { href: "/topics", label: "Topics" },
   { href: "/compare", label: "Compare" },
   { href: "/notices", label: "Notices" },
   { href: "/search", label: "Search" },
-  { href: "/tracker", label: "Tracker" },
-  { href: "/scholarship", label: "Scholarship" },
-  { href: "/resume", label: "Resume" },
   { href: "/pricing", label: "Pricing" },
 ];
 
@@ -58,6 +60,16 @@ export default function Navbar() {
               </Link>
             );
           })}
+          <details className="relative">
+            <summary className="cursor-pointer list-none rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100">More</summary>
+            <div className="absolute right-0 z-50 mt-1 w-40 rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+              {more.map((item) => (
+                <Link key={item.href} href={item.href} className="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </details>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -96,7 +108,7 @@ export default function Navbar() {
       </div>
 
       <nav className="flex gap-1 overflow-x-auto border-t border-gray-100 px-4 py-2 md:hidden">
-        {links.map((l) => {
+        {[...links, ...more].map((l) => {
           const active = pathname === l.href || pathname.startsWith(l.href + "/");
           return (
             <Link

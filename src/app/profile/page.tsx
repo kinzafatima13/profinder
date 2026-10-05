@@ -4,6 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { scoreProfile } from "@/lib/profile-score";
 
+type AtsCheck = { label: string; score: number; note: string };
+type AtsResult = {
+  fileName: string;
+  preview: string;
+  checklist: { score: number; checks: AtsCheck[] };
+  ai: { score: number; summary: string; fixes: string[] } | null;
+};
+
 type Profile = {
   name: string | null;
   email: string;
@@ -42,6 +50,10 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeBusy, setResumeBusy] = useState(false);
+  const [resumeError, setResumeError] = useState("");
+  const [ats, setAts] = useState<AtsResult | null>(null);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -80,6 +92,23 @@ export default function ProfilePage() {
     }
     setProfile({ ...EMPTY, ...data.profile });
     setMessage("Profile saved. Matching and email drafts will use this information.");
+  }
+
+  async function scoreResume(event: React.FormEvent) {
+    event.preventDefault();
+    if (!resumeFile) return;
+    setResumeBusy(true);
+    setResumeError("");
+    const body = new FormData();
+    body.set("file", resumeFile);
+    const res = await fetch("/api/resume", { method: "POST", body });
+    const data = await res.json();
+    setResumeBusy(false);
+    if (!res.ok) {
+      setResumeError(data.error || "Could not score that file");
+      return;
+    }
+    setAts(data);
   }
 
   if (loading) return <div className="page-container py-10 text-gray-500">Loading profile...</div>;
@@ -153,6 +182,36 @@ export default function ProfilePage() {
         </div>
         <button className="btn-primary w-fit" disabled={saving}>{saving ? "Saving..." : "Save profile"}</button>
       </form>
+
+      <section className="mt-10 max-w-3xl rounded-xl border border-gray-100 bg-white p-5">
+        <h2 className="text-lg font-bold text-[var(--navy)]">Resume</h2>
+        <p className="mt-1 text-sm text-gray-600">Upload a PDF, DOCX, or TXT file. The text is scored for an application resume. The file is not rewritten.</p>
+        <form onSubmit={scoreResume} className="mt-4 space-y-3">
+          <input className="input" type="file" accept=".pdf,.docx,.txt,application/pdf" onChange={(event) => setResumeFile(event.target.files?.[0] || null)} required />
+          <button className="btn-primary" disabled={resumeBusy}>{resumeBusy ? "Scoring..." : "Upload and score"}</button>
+        </form>
+        {resumeError && <p className="mt-3 text-sm text-red-700">{resumeError}</p>}
+        {ats && (
+          <div className="mt-4">
+            <p className="text-sm text-gray-500">{ats.fileName}</p>
+            <p className="mt-1 text-4xl font-bold text-[var(--navy)]">{ats.ai ? ats.ai.score : ats.checklist.score}%</p>
+            <p className="mt-1 text-sm text-gray-600">{ats.ai ? ats.ai.summary : "Checklist score from the extracted text. AI notes are unavailable on this server."}</p>
+            <ul className="mt-3 space-y-1 text-sm text-gray-700">
+              {ats.checklist.checks.map((check) => (
+                <li key={check.label}>{check.label}: {check.score}% — {check.note}</li>
+              ))}
+            </ul>
+            {ats.ai && ats.ai.fixes.length > 0 && (
+              <ul className="mt-3 space-y-1 text-sm text-gray-700">
+                {ats.ai.fixes.map((fix) => (
+                  <li key={fix}>Fix — {fix}</li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-3 text-xs text-gray-500">Text used: {ats.preview}</p>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

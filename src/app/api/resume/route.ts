@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { computeResearchMatch } from "@/lib/matching";
+import { scoreResume } from "@/lib/ats";
 
 async function extractText(file: File) {
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -19,6 +19,53 @@ async function extractText(file: File) {
   }
   if (name.endsWith(".txt")) return buffer.toString("utf8");
   throw new Error("Upload a PDF, DOCX, or TXT file.");
+}
+
+async function aiReview(text: string, major: string | null, interests: string | null) {
+  const key = process.env.XAI_API_KEY;
+  if (!key) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12000);
+  try {
+    const res = await fetch("https://api.x.ai/v1/chat/completions", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "grok-3-mini",
+        temperature: 0,
+        messages: [
+          {
+            role: "system",
+            content: "You score a resume for an applicant tracking system. Use only the supplied text. Do not invent jobs, degrees, or papers. Reply with JSON only: {\"score\":0-100,\"summary\":\"one sentence\",\"fixes\":[\"three short fixes\"]}.",
+          },
+          {
+            role: "user",
+            content: `Target degree field: ${major || "not provided"}. Interests: ${interests || "not provided"}.\n\nResume text:\n${text.slice(0, 5000)}`,
+          },
+        ],
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const raw = data?.choices?.[0]?.message?.content;
+    if (typeof raw !== "string") return null;
+    const json = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
+    const score = Number(json.score);
+    if (!Number.isFinite(score)) return null;
+    return {
+      score: Math.max(0, Math.min(100, Math.round(score))),
+      summary: typeof json.summary === "string" ? json.summary.slice(0, 400) : "",
+      fixes: Array.isArray(json.fixes) ? json.fixes.filter((item: unknown) => typeof item === "string").slice(0, 3) : [],
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -39,47 +86,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Could not read that file. Upload a text-based PDF or DOCX." }, { status: 400 });
   }
   if (resumeText.length < 40) {
-    return NextResponse.json({ error: "No usable text was found in that file. A scanned image PDF cannot be read." }, { status: 400 });
+    return NextResponse.json({ error: "No usable text was found. A scanned image PDF cannot be read." }, { status: 400 });
   }
 
   await prisma.student.update({ where: { id: student.id }, data: { resumeText: resumeText.slice(0, 8000) } });
-  const professors = await prisma.professor.findMany({
-    include: { university: true, researchAreas: { include: { researchArea: true } } },
+  const checklist = scoreResume(resumeText, {
+    major: student.major,
+    interests: student.researchInterests,
+    skills: student.skills,
   });
-  const ranked = professors.map((p) => ({
-    id: p.id,
-    name: p.name,
-    university: p.university.name,
-    department: p.department,
-    interests: p.researchInterests,
-    match: computeResearchMatch(
-      { researchInterests: student.researchInterests, major: student.major, degree: student.degree, skills: student.skills, cvText: resumeText },
-      { researchInterests: p.researchInterests, department: p.department, publications: p.publications, researchAreas: p.researchAreas.map((r) => ({ name: r.researchArea.name, keywords: r.researchArea.keywords })) }
-    ),
-  })).sort((a, b) => b.match.score - a.match.score);
+  const ai = await aiReview(resumeText, student.major, student.researchInterests);
 
-  const isPro = student.plan === "pro";
-  const top = ranked[0];
-  const suggestions = [
-    resumeText.length < 400 ? "The extracted text is short. Add projects, tools, and research keywords." : "The file has enough text to compare.",
-    top ? `The closest supervisor is ${top.name} at ${top.university}, with ${top.match.score}% overlap.` : "No supervisor comparison was available.",
-    top?.interests ? `If this direction fits, name these interests in your projects: ${top.interests}.` : "Add the research topics you actually want to study.",
-    "Keep the original file. These are suggestions, not a rewritten resume.",
-  ];
   return NextResponse.json({
-    plan: isPro ? "pro" : "free",
-    preview: resumeText.slice(0, 400),
-    suggestions,
-    draft: [
-      "RESUME DRAFT",
-      "",
-      resumeText.slice(0, 2500),
-      "",
-      "Suggested additions",
-      ...suggestions.map((item) => `- ${item}`),
-    ].join("\n"),
-    shown: isPro ? ranked.length : 3,
-    total: ranked.length,
-    results: ranked.slice(0, isPro ? ranked.length : 3),
+    fileName: file.name,
+    preview: resumeText.slice(0, 280),
+    checklist,
+    ai,
   });
 }
