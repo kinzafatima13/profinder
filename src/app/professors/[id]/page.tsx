@@ -312,6 +312,8 @@ export default async function ProfessorDetailPage({ params }: Props) {
               </Link>
               <SaveToTrackerButton professorId={prof.id} />
               <EmailGeneratorButton professorId={prof.id} />
+              <EmailGeneratorButton professorId={prof.id} kind="follow-up" />
+              <ProposalButton professorId={prof.id} endpoint="/api/sop" button="Draft statement of purpose" heading="Statement of purpose" />
               <ProposalButton professorId={prof.id} />
             </div>
           </div>

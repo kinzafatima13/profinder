@@ -6,8 +6,10 @@ import { useState } from "react";
 
 export default function EmailGeneratorButton({
   professorId,
+  kind = "email",
 }: {
   professorId: string;
+  kind?: "email" | "follow-up";
 }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -26,7 +28,7 @@ export default function EmailGeneratorButton({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/email", {
+      const res = await fetch(kind === "follow-up" ? "/api/follow-up" : "/api/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ professorId }),
@@ -59,7 +61,7 @@ export default function EmailGeneratorButton({
         disabled={loading}
         className="btn-secondary w-full text-sm"
       >
-        {loading ? "Generating..." : "Generate Email (Pro)"}
+        {loading ? "Generating..." : kind === "follow-up" ? "Follow-up email (Pro)" : "Generate Email (Pro)"}
       </button>
       {error && (
         <p className="mt-2 text-center text-xs text-amber-700">
@@ -76,7 +78,7 @@ export default function EmailGeneratorButton({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="card max-h-[90vh] w-full max-w-lg overflow-y-auto p-6">
             <h3 className="text-lg font-bold text-[var(--navy)]">
-              Outreach email draft
+              {kind === "follow-up" ? "Follow-up draft" : "Outreach email draft"}
             </h3>
             <p className="mt-1 text-xs text-gray-500">
               Review and edit before sending. We never send email automatically.

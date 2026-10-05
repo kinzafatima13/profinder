@@ -6,7 +6,17 @@ import { useState } from "react";
 
 type Section = { heading: string; text: string };
 
-export default function ProposalButton({ professorId }: { professorId: string }) {
+export default function ProposalButton({
+  professorId,
+  endpoint = "/api/proposal",
+  button = "Draft research proposal",
+  heading = "Research proposal draft",
+}: {
+  professorId: string;
+  endpoint?: string;
+  button?: string;
+  heading?: string;
+}) {
   const { data: session } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -24,7 +34,7 @@ export default function ProposalButton({ professorId }: { professorId: string })
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/proposal", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ professorId }),
@@ -50,13 +60,13 @@ export default function ProposalButton({ professorId }: { professorId: string })
   return (
     <div>
       <button onClick={draft} disabled={loading} className="btn-secondary w-full text-sm">
-        {loading ? "Drafting..." : "Draft research proposal"}
+        {loading ? "Drafting..." : button}
       </button>
       {error && <p className="mt-2 text-center text-xs text-amber-700">{error}</p>}
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="card max-h-[90vh] w-full max-w-lg overflow-y-auto p-6">
-            <h3 className="text-lg font-bold text-[var(--navy)]">Research proposal draft</h3>
+            <h3 className="text-lg font-bold text-[var(--navy)]">{heading}</h3>
             <p className="mt-1 text-xs text-gray-500">{disclaimer}</p>
             <p className="mt-3 text-sm font-semibold text-[var(--navy)]">{title}</p>
             <div className="mt-3 space-y-3">

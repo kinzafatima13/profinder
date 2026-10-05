@@ -16,6 +16,7 @@ const more = [
   { href: "/topics", label: "Topics" },
   { href: "/compare", label: "Compare" },
   { href: "/notices", label: "Notices" },
+  { href: "/assistant", label: "Assistant" },
   { href: "/search", label: "Search" },
   { href: "/pricing", label: "Pricing" },
 ];

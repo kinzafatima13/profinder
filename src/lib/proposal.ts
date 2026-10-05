@@ -4,6 +4,8 @@ export type ProposalInput = {
   studentMajor?: string | null;
   studentInterests?: string | null;
   studentBackground?: string | null;
+  studentProjects?: string | null;
+  studentSkills?: string | null;
   professorName: string;
   universityName: string;
   professorInterests?: string | null;
@@ -26,7 +28,7 @@ export function draftProposal(input: ProposalInput) {
     title: paper ? `${interest}: a draft connected to stored work by ${input.professorName}` : `${interest}: a draft for ${input.professorName}`,
     disclaimer: "Assisted draft only. Not a submission. It does not cite a paper unless that title is already stored on this profile.",
     sections: [
-      { heading: "Background", text: `${input.studentName || "The student"} is preparing a ${input.studentDegree || "degree"} application in ${input.studentMajor || "an unstated major"} at ${input.universityName}. Saved interests: ${input.studentInterests || "none"}. ${input.studentBackground?.trim() ? `Saved background: ${input.studentBackground.trim()}.` : "No academic background is saved."}` },
+      { heading: "Background", text: `${input.studentName || "The student"} is preparing a ${input.studentDegree || "degree"} application in ${input.studentMajor || "an unstated major"} at ${input.universityName}. Saved interests: ${input.studentInterests || "none"}. ${input.studentBackground?.trim() ? `Saved background: ${input.studentBackground.trim()}.` : "No academic background is saved."} ${input.studentProjects?.trim() ? `Saved projects: ${input.studentProjects.trim()}.` : "No projects are saved."} ${input.studentSkills?.trim() ? `Saved skills: ${input.studentSkills.trim()}.` : ""}` },
       { heading: "Problem", text: `The research text stored for ${input.professorName} is: ${focus}.` },
       { heading: "Gap", text: paper ? `A title stored on this profile is “${paper}”. This draft does not claim that paper was read.` : "No publication title is stored, so this draft does not cite a paper." },
       { heading: "Question", text: `How does ${interest} connect to the stored work of ${input.professorName}? Write the real question after reading the official page.` },
