@@ -40,8 +40,10 @@ export function planForPrice(priceId: string | undefined) {
 }
 
 export async function stripeClient(): Promise<StripeClient> {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("Stripe is not configured");
   const stripe = await import("stripe");
-  return new stripe.default(process.env.STRIPE_SECRET_KEY) as StripeClient;
+  return new stripe.default(key) as unknown as StripeClient;
 }
 
 function unixDate(value: number | undefined) {
