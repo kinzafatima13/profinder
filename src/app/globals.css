@@ -3,31 +3,39 @@
 @tailwind utilities;
 
 :root {
-  --navy: #101828;
+  --navy: #0f172a;
   --dark-navy: #0b1220;
-  --teal: #3b5bdb;
-  --teal-dark: #2f4ac4;
-  --light-teal: #eef2ff;
-  --soft-blue: #f4f6fb;
-  --gray-50: #f7f8fa;
-  --gray-100: #f2f4f7;
-  --gray-200: #e4e7ec;
-  --gray-500: #667085;
-  --gray-700: #344054;
-  --gray-900: #101828;
-  --ok: #067647;
-  --ok-bg: #ecfdf3;
-  --warn: #b54708;
-  --warn-bg: #fffaeb;
-  --danger: #b42318;
-  --danger-bg: #fef3f2;
+  --teal: #2563eb;
+  --teal-dark: #1d4ed8;
+  --light-teal: #eff6ff;
+  --soft-blue: #f8fafc;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-500: #64748b;
+  --gray-700: #334155;
+  --gray-900: #0f172a;
+  --muted: #94a3b8;
+  --ok: #16a34a;
+  --ok-bg: #f0fdf4;
+  --warn: #d97706;
+  --warn-bg: #fffbeb;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
 }
 
 body {
   color: var(--gray-900);
-  background: #fff;
+  background: var(--gray-50);
   font-family: inherit;
-  line-height: 1.5;
+  line-height: 1.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 @layer components {

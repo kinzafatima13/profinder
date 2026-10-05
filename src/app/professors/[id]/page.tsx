@@ -38,6 +38,7 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { computeResearchMatch, profileGaps } from "@/lib/matching";
 import { assessTarget, fundingStatement, newestStoredYear, timelineGroups } from "@/lib/professor-assessment";
+import MatchScore from "@/components/MatchScore";
 import SaveToTrackerButton from "@/components/SaveToTrackerButton";
 import EmailGeneratorButton from "@/components/EmailGeneratorButton";
 import ProposalButton from "@/components/ProposalButton";
@@ -281,22 +282,10 @@ export default async function ProfessorDetailPage({ params }: Props) {
               </p>
             )}
             {match && !match.incomplete && (
-              <>
-                <div className="mt-4 text-center text-5xl font-bold text-[var(--navy)]">{match.score}%</div>
-                <p className="mt-2 text-sm text-gray-700">{match.explanation}</p>
-                <ul className="mt-3 space-y-1 text-sm text-gray-700">
-                  {match.reasons.slice(0, 4).map((reason) => (
-                    <li key={reason}>{reason}</li>
-                  ))}
-                </ul>
-                <ul className="mt-3 space-y-1 text-xs text-gray-500">
-                  <li>Interest similarity (40%): {match.breakdown.interestOverlap}%</li>
-                  <li>Research-area similarity (20%): {match.breakdown.areaOverlap}%</li>
-                  <li>Topic keywords on file (20%): {match.breakdown.topicOverlap}%</li>
-                  <li>Major relevance (10%): {match.breakdown.majorRelevance}%</li>
-                  <li>Degree relevance (10%): {match.breakdown.degreeRelevance}%</li>
-                </ul>
-              </>
+              <div className="mt-4">
+                <MatchScore score={match.score} breakdown={match.breakdown} reasons={match.reasons} />
+                <p className="mt-3 text-sm text-[var(--gray-700)]">{match.explanation}</p>
+              </div>
             )}
             <div className="mt-4 border-t border-gray-100 pt-4">
               <p className="text-sm font-semibold text-[var(--navy)]">Target: {target.level} priority</p>

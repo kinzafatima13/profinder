@@ -69,41 +69,39 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="border-b border-[var(--gray-200)] bg-white pt-16 pb-12">
+      <section className="border-b border-[var(--gray-200)] bg-white pt-12 pb-8">
         <div className="page-container text-center">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--gray-500)]">AI university and professor discovery</p>
-          <h1 className="mx-auto mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-[var(--navy)] sm:text-5xl">
-            Discover the right university, professor, and research opportunity.
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--gray-500)]">University and professor discovery</p>
+          <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--navy)] sm:text-4xl">
+            Discover the universities and professors that actually match your research.
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base text-[var(--gray-700)]">
-            Find Chinese universities, programs, and supervisors that fit your research, then track the application in one place.
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-[var(--gray-700)]">
+            Start with a country and a program, compare supervisors by research overlap, then keep the application in the tracker.
           </p>
-
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/find" className="btn-primary px-6 py-3 text-base">
-              Find Professors for Me
-            </Link>
-            <Link href="/universities" className="btn-secondary px-6 py-3 text-base">
-              Browse Universities
-            </Link>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link href="/find" className="btn-primary">Find Professors for Me</Link>
+            <Link href="/universities" className="btn-secondary">Explore Universities</Link>
           </div>
 
           {/* Stats */}
           {(uniCount > 0 || profCount > 0) && (
-            <dl className="mx-auto mt-12 grid max-w-4xl grid-cols-2 border-y border-[var(--gray-200)] sm:grid-cols-5">
+            <>
+            <p className="mt-10 text-xs font-medium uppercase tracking-[0.14em] text-[var(--gray-500)]">ProFinder intelligence</p>
+            <dl className="mx-auto mt-4 grid max-w-3xl grid-cols-2 sm:grid-cols-4">
               {[
                 [uniCount, "Universities"],
                 [profCount, "Professors"],
-                [verifiedCount, "Verified"],
-                [emailCount, "Emails"],
-                [areaCount, "Research areas"],
+                [verifiedCount, "Verified profiles"],
+                [emailCount, "Public emails"],
               ].map(([value, label]) => (
-                <div key={String(label)} className="px-4 py-4">
-                  <dt className="text-xs text-[var(--gray-500)]">{label}</dt>
-                  <dd className="mt-1 text-2xl font-semibold text-[var(--navy)]">{value}</dd>
+                <div key={String(label)} className="px-3 py-2">
+                  <dd className="text-3xl font-semibold text-[var(--navy)]">{value}</dd>
+                  <dt className="mt-1 text-xs text-[var(--muted)]">{label}</dt>
                 </div>
               ))}
             </dl>
+            <p className="mt-2 text-xs text-[var(--muted)]">{areaCount} research areas are also stored.</p>
+            </>
           )}
         </div>
       </section>
@@ -178,19 +176,23 @@ export default async function HomePage() {
           From country to application tracker — one clear path.
         </p>
 
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            ["1", "Country and university"],
-            ["2", "Program and research area"],
-            ["3", "Professor and research match"],
-            ["4", "Outreach and tracker"],
-          ].map(([number, label]) => (
-            <div key={number} className="border-t border-[var(--gray-200)] pt-3">
-              <p className="text-xs text-[var(--gray-500)]">{number}</p>
+            ["01", "Country", false],
+            ["02", "University", false],
+            ["03", "Program", false],
+            ["04", "Research", false],
+            ["05", "Professor", false],
+            ["06", "Match", true],
+            ["07", "Outreach", false],
+            ["08", "Application", false],
+          ].map(([number, label, active]) => (
+            <li key={String(number)} className={`border-t pt-3 ${active ? "border-[var(--teal)]" : "border-[var(--gray-200)]"}`}>
+              <p className={`text-xs font-medium ${active ? "text-[var(--teal)]" : "text-[var(--muted)]"}`}>{number}</p>
               <p className="mt-1 text-sm font-medium text-[var(--navy)]">{label}</p>
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
       </section>
 
       {/* Features */}

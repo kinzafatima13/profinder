@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import MatchScore from "@/components/MatchScore";
 
 type MatchItem = {
   id: string;
@@ -23,7 +24,8 @@ type MatchItem = {
     strongAreas: string[];
     breakdown: {
       interestOverlap: number;
-      keywordOverlap: number;
+      areaOverlap: number;
+      topicOverlap: number;
       majorRelevance: number;
       degreeRelevance: number;
     };
@@ -69,12 +71,6 @@ export default function FindProfessorsPage() {
     } finally {
       setLoading(false);
     }
-  }
-
-  function matchClass(score: number) {
-    if (score >= 75) return "text-emerald-600";
-    if (score >= 50) return "text-amber-600";
-    return "text-gray-500";
   }
 
   return (
@@ -196,25 +192,13 @@ export default function FindProfessorsPage() {
                     </p>
                     {r.verified && <p className="mt-2 text-xs font-semibold text-[var(--teal)]">Verified faculty page</p>}
                     {r.email && <p className="mt-1 break-all text-xs text-gray-600">{r.email}</p>}
-                    <ul className="mt-3 space-y-1 text-sm text-gray-700">
-                      {r.match.reasons.slice(0, 4).map((reason) => (
-                        <li key={reason}>{reason}</li>
-                      ))}
-                    </ul>
+                    <div className="mt-3">
+                      <MatchScore score={r.match.score} breakdown={r.match.breakdown} reasons={r.match.reasons} />
+                    </div>
                   </div>
 
-                  <div className="shrink-0 text-center sm:text-right">
-                    <div className={`text-3xl font-bold ${matchClass(r.match.score)}`}>
-                      {r.match.score}%
-                    </div>
-                    <div className="text-xs text-gray-400">Research match</div>
-                    <p className="mt-2 text-sm font-semibold text-[var(--navy)]">{r.target.level} priority</p>
-                    <Link
-                      href={`/professors/${r.id}`}
-                      className="btn-secondary mt-3 text-xs"
-                    >
-                      View Profile
-                    </Link>
+                  <div className="shrink-0 sm:w-44">
+                    <Link href={`/professors/${r.id}`} className="btn-secondary text-xs">View Profile</Link>
                   </div>
                 </div>
               </div>

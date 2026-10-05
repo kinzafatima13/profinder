@@ -15,7 +15,7 @@ const more = [
   { href: "/find", label: "Find professors" },
   { href: "/topics", label: "Topics" },
   { href: "/search", label: "Search" },
-  { href: "/profile", label: "Resume" },
+  { href: "/profile", label: "Profile" },
   { href: "/compare", label: "Compare" },
   { href: "/notices", label: "Notices" },
   { href: "/assistant", label: "Assistant" },
@@ -42,7 +42,7 @@ export default function Navbar() {
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
               <circle cx="11" cy="11" r="7" stroke="#0a2540" strokeWidth="2.2" />
               <path d="M16 16 L20 20" stroke="#0a2540" strokeWidth="2.2" strokeLinecap="round" />
-              <path d="M11 8 L11 14 M8 11 L14 11" stroke="#3b5bdb" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M11 8 L11 14 M8 11 L14 11" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
           </div>
           <div className="leading-tight">

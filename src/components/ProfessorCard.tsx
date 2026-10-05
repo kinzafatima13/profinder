@@ -1,4 +1,5 @@
 import Link from "next/link";
+import MatchScore from "@/components/MatchScore";
 
 type Props = {
   id: string;
@@ -15,12 +16,6 @@ type Props = {
   email?: string | null;
   priority?: "High" | "Medium" | "Low" | null;
 };
-
-function matchClass(score: number) {
-  if (score >= 75) return "match-high";
-  if (score >= 50) return "match-mid";
-  return "match-low";
-}
 
 export default function ProfessorCard({
   id,
@@ -60,32 +55,15 @@ export default function ProfessorCard({
             {universityName}
             {universityCity && ` · ${universityCity}`}
           </p>
-          {verified && <p className="mt-1 text-xs font-semibold text-[var(--teal)]">Verified</p>}
-          {priority && <p className="mt-1 text-xs font-semibold text-[var(--navy)]">{priority} priority</p>}
-          {email && <p className="mt-1 break-all text-xs text-gray-600">{email}</p>}
-          <p className="mt-1 text-xs text-[var(--gray-500)]">Funding unknown</p>
+          {verified ? <p className="mt-2 text-xs font-medium text-[var(--ok)]">Verified</p> : <p className="mt-2 text-xs text-[var(--gray-500)]">Not verified from an official page</p>}
+          {priority && <p className="mt-1 text-xs text-[var(--gray-500)]">{priority} priority</p>}
+          {email && <p className="mt-1 break-all text-xs text-[var(--gray-700)]">{email}</p>}
         </div>
-        {typeof matchScore === "number" && (
-          <div className="text-right">
-            <div className={`text-2xl ${matchClass(matchScore)}`}>
-              {matchScore}%
-            </div>
-            <div className="text-xs text-gray-400">Match</div>
-          </div>
-        )}
+        {typeof matchScore === "number" && <MatchScore score={matchScore} compact />}
       </div>
 
       {researchAreas.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {researchAreas.slice(0, 4).map((a) => (
-            <span key={a} className="badge-teal">
-              {a}
-            </span>
-          ))}
-          {researchAreas.length > 4 && (
-            <span className="badge-navy">+{researchAreas.length - 4}</span>
-          )}
-        </div>
+        <p className="mt-3 text-sm text-[var(--gray-700)]">{researchAreas.slice(0, 4).join(" · ")}</p>
       )}
 
       {researchInterests && (
