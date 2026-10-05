@@ -26,6 +26,7 @@ type Profile = {
   preferredUniversities: string | null;
   gpa: string | null;
   nationality: string | null;
+  englishTest: string | null;
   plan: string;
 };
 
@@ -43,6 +44,7 @@ const EMPTY: Profile = {
   preferredUniversities: "",
   gpa: "",
   nationality: "",
+  englishTest: "",
   plan: "free",
 };
 
@@ -161,6 +163,9 @@ export default function ProfilePage() {
         </label>
         <label className="text-sm">Nationality
           <input className="input mt-1 max-w-xs" value={profile.nationality ?? ""} onChange={(e) => setField("nationality", e.target.value)} placeholder="e.g. Pakistan" />
+        </label>
+        <label className="text-sm">English test
+          <input className="input mt-1 max-w-md" value={profile.englishTest ?? ""} onChange={(e) => setField("englishTest", e.target.value)} placeholder="e.g. IELTS 7.0 or TOEFL 100. Leave blank if you have not taken one." />
         </label>
         <label className="text-sm">Academic background
           <textarea className="input mt-1 min-h-[80px]" value={profile.academicBackground ?? ""} onChange={(e) => setField("academicBackground", e.target.value)} />

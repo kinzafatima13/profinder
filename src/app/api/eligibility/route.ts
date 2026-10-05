@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
     preferredUniversities: student.preferredUniversities,
     preferredCountries: student.preferredCountries,
     nationality: student.nationality,
+    englishTest: student.englishTest,
   };
 
   if (kind === "program") {

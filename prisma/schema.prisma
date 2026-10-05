@@ -172,6 +172,7 @@ model Student {
   resetTokenExp      DateTime?
   nationality        String?
   gpa                String?
+  englishTest        String?
   phone              String?
   resumeText         String?
   createdAt          DateTime @default(now())

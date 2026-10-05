@@ -10,6 +10,7 @@ export type FitProfile = {
   preferredUniversities?: string | null;
   preferredCountries?: string | null;
   nationality?: string | null;
+  englishTest?: string | null;
 };
 
 function hits(left: string | null | undefined, right: string | null | undefined) {
@@ -149,9 +150,9 @@ export function requirementChecklist(
     },
     {
       item: "English",
-      text: record.englishReq?.trim()
-        ? `Stored note: ${record.englishReq.trim()}. No test score was checked.`
-        : "No official English requirement is stored.",
+      text: profile.englishTest?.trim()
+        ? `Saved as ${profile.englishTest.trim()}. ${record.englishReq?.trim() ? `Stored note: ${record.englishReq.trim()}.` : "No official minimum is stored."} The score was not checked.`
+        : "English proficiency is not on your profile. No official requirement is stored.",
     },
     {
       item: "Field",

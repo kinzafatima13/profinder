@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { scoreProfile } from "@/lib/profile-score";
 import { scoreScholarship } from "@/lib/eligibility";
+import { parseDocuments } from "@/lib/application-plan";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,9 @@ export default async function NoticesPage() {
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
+  const missingDocs = apps.reduce((sum, row) => {
+    return sum + Object.values(parseDocuments(row.documentsJson)).filter((item) => item === "missing").length;
+  }, 0);
   const fit = scoreProfile(student);
   const waiting = apps.filter((row) => row.status === "Saved" || row.status === "Researching");
   const notices = [
@@ -68,7 +72,7 @@ export default async function NoticesPage() {
       : { title: "Tracker", text: apps.length ? "Nothing is sitting at Saved." : "No applications are saved yet.", href: "/tracker" },
     { title: "Deadline changes", text: "No countdown or change alert is available. None of the stored deadlines are verified official dates, and email is not sent.", href: "/" },
     { title: "Funding records", text: fundingAlerts.length ? `Current records, not new alerts: ${fundingAlerts.map((item) => `${item.name} at ${item.university} (${item.score}%)`).join("; ")}.` : "No scholarship records are stored.", href: "/scholarship" },
-    { title: "Matches", text: "Open Topics or Find Professors to review stored faculty. This page does not invent new alerts.", href: "/topics" },
+    { title: "Tasks", text: !student.englishTest?.trim() ? "Add your English test on the profile. Missing documents are also listed on the tracker." : missingDocs ? `${missingDocs} document marks are still missing across saved applications.` : "No missing document marks. Deadlines still need an official source before a reminder date can be set.", href: "/tracker" },
   ];
 
   return (

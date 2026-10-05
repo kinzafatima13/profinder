@@ -3,6 +3,7 @@ export type ProfileFacts = {
   degree?: string | null;
   major?: string | null;
   gpa?: string | null;
+  englishTest?: string | null;
   researchInterests?: string | null;
   skills?: string | null;
   projects?: string | null;
@@ -15,6 +16,7 @@ const CHECKS: { key: keyof ProfileFacts; label: string }[] = [
   { key: "degree", label: "Degree" },
   { key: "major", label: "Major" },
   { key: "gpa", label: "CGPA" },
+  { key: "englishTest", label: "English test" },
   { key: "researchInterests", label: "Research interests" },
   { key: "academicBackground", label: "Academic background" },
   { key: "skills", label: "Skills" },

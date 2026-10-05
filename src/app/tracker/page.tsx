@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { applicationPlan, parseDocuments, readinessScore, COMMON_DOCUMENTS } from "@/lib/application-plan";
 
 const STATUSES = [
   "Saved",
@@ -25,23 +26,16 @@ type AppRow = {
   followUpDate: string | null;
   scholarship: string | null;
   programName: string | null;
+  documentsJson: string | null;
   applicationUrl: string | null;
   professor: {
     id: string;
     name: string;
+    email: string | null;
+    dataStatus: string;
     university: { name: string; city: string | null; agencyNumber: string | null };
   } | null;
 };
-
-function nextAction(status: string) {
-  if (status === "Saved" || status === "Researching") return "Open the professor page, confirm the faculty source, then draft the email.";
-  if (status === "Contacted" || status === "Follow-up") return "Do not send another email until the follow-up date. Record any reply here.";
-  if (status === "Replied" || status === "Interested") return "Save what they asked for, then start the application documents.";
-  if (status === "Application Started") return "Finish the documents and record the submission link.";
-  if (status === "Application Submitted") return "Watch the deadline note and wait for a decision.";
-  if (status === "Accepted" || status === "Rejected") return "This one is closed. Keep the outcome in the notes.";
-  return "Update the status when something changes.";
-}
 
 export default function TrackerPage() {
   const { data: session, status: authStatus } = useSession();
@@ -50,6 +44,8 @@ export default function TrackerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [hasProfile, setHasProfile] = useState(false);
+  const [hasEnglish, setHasEnglish] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,6 +60,12 @@ export default function TrackerPage() {
       if (!res.ok) throw new Error(data.error || "Failed to load");
       setApps(data.applications ?? []);
       setPlan(data.plan ?? "free");
+      const profileRes = await fetch("/api/profile");
+      if (profileRes.ok) {
+        const profileData = await profileRes.json();
+        setHasProfile(Boolean(profileData.profile?.degree && profileData.profile?.researchInterests));
+        setHasEnglish(Boolean(profileData.profile?.englishTest?.trim()));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
@@ -92,6 +94,39 @@ export default function TrackerPage() {
       body: JSON.stringify({ id, ...details }),
     });
     if (!res.ok) setError("Could not save tracker details.");
+  }
+
+  async function toggleDocument(row: AppRow, name: string) {
+    const documents = parseDocuments(row.documentsJson);
+    documents[name] = documents[name] === "done" ? "missing" : "done";
+    const res = await fetch("/api/applications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: row.id, documentsJson: JSON.stringify(documents) }),
+    });
+    if (res.ok) load();
+    else setError("Could not update the document checklist.");
+  }
+
+  function planFor(row: AppRow) {
+    return applicationPlan({
+      hasProfile,
+      hasEnglish,
+      hasTarget: Boolean(row.professor || row.programName || row.scholarship),
+      status: row.status,
+      documents: parseDocuments(row.documentsJson),
+    });
+  }
+
+  function scoreFor(row: AppRow) {
+    return readinessScore({
+      hasProfile,
+      hasEnglish,
+      hasTarget: Boolean(row.professor || row.programName || row.scholarship),
+      verifiedProfessor: row.professor?.dataStatus === "verified",
+      hasEmail: Boolean(row.professor?.email?.trim()),
+      documents: parseDocuments(row.documentsJson),
+    });
   }
 
   async function remove(id: string) {
@@ -131,7 +166,7 @@ export default function TrackerPage() {
     <div className="page-container py-10">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="section-title">Application Tracker</h1>
+          <h1 className="section-title">Application dashboard</h1>
           <p className="mt-1 text-gray-600">
             {apps.length} tracked · Plan:{" "}
             <span className="font-medium capitalize">{plan === "pro" ? "Pro" : plan === "free" ? "Free" : "Upgrade pending"}</span>
@@ -147,9 +182,18 @@ export default function TrackerPage() {
         </Link>
       </div>
       {apps.length > 0 && (
-        <p className="mt-3 text-sm text-gray-600">
-          {apps.filter((row) => ["Contacted", "Follow-up", "Replied", "Interested", "Application Started", "Application Submitted", "Accepted"].includes(row.status)).length} of {apps.length} have moved past saved.
-        </p>
+        <section className="mt-6 grid gap-3 sm:grid-cols-3">
+          <article className="card p-4">
+            <p className="text-xs text-gray-500">Readiness</p>
+            <p className="text-3xl font-bold text-[var(--navy)]">
+              {Math.round(apps.reduce((sum, row) => sum + scoreFor(row).score, 0) / apps.length)}%
+            </p>
+          </article>
+          <article className="card p-4 sm:col-span-2">
+            <p className="text-xs text-gray-500">Next</p>
+            <p className="mt-1 text-sm text-gray-800">{planFor(apps[0]).next}</p>
+          </article>
+        </section>
       )}
 
       {error && (
@@ -195,7 +239,26 @@ export default function TrackerPage() {
                   ) : (
                     <p className="text-sm text-gray-500">{row.programName || row.scholarship || "No professor linked"}</p>
                   )}
-                  <p className="mt-2 text-sm text-gray-700">Next: {nextAction(row.status)}</p>
+                  <p className="mt-2 text-sm text-gray-700">Next: {planFor(row).next}</p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--navy)]">Readiness {scoreFor(row).score}%</p>
+                  <ul className="mt-2 space-y-1 text-xs text-gray-600">
+                    {scoreFor(row).notes.map((note) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                  </ul>
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold text-gray-500">Documents. Common materials, not an official university list.</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {COMMON_DOCUMENTS.map((name) => {
+                        const done = parseDocuments(row.documentsJson)[name] === "done";
+                        return (
+                          <button key={name} type="button" onClick={() => toggleDocument(row, name)} className={`rounded-full px-2 py-1 text-xs ${done ? "bg-[var(--light-teal)] text-[var(--teal-dark)]" : "bg-gray-100 text-gray-600"}`}>
+                            {done ? "Done" : "Missing"} · {name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-2 sm:items-end">
                   <select className="input w-full py-1.5 sm:w-52" value={row.status} onChange={(e) => updateStatus(row.id, e.target.value)}>
