@@ -27,9 +27,11 @@ export default async function UniversityDetailPage({ params }: Props) {
 
   return (
     <div className="page-container py-10">
-      <Link href="/universities" className="text-sm text-[var(--teal)] hover:underline">
-        ← All universities
-      </Link>
+      <nav aria-label="Breadcrumb" className="text-sm text-[var(--gray-500)]">
+        <Link href="/universities" className="hover:text-[var(--navy)]">Universities</Link>
+        <span> / </span>
+        <span className="text-[var(--navy)]">{uni.name}</span>
+      </nav>
 
       <div className="mt-4">
         <h1 className="section-title">{uni.name}</h1>

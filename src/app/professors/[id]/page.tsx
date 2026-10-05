@@ -137,9 +137,11 @@ export default async function ProfessorDetailPage({ params }: Props) {
 
   return (
     <div className="page-container py-10">
-      <Link href="/professors" className="text-sm text-[var(--teal)] hover:underline">
-        ← All professors
-      </Link>
+      <nav aria-label="Breadcrumb" className="text-sm text-[var(--gray-500)]">
+        <Link href="/professors" className="hover:text-[var(--navy)]">Professors</Link>
+        <span> / </span>
+        <span className="text-[var(--navy)]">{prof.name}</span>
+      </nav>
 
       <div className="mt-4 grid gap-8 lg:grid-cols-3">
         <div className="min-w-0 lg:col-span-2">

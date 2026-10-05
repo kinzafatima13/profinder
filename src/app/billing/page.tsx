@@ -31,7 +31,7 @@ export default async function BillingPage({ searchParams }: { searchParams?: { c
   return (
     <div className="page-container py-12">
       <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--gray-500)]">Settings</p>
-      <h1 className="mt-2 text-3xl font-semibold text-[var(--navy)]">Billing</h1>
+      <h1 className="mt-2 text-3xl font-semibold text-[var(--navy)]">Billing & Subscription</h1>
       {waiting && <p className="mt-4 max-w-xl text-sm text-[var(--gray-700)]">Stripe sent you back here. Pro turns on when the webhook confirms the payment. Refresh in a moment.</p>}
       <article className="mt-6 max-w-xl rounded-lg border border-[var(--gray-200)] p-5">
         <p className="text-sm text-[var(--gray-500)]">{pro ? "ProFinder Pro" : "ProFinder Free"}</p>
