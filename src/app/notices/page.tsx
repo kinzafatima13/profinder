@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { scoreProfile } from "@/lib/profile-score";
+import { scoreScholarship } from "@/lib/eligibility";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,35 @@ export default async function NoticesPage() {
     where: { studentId: student.id },
     include: { professor: true },
   });
+  const scholarships = await prisma.scholarship.findMany({
+    include: { university: { select: { name: true } } },
+    take: 40,
+  });
+  const seen = new Set<string>();
+  const fundingAlerts = scholarships
+    .filter((row) => {
+      const key = `${row.type}:${row.universityId}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((row) => {
+      const fit = scoreScholarship(
+        {
+          degree: student.degree,
+          major: student.major,
+          interests: student.researchInterests,
+          gpa: student.gpa,
+          preferredCountries: student.preferredCountries,
+          preferredUniversities: student.preferredUniversities,
+          nationality: student.nationality,
+        },
+        { name: row.name, type: row.type, universityName: row.university?.name, deadline: row.deadline }
+      );
+      return { id: row.id, name: row.name, university: row.university?.name || "University not linked", score: fit.score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
   const fit = scoreProfile(student);
   const waiting = apps.filter((row) => row.status === "Saved" || row.status === "Researching");
   const notices = [
@@ -36,7 +66,8 @@ export default async function NoticesPage() {
     waiting.length
       ? { title: "Tracker", text: `${waiting.length} saved item${waiting.length === 1 ? "" : "s"} still need a status update or an email.`, href: "/tracker" }
       : { title: "Tracker", text: apps.length ? "Nothing is sitting at Saved." : "No applications are saved yet.", href: "/tracker" },
-    { title: "Deadlines", text: "Deadline text in the database is unverified. Days remaining are not calculated, and no reminder email is sent.", href: "/scholarship" },
+    { title: "Deadline changes", text: "No countdown or change alert is available. None of the stored deadlines are verified official dates, and email is not sent.", href: "/" },
+    { title: "Funding records", text: fundingAlerts.length ? `Current records, not new alerts: ${fundingAlerts.map((item) => `${item.name} at ${item.university} (${item.score}%)`).join("; ")}.` : "No scholarship records are stored.", href: "/scholarship" },
     { title: "Matches", text: "Open Topics or Find Professors to review stored faculty. This page does not invent new alerts.", href: "/topics" },
   ];
 

@@ -55,7 +55,7 @@ export default function ComparePage() {
     <div className="page-container py-10">
       <h1 className="section-title">Compare</h1>
       <p className="mt-2 max-w-2xl text-sm text-gray-600">
-        Side-by-side facts already stored for two professors or two universities. Empty fields stay empty.
+        Side-by-side facts already stored. University funding shows scholarship labels and counts only. Coverage amounts and official deadlines are not stored, so they are not compared.
       </p>
       <div className="mt-4 flex gap-2">
         <button type="button" className={kind === "professor" ? "btn-primary text-sm" : "btn-secondary text-sm"} onClick={() => { setKind("professor"); setResult(null); }}>Professors</button>

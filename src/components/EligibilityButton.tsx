@@ -3,7 +3,13 @@
 import { useState } from "react";
 
 type Reason = { tone: "ok" | "warn"; text: string };
-type Result = { score: number; verdict: string; stored: Reason[]; needsSource: Reason[] };
+type Result = {
+  score: number;
+  verdict: string;
+  stored: Reason[];
+  needsSource: Reason[];
+  checklist?: { item: string; text: string }[];
+};
 
 export default function EligibilityButton({ kind, id }: { kind: "scholarship" | "program"; id: string }) {
   const [loading, setLoading] = useState(false);
@@ -39,7 +45,14 @@ export default function EligibilityButton({ kind, id }: { kind: "scholarship" | 
       {result && (
         <div className="mt-3 rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
           <p className="font-semibold text-[var(--navy)]">{result.verdict}</p>
-          <p className="mt-1 text-xs text-gray-500">Profile fit {result.score}%. This is not an offer.</p>
+          <p className="mt-1 text-xs text-gray-500">Compatibility {result.score}%. This is not an offer.</p>
+          {result.checklist && result.checklist.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {result.checklist.map((row) => (
+                <li key={row.item}><span className="font-semibold text-[var(--navy)]">{row.item}.</span> {row.text}</li>
+              ))}
+            </ul>
+          )}
           {result.stored.length > 0 && (
             <ul className="mt-2 space-y-1">
               {result.stored.map((reason) => (

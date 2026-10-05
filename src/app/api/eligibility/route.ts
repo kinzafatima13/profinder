@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { scoreProgram, scoreScholarship, type FitProfile, type FitReason } from "@/lib/eligibility";
+import { scoreProgram, scoreScholarship, requirementChecklist, type FitProfile, type FitReason } from "@/lib/eligibility";
 
 function splitReasons(reasons: FitReason[]) {
   return {
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
     gpa: student.gpa,
     preferredUniversities: student.preferredUniversities,
     preferredCountries: student.preferredCountries,
+    nationality: student.nationality,
   };
 
   if (kind === "program") {
@@ -51,6 +52,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       score: fit.score,
       verdict: "Not confirmed. Official requirements are incomplete, so this is not an eligibility decision.",
+      checklist: requirementChecklist(profile, {
+        degree: program.degree,
+        major: program.major,
+        gpaRequirement: program.gpaRequirement,
+        englishReq: program.englishReq,
+      }),
       ...parts,
     });
   }
@@ -67,6 +74,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     score: fit.score,
     verdict: "Not confirmed. Official scholarship rules are not fully stored, so this is not an eligibility decision.",
+    checklist: requirementChecklist(profile, {}),
     ...parts,
   });
 }

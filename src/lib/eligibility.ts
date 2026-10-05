@@ -9,6 +9,7 @@ export type FitProfile = {
   gpa?: string | null;
   preferredUniversities?: string | null;
   preferredCountries?: string | null;
+  nationality?: string | null;
 };
 
 function hits(left: string | null | undefined, right: string | null | undefined) {
@@ -109,10 +110,56 @@ export function scoreScholarship(
   }
 
   reasons.push({ tone: "warn", text: "Full eligibility rules are not stored. This is not an admission or scholarship decision." });
-  reasons.push({
-    tone: "warn",
-    text: `Deadline note: ${scholarship.deadline?.trim() || "none stored"}. This is not an official date.`,
-  });
-
   return { score: Math.max(0, Math.min(99, score)), reasons };
+}
+
+export function requirementChecklist(
+  profile: FitProfile,
+  record: { degree?: string | null; major?: string | null; gpaRequirement?: string | null; englishReq?: string | null }
+) {
+  const fieldHits = hits(profile.major, record.major) + hits(profile.interests, record.major);
+  return [
+    {
+      item: "Nationality",
+      text: profile.nationality?.trim()
+        ? `Saved as ${profile.nationality.trim()}. No nationality rule is stored, so it was not checked.`
+        : "Nationality is not on your profile. No nationality rule is stored.",
+    },
+    {
+      item: "Degree",
+      text: !profile.degree
+        ? "Degree is not on your profile."
+        : !record.degree
+          ? `Your degree is ${profile.degree}. This record has no degree stored.`
+          : degreeFits(profile.degree, record.degree)
+            ? `Your degree matches ${record.degree}.`
+            : `Your degree is ${profile.degree}. This record is ${record.degree}.`,
+    },
+    {
+      item: "CGPA",
+      text: !profile.gpa?.trim()
+        ? "CGPA is not on your profile."
+        : record.gpaRequirement?.trim()
+          ? `Your CGPA is ${profile.gpa.trim()}. Stored note: ${record.gpaRequirement.trim()}. Confirm it on the official page.`
+          : `Your CGPA is ${profile.gpa.trim()}. No official minimum is stored.`,
+    },
+    {
+      item: "Age",
+      text: "Age is not collected, and no age limit is stored.",
+    },
+    {
+      item: "English",
+      text: record.englishReq?.trim()
+        ? `Stored note: ${record.englishReq.trim()}. No test score was checked.`
+        : "No official English requirement is stored.",
+    },
+    {
+      item: "Field",
+      text: !record.major
+        ? "No program field is stored on this record, so your major was not compared."
+        : fieldHits > 0
+          ? `Your field overlaps ${record.major}.`
+          : `No clear overlap between your major and ${record.major}.`,
+    },
+  ];
 }

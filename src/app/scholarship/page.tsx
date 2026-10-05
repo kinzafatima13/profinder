@@ -69,12 +69,12 @@ export default function ScholarshipPage() {
       <h1 className="section-title">Scholarships</h1>
       <p className="mt-2 max-w-2xl text-sm text-gray-600">CSC, university, and presidential awards currently stored. Dates are unverified until checked against the official page.</p>
       <section className="mt-6">
-        <h2 className="text-lg font-bold text-[var(--navy)]">Matches for your profile</h2>
-        <p className="mt-1 text-sm text-gray-600">{matchNote}</p>
+        <h2 className="text-lg font-bold text-[var(--navy)]">Scholarship match</h2>
+        <p className="mt-1 text-sm text-gray-600">{matchNote || "Each score is a compatibility check against your saved profile, with the reason beside it."}</p>
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           {programs.slice(0, 4).map((item) => (
             <article key={item.id} className="card p-4">
-              <p className="text-xs font-semibold text-[var(--teal)]">{item.score === null ? "Not scored" : `${item.score}% match`}</p>
+              <p className="text-xs font-semibold text-[var(--teal)]">{item.score === null ? "Not scored" : `${item.score}% compatibility`}</p>
               <h3 className="mt-1 font-semibold text-[var(--navy)]">{item.university}</h3>
               <p className="text-sm text-gray-600">{item.degree} · {item.major}</p>
               <ul className="mt-2 space-y-1 text-sm text-gray-700">
@@ -87,7 +87,7 @@ export default function ScholarshipPage() {
           ))}
           {matches.slice(0, 4).map((item) => (
             <article key={item.id} className="card p-4">
-              <p className="text-xs font-semibold text-[var(--teal)]">{item.score === null ? "Not scored" : `${item.score}% match`}</p>
+              <p className="text-xs font-semibold text-[var(--teal)]">{item.score === null ? "Not scored" : `${item.score}% compatibility`}</p>
               <h3 className="mt-1 font-semibold text-[var(--navy)]">{item.name}</h3>
               <p className="text-sm text-gray-600">{item.university} · {item.type}</p>
               <ul className="mt-2 space-y-1 text-sm text-gray-700">

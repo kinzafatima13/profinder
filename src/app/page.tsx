@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { deadlineStatus } from "@/lib/deadline";
 
 export const dynamic = "force-dynamic";
 
@@ -98,18 +99,21 @@ export default async function HomePage() {
       <section className="page-container pb-4">
         <h2 className="section-title">Deadline radar</h2>
         <p className="mt-2 max-w-2xl text-sm text-gray-600">
-          These are notes already stored with the programs. None of them were confirmed from an official admissions notice.
+          A countdown appears only when the date was verified from an official source. These program notes are not verified, so no countdown is shown.
         </p>
         <ul className="mt-4 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100 bg-white">
-          {radar.map((item) => (
+          {radar.map((item) => {
+            const status = deadlineStatus(item.deadline, false);
+            return (
             <li key={item.id} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <span>
                 <span className="block text-sm font-semibold text-[var(--navy)]">{item.university}</span>
                 <span className="block text-sm text-gray-500">{item.degree} · {item.major}</span>
               </span>
-              <span className="text-sm font-medium text-amber-800">Unverified · {item.deadline || "No date stored"}</span>
+              <span className="text-sm font-medium text-amber-800">{status.source} · {status.countdown} · {status.detail}</span>
             </li>
-          ))}
+            );
+          })}
           {radar.length === 0 && <li className="px-4 py-3 text-sm text-gray-500">No program notes are stored yet.</li>}
         </ul>
         <Link href="/scholarship" className="mt-4 inline-flex text-sm font-semibold text-[var(--teal)]">

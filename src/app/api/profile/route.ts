@@ -15,6 +15,7 @@ const FIELDS = [
   "preferredCountries",
   "preferredUniversities",
   "gpa",
+  "nationality",
 ] as const;
 
 async function currentStudent() {

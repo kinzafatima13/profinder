@@ -28,9 +28,14 @@ async function professorSide(id: string) {
 async function universitySide(id: string) {
   const university = await prisma.university.findUnique({
     where: { id },
-    include: { _count: { select: { professors: true, programs: true, scholarships: true } } },
+    include: {
+      _count: { select: { professors: true, programs: true, scholarships: true } },
+      scholarships: { select: { type: true, coverage: true, deadline: true, dataStatus: true } },
+      programs: { select: { degree: true, major: true }, take: 6 },
+    },
   });
   if (!university) return null;
+  const coverage = [...new Set(university.scholarships.map((item) => item.coverage).filter(Boolean))];
   return {
     id: university.id,
     name: university.name,
@@ -40,8 +45,11 @@ async function universitySide(id: string) {
     officialUrl: university.officialUrl,
     professors: university._count.professors,
     programs: university._count.programs,
+    programExamples: university.programs.map((program) => `${program.degree} ${program.major}`).join("; ") || "None stored",
     scholarships: university._count.scholarships,
-    deadline: university.applicationDeadline || university.scholarshipDeadline || null,
+    fundingLabels: coverage.join(", ") || "None stored",
+    fundingAmount: "Not stored",
+    deadline: "Unverified. No countdown.",
   };
 }
 
