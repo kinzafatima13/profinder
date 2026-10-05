@@ -198,7 +198,7 @@ export default function ProfilePage() {
         <button className="btn-primary w-fit" disabled={saving}>{saving ? "Saving..." : "Save profile"}</button>
       </form>
 
-      <section className="mt-10 max-w-3xl rounded-xl border border-gray-100 bg-white p-5">
+      <section id="resume" className="mt-10 max-w-3xl rounded-lg border border-[var(--gray-200)] bg-white p-5">
         <h2 className="text-lg font-bold text-[var(--navy)]">Resume</h2>
         <p className="mt-1 text-sm text-gray-600">Upload a PDF, DOCX, or TXT file. The text is scored for an application resume. The file is not rewritten.</p>
         <form onSubmit={scoreResume} className="mt-4 space-y-3">

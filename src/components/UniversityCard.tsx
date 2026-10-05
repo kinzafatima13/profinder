@@ -42,19 +42,12 @@ export default function UniversityCard({
         <p className="mt-3 line-clamp-2 text-sm text-gray-600">{description}</p>
       )}
 
-      <div className="mt-4 flex gap-4 text-xs text-gray-500">
-        {typeof professorCount === "number" && (
-          <span>
-            <strong className="text-[var(--navy)]">{professorCount}</strong>{" "}
-            professors
-          </span>
-        )}
-        {typeof programCount === "number" && (
-          <span>
-            <strong className="text-[var(--navy)]">{programCount}</strong>{" "}
-            programs
-          </span>
-        )}
+      <div className="mt-4 flex items-center justify-between text-xs text-[var(--gray-500)]">
+        <span>
+          {typeof programCount === "number" ? `${programCount} programs` : "Programs not counted"}
+          {typeof professorCount === "number" ? ` · ${professorCount} professors` : ""}
+        </span>
+        <span className="font-medium text-[var(--teal-dark)]">View university</span>
       </div>
     </Link>
   );

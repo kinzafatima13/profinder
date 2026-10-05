@@ -2,7 +2,6 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-import { deadlineStatus } from "@/lib/deadline";
 import { applicationPlan, parseDocuments } from "@/lib/application-plan";
 import { topProfessorMatches, topScholarshipMatches } from "@/lib/profile-matches";
 
@@ -15,7 +14,6 @@ export default async function HomePage() {
   let verifiedCount = 0;
   let emailCount = 0;
   let radar: { id: string; university: string; degree: string; major: string; deadline: string | null }[] = [];
-  let dbFile = "";
 
   try {
     [uniCount, profCount, areaCount, verifiedCount, emailCount] = await Promise.all([
@@ -25,8 +23,6 @@ export default async function HomePage() {
       prisma.professor.count({ where: { dataStatus: "verified" } }),
       prisma.professor.count({ where: { AND: [{ email: { not: null } }, { NOT: { email: "" } }] } }),
     ]);
-    const rows = await prisma.$queryRawUnsafe<Array<{ file: string }>>("PRAGMA database_list");
-    dbFile = rows?.[0]?.file ?? "";
     const programs = await prisma.program.findMany({
       where: { degree: "Master", major: { contains: "Computer" } },
       include: { university: { select: { name: true } } },
@@ -73,26 +69,14 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-white to-[var(--gray-50)] pt-16 pb-20">
+      <section className="border-b border-[var(--gray-200)] bg-white pt-16 pb-12">
         <div className="page-container text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border-2 border-[var(--navy)] shadow-sm">
-            <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none">
-              <circle cx="11" cy="11" r="7" stroke="#0a2540" strokeWidth="2.2" />
-              <path d="M16 16 L20 20" stroke="#0a2540" strokeWidth="2.2" strokeLinecap="round" />
-              <path d="M11 8 L11 14 M8 11 L14 11" stroke="#00b4a6" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          </div>
-
-          <h1 className="text-4xl font-bold tracking-tight text-[var(--navy)] sm:text-5xl">
-            Discover universities &amp; professors
-            <br />
-            <span className="text-[var(--teal)]">that match your research</span>
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--gray-500)]">AI university and professor discovery</p>
+          <h1 className="mx-auto mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-[var(--navy)] sm:text-5xl">
+            Discover the right university, professor, and research opportunity.
           </h1>
-
-          <p className="mx-auto mt-5 max-w-2xl text-lg text-gray-600">
-            PROFINDER helps international students find relevant Chinese universities,
-            programs, research areas, and supervisors — then personalize outreach and
-            track applications in one place.
+          <p className="mx-auto mt-4 max-w-2xl text-base text-[var(--gray-700)]">
+            Find Chinese universities, programs, and supervisors that fit your research, then track the application in one place.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -106,23 +90,21 @@ export default async function HomePage() {
 
           {/* Stats */}
           {(uniCount > 0 || profCount > 0) && (
-            <div className="mx-auto mt-12 grid max-w-lg grid-cols-3 gap-4">
-              <div className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
-                <div className="text-2xl font-bold text-[var(--navy)]">{uniCount}</div>
-                <div className="text-xs text-gray-500">Universities</div>
-              </div>
-              <div className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
-                <div className="text-2xl font-bold text-[var(--navy)]">{profCount}</div>
-                <div className="text-xs text-gray-500">Professors</div>
-                <div className="mt-1 text-xs text-[var(--teal)]">{verifiedCount} verified · {emailCount} emails</div>
-              </div>
-              <div className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
-                <div className="text-2xl font-bold text-[var(--navy)]">{areaCount}</div>
-                <div className="text-xs text-gray-500">Research Areas</div>
-              </div>
-            </div>
+            <dl className="mx-auto mt-12 grid max-w-4xl grid-cols-2 border-y border-[var(--gray-200)] sm:grid-cols-5">
+              {[
+                [uniCount, "Universities"],
+                [profCount, "Professors"],
+                [verifiedCount, "Verified"],
+                [emailCount, "Emails"],
+                [areaCount, "Research areas"],
+              ].map(([value, label]) => (
+                <div key={String(label)} className="px-4 py-4">
+                  <dt className="text-xs text-[var(--gray-500)]">{label}</dt>
+                  <dd className="mt-1 text-2xl font-semibold text-[var(--navy)]">{value}</dd>
+                </div>
+              ))}
+            </dl>
           )}
-          <p className="mt-4 text-xs text-gray-400">Database file: {dbFile || "not opened"} · {uniCount} universities · {profCount} professors</p>
         </div>
       </section>
 
@@ -170,18 +152,18 @@ export default async function HomePage() {
           A countdown appears only when the date was verified from an official source. These program notes are not verified, so no countdown is shown.
         </p>
         <ul className="mt-4 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100 bg-white">
-          {radar.map((item) => {
-            const status = deadlineStatus(item.deadline, false);
-            return (
-            <li key={item.id} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          {radar.map((item) => (
+            <li key={item.id} className="grid gap-2 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
               <span>
-                <span className="block text-sm font-semibold text-[var(--navy)]">{item.university}</span>
-                <span className="block text-sm text-gray-500">{item.degree} · {item.major}</span>
+                <span className="block text-sm font-medium text-[var(--navy)]">{item.university}</span>
+                <span className="block text-sm text-[var(--gray-500)]">{item.degree} · {item.major}</span>
               </span>
-              <span className="text-sm font-medium text-amber-800">{status.source} · {status.countdown} · {status.detail}</span>
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="badge-muted">Unverified</span>
+                <span className="text-sm text-[var(--gray-700)]">Check official admissions page</span>
+              </span>
             </li>
-            );
-          })}
+          ))}
           {radar.length === 0 && <li className="px-4 py-3 text-sm text-gray-500">No program notes are stored yet.</li>}
         </ul>
         <Link href="/scholarship" className="mt-4 inline-flex text-sm font-semibold text-[var(--teal)]">
@@ -196,22 +178,16 @@ export default async function HomePage() {
           From country to application tracker — one clear path.
         </p>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-2 text-sm font-medium">
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            "Country",
-            "University",
-            "Program",
-            "Research Area",
-            "Professor",
-            "Research Match",
-            "Outreach",
-            "Tracker",
-          ].map((step, i) => (
-            <div key={step} className="flex items-center gap-2">
-              <span className="rounded-full bg-[var(--light-teal)] px-3 py-1.5 text-[var(--teal-dark)]">
-                {step}
-              </span>
-              {i < 7 && <span className="text-gray-300">→</span>}
+            ["1", "Country and university"],
+            ["2", "Program and research area"],
+            ["3", "Professor and research match"],
+            ["4", "Outreach and tracker"],
+          ].map(([number, label]) => (
+            <div key={number} className="border-t border-[var(--gray-200)] pt-3">
+              <p className="text-xs text-[var(--gray-500)]">{number}</p>
+              <p className="mt-1 text-sm font-medium text-[var(--navy)]">{label}</p>
             </div>
           ))}
         </div>

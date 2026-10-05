@@ -63,7 +63,7 @@ export default function ProfessorCard({
           {verified && <p className="mt-1 text-xs font-semibold text-[var(--teal)]">Verified</p>}
           {priority && <p className="mt-1 text-xs font-semibold text-[var(--navy)]">{priority} priority</p>}
           {email && <p className="mt-1 break-all text-xs text-gray-600">{email}</p>}
-          <p className="mt-1 text-xs text-amber-800">Funding unknown</p>
+          <p className="mt-1 text-xs text-[var(--gray-500)]">Funding unknown</p>
         </div>
         {typeof matchScore === "number" && (
           <div className="text-right">

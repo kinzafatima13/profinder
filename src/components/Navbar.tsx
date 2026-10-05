@@ -5,21 +5,28 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 
 const links = [
-  { href: "/universities", label: "Universities" },
+  { href: "/universities", label: "Discover" },
   { href: "/professors", label: "Professors" },
-  { href: "/find", label: "Find" },
-  { href: "/scholarship", label: "Scholarship" },
-  { href: "/tracker", label: "Tracker" },
+  { href: "/scholarship", label: "Scholarships" },
+  { href: "/tracker", label: "Applications" },
 ];
 
 const more = [
+  { href: "/find", label: "Find professors" },
   { href: "/topics", label: "Topics" },
+  { href: "/search", label: "Search" },
+  { href: "/profile", label: "Resume" },
   { href: "/compare", label: "Compare" },
   { href: "/notices", label: "Notices" },
   { href: "/assistant", label: "Assistant" },
-  { href: "/search", label: "Search" },
   { href: "/pricing", label: "Pricing" },
 ];
+
+function itemClass(active: boolean) {
+  return `rounded-md px-3 py-2 text-sm font-medium ${
+    active ? "bg-[var(--light-teal)] text-[var(--teal-dark)]" : "text-[var(--gray-700)] hover:bg-[var(--gray-100)]"
+  }`;
+}
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -34,13 +41,11 @@ export default function Navbar() {
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
               <circle cx="11" cy="11" r="7" stroke="#0a2540" strokeWidth="2.2" />
               <path d="M16 16 L20 20" stroke="#0a2540" strokeWidth="2.2" strokeLinecap="round" />
-              <path d="M11 8 L11 14 M8 11 L14 11" stroke="#00b4a6" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M11 8 L11 14 M8 11 L14 11" stroke="#3b5bdb" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
           </div>
           <div className="leading-tight">
-            <span className="text-lg font-bold tracking-tight text-[var(--navy)]">
-              PROFINDER
-            </span>
+            <span className="text-sm font-semibold tracking-tight text-[var(--navy)]">ProFinder</span>
           </div>
         </Link>
 
@@ -51,11 +56,7 @@ export default function Navbar() {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  active
-                    ? "bg-[var(--light-teal)] text-[var(--teal-dark)]"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                }`}
+                className={itemClass(active)}
               >
                 {l.label}
               </Link>
@@ -63,7 +64,7 @@ export default function Navbar() {
           })}
           <details className="relative">
             <summary className="cursor-pointer list-none rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100">More</summary>
-            <div className="absolute right-0 z-50 mt-1 w-40 rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+            <div className="absolute right-0 z-50 mt-1 w-48 rounded-md border border-[var(--gray-200)] bg-white p-1">
               {more.map((item) => (
                 <Link key={item.href} href={item.href} className="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
                   {item.label}
@@ -108,23 +109,25 @@ export default function Navbar() {
         </div>
       </div>
 
-      <nav className="flex gap-1 overflow-x-auto border-t border-gray-100 px-4 py-2 md:hidden">
-        {[...links, ...more].map((l) => {
+      <nav className="flex gap-1 overflow-x-auto border-t border-[var(--gray-200)] px-4 py-2 md:hidden" aria-label="Mobile">
+        {links.map((l) => {
           const active = pathname === l.href || pathname.startsWith(l.href + "/");
           return (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium ${
-                active
-                  ? "bg-[var(--light-teal)] text-[var(--teal-dark)]"
-                  : "text-gray-600"
-              }`}
-            >
+            <Link key={l.href} href={l.href} className={`whitespace-nowrap ${itemClass(active)}`}>
               {l.label}
             </Link>
           );
         })}
+        <details className="relative">
+          <summary className="cursor-pointer list-none whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-[var(--gray-700)]">More</summary>
+          <div className="absolute left-0 z-50 mt-1 w-44 rounded-md border border-[var(--gray-200)] bg-white p-1 shadow-sm">
+            {more.map((item) => (
+              <Link key={item.href} href={item.href} className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </details>
       </nav>
     </header>
   );

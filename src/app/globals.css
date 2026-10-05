@@ -3,77 +3,91 @@
 @tailwind utilities;
 
 :root {
-  --navy: #0a2540;
-  --dark-navy: #061a2e;
-  --teal: #00b4a6;
-  --teal-dark: #009688;
-  --light-teal: #e0f7f5;
-  --soft-blue: #e8f0fe;
-  --gray-50: #f8fafc;
-  --gray-100: #f1f5f9;
-  --gray-200: #e2e8f0;
-  --gray-500: #64748b;
-  --gray-700: #334155;
-  --gray-900: #0f172a;
+  --navy: #101828;
+  --dark-navy: #0b1220;
+  --teal: #3b5bdb;
+  --teal-dark: #2f4ac4;
+  --light-teal: #eef2ff;
+  --soft-blue: #f4f6fb;
+  --gray-50: #f7f8fa;
+  --gray-100: #f2f4f7;
+  --gray-200: #e4e7ec;
+  --gray-500: #667085;
+  --gray-700: #344054;
+  --gray-900: #101828;
+  --ok: #067647;
+  --ok-bg: #ecfdf3;
+  --warn: #b54708;
+  --warn-bg: #fffaeb;
+  --danger: #b42318;
+  --danger-bg: #fef3f2;
 }
 
 body {
   color: var(--gray-900);
-  background: var(--gray-50);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  background: #fff;
+  font-family: inherit;
+  line-height: 1.5;
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-lg bg-[var(--teal)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--teal-dark)] focus:outline-none focus:ring-2 focus:ring-[var(--teal)] focus:ring-offset-2;
+    @apply inline-flex items-center justify-center rounded-md bg-[var(--teal)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--teal-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--teal)] focus-visible:ring-offset-2;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[var(--teal)] focus:ring-offset-2;
+    @apply inline-flex items-center justify-center rounded-md border border-[var(--gray-200)] bg-white px-4 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--teal)] focus-visible:ring-offset-2;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-900;
+    @apply inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--teal)] focus-visible:ring-offset-2;
   }
 
   .card {
-    @apply rounded-xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md;
+    @apply rounded-lg border border-[var(--gray-200)] bg-white transition hover:border-[var(--gray-500)];
   }
 
   .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
   }
 
   .badge-teal {
-    @apply badge bg-[var(--light-teal)] text-[var(--teal-dark)];
+    @apply badge bg-[var(--ok-bg)] text-[var(--ok)];
   }
 
   .badge-navy {
-    @apply badge bg-[var(--soft-blue)] text-[var(--navy)];
+    @apply badge bg-[var(--light-teal)] text-[var(--teal-dark)];
+  }
+
+  .badge-muted {
+    @apply badge bg-[var(--gray-100)] text-[var(--gray-700)];
+  }
+
+  .badge-warn {
+    @apply badge bg-[var(--warn-bg)] text-[var(--warn)];
   }
 
   .match-high {
-    @apply text-emerald-600 font-bold;
+    @apply font-semibold text-[var(--ok)];
   }
 
   .match-mid {
-    @apply text-amber-600 font-bold;
+    @apply font-semibold text-[var(--warn)];
   }
 
   .match-low {
-    @apply text-gray-500 font-semibold;
+    @apply font-medium text-[var(--gray-500)];
   }
 
   .input {
-    @apply w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-gray-400 focus:border-[var(--teal)] focus:outline-none focus:ring-1 focus:ring-[var(--teal)];
+    @apply w-full rounded-md border border-[var(--gray-200)] bg-white px-3 py-2 text-sm placeholder:text-[var(--gray-500)] focus:border-[var(--teal)] focus:outline-none focus:ring-1 focus:ring-[var(--teal)];
   }
 
   .section-title {
-    @apply text-2xl font-bold tracking-tight text-[var(--navy)];
+    @apply text-xl font-semibold tracking-tight text-[var(--navy)];
   }
 
   .page-container {
-    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+    @apply mx-auto max-w-6xl px-4 sm:px-6 lg:px-8;
   }
 }
