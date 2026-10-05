@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { draftSop } from "@/lib/writing";
+import { consumeUsage, isPro, limitMessage } from "@/lib/billing/usage";
+import { FEATURES } from "@/lib/billing/plans";
 
 function firstPaper(value: string | null | undefined) {
   const line = value?.split(/\n+/).map((part) => part.replace(/^\d+\.\s*/, "").trim()).find(Boolean);
@@ -14,6 +16,9 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.email) return NextResponse.json({ error: "Sign in to draft a statement." }, { status: 401 });
   const student = await prisma.student.findUnique({ where: { email: session.user.email } });
   if (!student) return NextResponse.json({ error: "Account not found" }, { status: 404 });
+  const pro = await isPro(student);
+  const usage = await consumeUsage(student.id, FEATURES.AI_OUTREACH, pro);
+  if (!usage.ok) return NextResponse.json({ error: limitMessage(FEATURES.AI_OUTREACH, usage.used, usage.limit || 0), code: "LIMIT" }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));
   const professorId = typeof body.professorId === "string" ? body.professorId : "";

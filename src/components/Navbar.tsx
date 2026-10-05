@@ -20,6 +20,7 @@ const more = [
   { href: "/notices", label: "Notices" },
   { href: "/assistant", label: "Assistant" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/billing", label: "Billing" },
 ];
 
 function itemClass(active: boolean) {

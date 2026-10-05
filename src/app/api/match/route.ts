@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { computeResearchMatch } from "@/lib/matching";
 import { assessTarget, newestStoredYear } from "@/lib/professor-assessment";
+import { consumeUsage, isPro, limitMessage } from "@/lib/billing/usage";
+import { FEATURES } from "@/lib/billing/plans";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,11 +25,19 @@ export async function POST(req: NextRequest) {
       cvText: saved?.cvText || null,
     };
 
+    if (!saved) {
+      return NextResponse.json({ error: "Sign in to use professor matching. Free includes 10 searches a month." }, { status: 401 });
+    }
     if (!student.researchInterests && !student.major) {
       return NextResponse.json(
         { error: "Add research interests or a major in your profile or this form." },
         { status: 400 }
       );
+    }
+    const pro = await isPro(saved);
+    const usage = await consumeUsage(saved.id, FEATURES.AI_PROFESSOR_MATCH, pro);
+    if (!usage.ok) {
+      return NextResponse.json({ error: limitMessage(FEATURES.AI_PROFESSOR_MATCH, usage.used, usage.limit || 0), code: "LIMIT" }, { status: 403 });
     }
 
     const professors = await prisma.professor.findMany({
@@ -76,13 +86,13 @@ export async function POST(req: NextRequest) {
       .sort((a, b) => b.match.score - a.match.score)
       .slice(0, 20);
 
-    const sessionPlan = saved?.plan === "pro" ? "pro" : "free";
-    const limited = sessionPlan === "pro" ? results : results.slice(0, 3);
+    const limited = pro ? results : results.slice(0, 10);
     return NextResponse.json({
       count: limited.length,
       total: results.length,
-      plan: sessionPlan,
-      limited: sessionPlan !== "pro",
+      plan: pro ? "pro" : "free",
+      limited: !pro,
+      usage,
       results: limited,
     });
   } catch (err) {

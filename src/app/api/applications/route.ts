@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isPro, limitMessage } from "@/lib/billing/usage";
+import { FEATURES, limitFor } from "@/lib/billing/plans";
 
 const STATUSES = [
   "Saved",
@@ -18,8 +20,6 @@ const STATUSES = [
   "Accepted",
   "Rejected",
 ];
-
-const FREE_LIMIT = 5;
 
 async function currentStudent() {
   const session = await getServerSession(authOptions);
@@ -61,19 +61,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Choose a professor, program, or scholarship." }, { status: 400 });
   }
 
-  if (student.plan !== "pro") {
+  const pro = await isPro(student);
+  const appLimit = limitFor(FEATURES.ACTIVE_APPLICATIONS, pro);
+  if (appLimit != null) {
     const count = await prisma.application.count({ where: { studentId: student.id } });
     const existingPreview = professorId
       ? await prisma.application.findFirst({ where: { studentId: student.id, professorId } })
       : programId
         ? await prisma.application.findFirst({ where: { studentId: student.id, programId } })
         : null;
-    if (!existingPreview && count >= FREE_LIMIT) {
+    if (!existingPreview && count >= appLimit) {
       return NextResponse.json(
-        {
-          error: "Free plan allows up to 5 tracked applications. Upgrade to Pro for unlimited tracking.",
-          code: "PLAN_LIMIT",
-        },
+        { error: limitMessage(FEATURES.ACTIVE_APPLICATIONS, count, appLimit), code: "LIMIT" },
         { status: 403 }
       );
     }
