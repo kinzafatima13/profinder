@@ -12,7 +12,7 @@ export async function subscriptionFor(studentId: string) {
 
 export async function isPro(student: { id: string; plan: string }) {
   const subscription = await subscriptionFor(student.id);
-  return hasProAccess(student.plan, subscription);
+  return hasProAccess(subscription);
 }
 
 export async function consumeUsage(studentId: string, feature: Feature, pro: boolean) {

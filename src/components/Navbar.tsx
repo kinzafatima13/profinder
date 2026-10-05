@@ -120,8 +120,8 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/pricing" className="rounded-md px-2.5 py-2 text-sm font-medium text-[var(--navy)] hover:bg-[var(--gray-100)]">
-            {pro ? "Pro ✓" : "Pro"}
+          <Link href={pro ? "/billing" : "/pricing"} className="rounded-md px-2.5 py-2 text-sm font-medium text-[var(--navy)] hover:bg-[var(--gray-100)]">
+            {pro ? "Pro ✓" : "Go Pro"}
           </Link>
           {status === "loading" ? (
             <span className="text-xs text-[var(--gray-500)]">...</span>
@@ -144,10 +144,8 @@ export default function Navbar() {
                     <p className="text-xs text-[var(--gray-500)]">{pro ? "ProFinder Pro" : "Free plan"}</p>
                   </div>
                   <Link href="/profile" role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">Profile</Link>
-                  <Link href="/settings" role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">Settings</Link>
                   <Link href="/billing" role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">Billing & Subscription</Link>
                   <div className="my-1 border-t border-[var(--gray-200)]" />
-                  {!pro && <Link href="/pricing" role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">Upgrade to Pro</Link>}
                   <button type="button" role="menuitem" className="block w-full rounded-md px-3 py-2 text-left text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]" onClick={() => signOut({ callbackUrl: "/" })}>
                     Sign out
                   </button>
@@ -190,7 +188,6 @@ export default function Navbar() {
             {session ? (
               <>
                 <Link href="/profile" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">Profile</Link>
-                <Link href="/settings" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">Settings</Link>
                 <Link href="/billing" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">Billing & Subscription</Link>
                 <button type="button" className="rounded-md px-2 py-2 text-left text-sm text-[var(--gray-700)]" onClick={() => signOut({ callbackUrl: "/" })}>Sign out</button>
               </>

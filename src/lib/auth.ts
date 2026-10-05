@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { hasProAccess } from "@/lib/billing/access";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -21,7 +22,11 @@ export const authOptions: NextAuthOptions = {
         if (!student?.passwordHash) return null;
         const valid = await bcrypt.compare(credentials.password, student.passwordHash);
         if (!valid) return null;
-        return { id: student.id, email: student.email, name: student.name, plan: student.plan === "pro" ? "pro" : "free" };
+        const access = await prisma.student.findUnique({
+          where: { email: student.email },
+          include: { subscription: true },
+        });
+        return { id: student.id, email: student.email, name: student.name, plan: hasProAccess(access?.subscription ?? null) ? "pro" : "free" };
       },
     }),
   ],
@@ -33,8 +38,8 @@ export const authOptions: NextAuthOptions = {
       }
       const email = token.email;
       if (email) {
-        const student = await prisma.student.findUnique({ where: { email } });
-        token.plan = student?.plan === "pro" ? "pro" : "free";
+        const student = await prisma.student.findUnique({ where: { email }, include: { subscription: true } });
+        token.plan = hasProAccess(student?.subscription ?? null) ? "pro" : "free";
       }
       return token;
     },

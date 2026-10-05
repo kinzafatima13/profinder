@@ -46,7 +46,8 @@ export async function GET() {
     orderBy: [{ deadline: "asc" }, { updatedAt: "desc" }],
   });
 
-  return NextResponse.json({ applications, plan: student.plan, statuses: STATUSES });
+  const pro = await isPro(student);
+  return NextResponse.json({ applications, plan: pro ? "pro" : "free", statuses: STATUSES });
 }
 
 export async function POST(req: NextRequest) {

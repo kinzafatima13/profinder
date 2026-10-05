@@ -129,8 +129,8 @@ export default function ProfilePage() {
 
   return (
     <div className="page-container py-10">
-      <h1 className="section-title">Research profile</h1>
-      <p className="mt-1 text-gray-600">One profile used for matching, drafts, and the dashboard. Email: {profile.email}</p>
+      <h1 className="text-2xl font-semibold text-[var(--navy)]">Profile</h1>
+      <p className="mt-1 text-sm text-[var(--gray-700)]">{profile.email}</p>
       {(() => {
         const fit = scoreProfile(profile);
         return (

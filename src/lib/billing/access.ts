@@ -6,19 +6,17 @@ export type SubscriptionSnapshot = {
 
 const OPEN = new Set(["ACTIVE", "TRIALING", "PAST_DUE"]);
 
-export function hasProAccess(plan: string | null | undefined, subscription: SubscriptionSnapshot) {
-  if (subscription) {
-    if (OPEN.has(subscription.status)) return true;
-    if (
-      subscription.cancelAtPeriodEnd &&
-      subscription.currentPeriodEnd &&
-      subscription.currentPeriodEnd.getTime() > Date.now()
-    ) {
-      return true;
-    }
-    return false;
+export function hasProAccess(subscription: SubscriptionSnapshot) {
+  if (!subscription) return false;
+  if (OPEN.has(subscription.status)) return true;
+  if (
+    subscription.cancelAtPeriodEnd &&
+    subscription.currentPeriodEnd &&
+    subscription.currentPeriodEnd.getTime() > Date.now()
+  ) {
+    return true;
   }
-  return plan === "pro";
+  return false;
 }
 
 export function mapStripeStatus(status: string) {

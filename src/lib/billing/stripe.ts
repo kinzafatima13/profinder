@@ -84,7 +84,7 @@ export async function syncSubscription(input: {
       cancelAtPeriodEnd: Boolean(input.subscription.cancel_at_period_end),
     },
   });
-  const pro = hasProAccess("free", saved);
+  const pro = hasProAccess(saved);
   await prisma.student.update({ where: { id: input.studentId }, data: { plan: pro ? "pro" : "free" } });
   return saved;
 }
