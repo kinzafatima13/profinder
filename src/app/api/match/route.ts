@@ -48,6 +48,8 @@ export async function POST(req: NextRequest) {
         universityCity: p.university.city,
         researchAreas: p.researchAreas.map((r) => r.researchArea.name),
         researchInterests: p.researchInterests,
+        verified: p.dataStatus === "verified",
+        email: p.email,
         match: computeResearchMatch(student, {
           researchInterests: p.researchInterests,
           department: p.department,

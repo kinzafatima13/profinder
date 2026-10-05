@@ -14,6 +14,7 @@ const FIELDS = [
   "cvText",
   "preferredCountries",
   "preferredUniversities",
+  "gpa",
 ] as const;
 
 async function currentStudent() {

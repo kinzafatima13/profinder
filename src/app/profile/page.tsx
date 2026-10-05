@@ -15,6 +15,7 @@ type Profile = {
   cvText: string | null;
   preferredCountries: string | null;
   preferredUniversities: string | null;
+  gpa: string | null;
   plan: string;
 };
 
@@ -30,6 +31,7 @@ const EMPTY: Profile = {
   cvText: "",
   preferredCountries: "China",
   preferredUniversities: "",
+  gpa: "",
   plan: "free",
 };
 
@@ -110,6 +112,9 @@ export default function ProfilePage() {
             <input className="input mt-1" value={profile.major ?? ""} onChange={(e) => setField("major", e.target.value)} required />
           </label>
         </div>
+        <label className="text-sm">CGPA
+          <input className="input mt-1 max-w-xs" value={profile.gpa ?? ""} onChange={(e) => setField("gpa", e.target.value)} placeholder="e.g. 3.41 / 4.00" />
+        </label>
         <label className="text-sm">Academic background
           <textarea className="input mt-1 min-h-[80px]" value={profile.academicBackground ?? ""} onChange={(e) => setField("academicBackground", e.target.value)} />
         </label>

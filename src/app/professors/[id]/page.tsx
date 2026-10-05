@@ -241,6 +241,11 @@ export default async function ProfessorDetailPage({ params }: Props) {
               <>
                 <div className="mt-4 text-center text-5xl font-bold text-[var(--navy)]">{match.score}%</div>
                 <p className="mt-2 text-sm text-gray-700">{match.explanation}</p>
+                <ul className="mt-3 space-y-1 text-sm text-gray-700">
+                  {match.reasons.slice(0, 4).map((reason) => (
+                    <li key={reason}>{reason}</li>
+                  ))}
+                </ul>
                 <ul className="mt-3 space-y-1 text-xs text-gray-500">
                   <li>Interest similarity (40%): {match.breakdown.interestOverlap}%</li>
                   <li>Research-area similarity (20%): {match.breakdown.areaOverlap}%</li>

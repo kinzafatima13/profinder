@@ -63,5 +63,14 @@ export async function POST(req: NextRequest) {
     body: email.body,
     source: email.source,
     disclaimer: "Review and edit this draft before sending. PROFINDER does not send emails.",
+    facts: [
+      student.name ? `Your name: ${student.name}` : "Your name is missing",
+      student.degree ? `Degree: ${student.degree}` : "Degree is missing",
+      student.major ? `Major: ${student.major}` : "Major is missing",
+      student.researchInterests ? `Your interests: ${student.researchInterests}` : "Research interests are missing",
+      `Professor: ${professor.name}`,
+      professor.researchInterests ? `Professor interests on file: ${professor.researchInterests}` : "No professor research summary is stored",
+      professor.email ? `Email on file: ${professor.email}` : "No email is stored for this professor",
+    ],
   });
 }

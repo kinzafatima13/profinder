@@ -16,6 +16,7 @@ export default function EmailGeneratorButton({
   const [error, setError] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [facts, setFacts] = useState<string[]>([]);
 
   async function generate() {
     if (!session) {
@@ -38,6 +39,7 @@ export default function EmailGeneratorButton({
       if (!res.ok) throw new Error(data.error || "Failed");
       setSubject(data.subject);
       setBody(data.body);
+      setFacts(Array.isArray(data.facts) ? data.facts : []);
       setOpen(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to generate");
@@ -79,6 +81,13 @@ export default function EmailGeneratorButton({
             <p className="mt-1 text-xs text-gray-500">
               Review and edit before sending. We never send email automatically.
             </p>
+            {facts.length > 0 && (
+              <ul className="mt-3 space-y-1 rounded-lg bg-gray-50 p-3 text-xs text-gray-700">
+                {facts.map((fact) => (
+                  <li key={fact}>{fact}</li>
+                ))}
+              </ul>
+            )}
 
             <label className="mt-4 mb-1 block text-xs font-medium text-gray-600">
               Subject

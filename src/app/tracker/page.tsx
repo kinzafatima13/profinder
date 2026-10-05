@@ -32,6 +32,16 @@ type AppRow = {
   } | null;
 };
 
+function nextAction(status: string) {
+  if (status === "Saved" || status === "Researching") return "Open the professor page, confirm the faculty source, then draft the email.";
+  if (status === "Contacted" || status === "Follow-up") return "Do not send another email until the follow-up date. Record any reply here.";
+  if (status === "Replied" || status === "Interested") return "Save what they asked for, then start the application documents.";
+  if (status === "Application Started") return "Finish the documents and record the submission link.";
+  if (status === "Application Submitted") return "Watch the deadline note and wait for a decision.";
+  if (status === "Accepted" || status === "Rejected") return "This one is closed. Keep the outcome in the notes.";
+  return "Update the status when something changes.";
+}
+
 export default function TrackerPage() {
   const { data: session, status: authStatus } = useSession();
   const [apps, setApps] = useState<AppRow[]>([]);
@@ -135,6 +145,11 @@ export default function TrackerPage() {
           Find professors
         </Link>
       </div>
+      {apps.length > 0 && (
+        <p className="mt-3 text-sm text-gray-600">
+          {apps.filter((row) => ["Contacted", "Follow-up", "Replied", "Interested", "Application Started", "Application Submitted", "Accepted"].includes(row.status)).length} of {apps.length} have moved past saved.
+        </p>
+      )}
 
       {error && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -179,6 +194,7 @@ export default function TrackerPage() {
                   ) : (
                     <p className="text-sm text-gray-500">Professor not linked</p>
                   )}
+                  <p className="mt-2 text-sm text-gray-700">Next: {nextAction(row.status)}</p>
                 </div>
                 <div className="flex flex-col gap-2 sm:items-end">
                   <select className="input w-full py-1.5 sm:w-52" value={row.status} onChange={(e) => updateStatus(row.id, e.target.value)}>

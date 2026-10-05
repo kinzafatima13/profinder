@@ -9,6 +9,7 @@ export default async function HomePage() {
   let areaCount = 0;
   let verifiedCount = 0;
   let emailCount = 0;
+  let radar: { id: string; university: string; degree: string; major: string; deadline: string | null }[] = [];
   let dbFile = "";
 
   try {
@@ -21,6 +22,19 @@ export default async function HomePage() {
     ]);
     const rows = await prisma.$queryRawUnsafe<Array<{ file: string }>>("PRAGMA database_list");
     dbFile = rows?.[0]?.file ?? "";
+    const programs = await prisma.program.findMany({
+      where: { degree: "Master", major: { contains: "Computer" } },
+      include: { university: { select: { name: true } } },
+      orderBy: { university: { name: "asc" } },
+      take: 8,
+    });
+    radar = programs.map((program) => ({
+      id: program.id,
+      university: program.university.name,
+      degree: program.degree,
+      major: program.major,
+      deadline: program.deadline,
+    }));
   } catch {
     // DB not ready yet
   }
@@ -79,6 +93,28 @@ export default async function HomePage() {
           )}
           <p className="mt-4 text-xs text-gray-400">Database file: {dbFile || "not opened"} · {uniCount} universities · {profCount} professors</p>
         </div>
+      </section>
+
+      <section className="page-container pb-4">
+        <h2 className="section-title">Deadline radar</h2>
+        <p className="mt-2 max-w-2xl text-sm text-gray-600">
+          These are notes already stored with the programs. None of them were confirmed from an official admissions notice.
+        </p>
+        <ul className="mt-4 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100 bg-white">
+          {radar.map((item) => (
+            <li key={item.id} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                <span className="block text-sm font-semibold text-[var(--navy)]">{item.university}</span>
+                <span className="block text-sm text-gray-500">{item.degree} · {item.major}</span>
+              </span>
+              <span className="text-sm font-medium text-amber-800">Unverified · {item.deadline || "No date stored"}</span>
+            </li>
+          ))}
+          {radar.length === 0 && <li className="px-4 py-3 text-sm text-gray-500">No program notes are stored yet.</li>}
+        </ul>
+        <Link href="/scholarship" className="mt-4 inline-flex text-sm font-semibold text-[var(--teal)]">
+          See scholarship matches
+        </Link>
       </section>
 
       {/* Journey */}

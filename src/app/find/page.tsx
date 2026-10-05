@@ -13,9 +13,12 @@ type MatchItem = {
   universityCity: string | null;
   researchAreas: string[];
   researchInterests: string | null;
+  verified: boolean;
+  email: string | null;
   match: {
     score: number;
     explanation: string;
+    reasons: string[];
     strongAreas: string[];
     breakdown: {
       interestOverlap: number;
@@ -190,6 +193,13 @@ export default function FindProfessorsPage() {
                     <p className="mt-3 text-sm text-gray-700">
                       {r.match.explanation}
                     </p>
+                    {r.verified && <p className="mt-2 text-xs font-semibold text-[var(--teal)]">Verified faculty page</p>}
+                    {r.email && <p className="mt-1 break-all text-xs text-gray-600">{r.email}</p>}
+                    <ul className="mt-3 space-y-1 text-sm text-gray-700">
+                      {r.match.reasons.slice(0, 4).map((reason) => (
+                        <li key={reason}>{reason}</li>
+                      ))}
+                    </ul>
                   </div>
 
                   <div className="shrink-0 text-center sm:text-right">
