@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
 import { deadlineStatus } from "@/lib/deadline";
+import { applicationPlan, parseDocuments } from "@/lib/application-plan";
+import { topProfessorMatches, topScholarshipMatches } from "@/lib/profile-matches";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +43,32 @@ export default async function HomePage() {
   } catch {
     // DB not ready yet
   }
+
+  const session = await getServerSession(authOptions);
+  const student = session?.user?.email
+    ? await prisma.student.findUnique({ where: { email: session.user.email } })
+    : null;
+  const matches = student ? await topProfessorMatches(student, 3) : [];
+  const scholarships = student ? await topScholarshipMatches(student, 3) : [];
+  const applications = student
+    ? await prisma.application.findMany({
+        where: { studentId: student.id },
+        include: { professor: { include: { university: true } } },
+        orderBy: { updatedAt: "desc" },
+        take: 3,
+      })
+    : [];
+  const next = applications[0]
+    ? applicationPlan({
+        hasProfile: Boolean(student?.degree && student?.researchInterests),
+        hasEnglish: Boolean(student?.englishTest?.trim()),
+        hasTarget: true,
+        status: applications[0].status,
+        documents: parseDocuments(applications[0].documentsJson),
+      }).next
+    : student?.researchInterests
+      ? "Save a professor or scholarship, then open the tracker."
+      : "Save your research profile before the dashboard can rank opportunities.";
 
   return (
     <div>
@@ -95,6 +125,44 @@ export default async function HomePage() {
           <p className="mt-4 text-xs text-gray-400">Database file: {dbFile || "not opened"} · {uniCount} universities · {profCount} professors</p>
         </div>
       </section>
+
+      {student && (
+        <section className="page-container py-8">
+          <h2 className="section-title">Your dashboard</h2>
+          <p className="mt-2 text-sm text-gray-600">Next: {next}</p>
+          <p className="mt-1 text-sm text-gray-600">Funding goal: {student.fundingGoals?.trim() || "not saved"}. Stored deadlines are unverified, so no countdown is shown.</p>
+          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            <article className="card p-4">
+              <h3 className="font-semibold text-[var(--navy)]">Professor matches</h3>
+              <ul className="mt-2 space-y-2 text-sm text-gray-700">
+                {matches.map((row) => (
+                  <li key={row.id}><Link className="font-medium text-[var(--navy)]" href={`/professors/${row.id}`}>{row.name}</Link> · {row.match.score}% · {row.university}</li>
+                ))}
+                {matches.length === 0 && <li>Save research interests to see matches.</li>}
+              </ul>
+            </article>
+            <article className="card p-4">
+              <h3 className="font-semibold text-[var(--navy)]">Scholarships</h3>
+              <ul className="mt-2 space-y-2 text-sm text-gray-700">
+                {scholarships.map((row) => (
+                  <li key={row.id}>{row.name} · {row.fit.score}% · {row.university}</li>
+                ))}
+                {scholarships.length === 0 && <li>No scholarship record is stored.</li>}
+              </ul>
+            </article>
+            <article className="card p-4">
+              <h3 className="font-semibold text-[var(--navy)]">Applications</h3>
+              <ul className="mt-2 space-y-2 text-sm text-gray-700">
+                {applications.map((row) => (
+                  <li key={row.id}>{row.professor?.name || row.programName || "Saved item"} · {row.status}</li>
+                ))}
+                {applications.length === 0 && <li>Nothing is on the tracker yet.</li>}
+              </ul>
+              <Link href="/tracker" className="mt-3 inline-flex text-sm font-semibold text-[var(--teal)]">Open tracker</Link>
+            </article>
+          </div>
+        </section>
+      )}
 
       <section className="page-container pb-4">
         <h2 className="section-title">Deadline radar</h2>

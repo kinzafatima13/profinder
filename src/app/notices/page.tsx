@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { scoreProfile } from "@/lib/profile-score";
 import { scoreScholarship } from "@/lib/eligibility";
 import { parseDocuments } from "@/lib/application-plan";
+import { topProfessorMatches } from "@/lib/profile-matches";
+import MarkSeenButton from "@/components/MarkSeenButton";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +63,11 @@ export default async function NoticesPage() {
   const missingDocs = apps.reduce((sum, row) => {
     return sum + Object.values(parseDocuments(row.documentsJson)).filter((item) => item === "missing").length;
   }, 0);
+  const currentMatches = await topProfessorMatches(student, 5);
+  const checkedAt = student.matchCheckedAt ? new Date(student.matchCheckedAt) : null;
+  const fresh = checkedAt
+    ? currentMatches.filter((row) => row.createdAt > checkedAt || row.updatedAt > checkedAt)
+    : [];
   const fit = scoreProfile(student);
   const waiting = apps.filter((row) => row.status === "Saved" || row.status === "Researching");
   const notices = [
@@ -80,6 +87,25 @@ export default async function NoticesPage() {
       <h1 className="section-title">Notices</h1>
       <p className="mt-2 max-w-2xl text-sm text-gray-600">In-app only. These come from your saved profile and tracker, not from a new email feed.</p>
       <ul className="mt-6 space-y-3">
+        <li className="card p-4">
+          <p className="text-sm font-semibold text-[var(--navy)]">Professor matches</p>
+          {checkedAt ? (
+            <p className="mt-1 text-sm text-gray-700">
+              {fresh.length
+                ? `${fresh.length} matching professor record${fresh.length === 1 ? "" : "s"} changed since ${checkedAt.toISOString().slice(0, 10)}.`
+                : `No matching professor record has changed since ${checkedAt.toISOString().slice(0, 10)}.`}
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-gray-700">No earlier check is saved, so these current matches are not marked as new.</p>
+          )}
+          <ul className="mt-2 space-y-1 text-sm text-gray-700">
+            {(fresh.length ? fresh : currentMatches).slice(0, 3).map((row) => (
+              <li key={row.id}><Link className="text-[var(--navy)]" href={`/professors/${row.id}`}>{row.name}</Link> · {row.match.score}% · {row.university}{fresh.length ? " · changed" : " · current"}</li>
+            ))}
+            {currentMatches.length === 0 && <li>Save research interests before matches can be checked.</li>}
+          </ul>
+          <div className="mt-3"><MarkSeenButton /></div>
+        </li>
         {notices.map((notice) => (
           <li key={notice.title} className="card p-4">
             <p className="text-sm font-semibold text-[var(--navy)]">{notice.title}</p>

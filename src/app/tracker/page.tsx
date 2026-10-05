@@ -5,9 +5,14 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { applicationPlan, parseDocuments, readinessScore, COMMON_DOCUMENTS } from "@/lib/application-plan";
 
+const OUTREACH = ["Drafted", "Sent", "Waiting", "Replied", "Interested", "Rejected"];
+
 const STATUSES = [
   "Saved",
   "Researching",
+  "Drafted",
+  "Sent",
+  "Waiting",
   "Contacted",
   "Follow-up",
   "Replied",
@@ -17,6 +22,14 @@ const STATUSES = [
   "Accepted",
   "Rejected",
 ];
+
+function outreachStage(status: string) {
+  if (status === "Saved" || status === "Researching" || status === "Drafted") return "Drafted";
+  if (status === "Contacted" || status === "Sent") return "Sent";
+  if (status === "Follow-up" || status === "Waiting") return "Waiting";
+  if (status === "Accepted") return "Interested";
+  return OUTREACH.includes(status) ? status : "Drafted";
+}
 
 type AppRow = {
   id: string;
@@ -261,6 +274,13 @@ export default function TrackerPage() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 sm:items-end">
+                  <div className="flex flex-wrap gap-1 sm:justify-end">
+                    {OUTREACH.map((stage) => (
+                      <button key={stage} type="button" onClick={() => updateStatus(row.id, stage)} className={`rounded-full px-2 py-1 text-xs ${outreachStage(row.status) === stage ? "bg-[var(--navy)] text-white" : "bg-gray-100 text-gray-600"}`}>
+                        {stage}
+                      </button>
+                    ))}
+                  </div>
                   <select className="input w-full py-1.5 sm:w-52" value={row.status} onChange={(e) => updateStatus(row.id, e.target.value)}>
                     {STATUSES.map((s) => (
                       <option key={s} value={s}>{s}</option>

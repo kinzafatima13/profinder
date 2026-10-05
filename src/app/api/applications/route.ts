@@ -6,6 +6,9 @@ import { prisma } from "@/lib/prisma";
 const STATUSES = [
   "Saved",
   "Researching",
+  "Drafted",
+  "Sent",
+  "Waiting",
   "Contacted",
   "Follow-up",
   "Replied",

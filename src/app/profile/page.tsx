@@ -27,6 +27,7 @@ type Profile = {
   gpa: string | null;
   nationality: string | null;
   englishTest: string | null;
+  fundingGoals: string | null;
   plan: string;
 };
 
@@ -45,6 +46,7 @@ const EMPTY: Profile = {
   gpa: "",
   nationality: "",
   englishTest: "",
+  fundingGoals: "",
   plan: "free",
 };
 
@@ -127,8 +129,8 @@ export default function ProfilePage() {
 
   return (
     <div className="page-container py-10">
-      <h1 className="section-title">Your research profile</h1>
-      <p className="mt-1 text-gray-600">Used for research matching and outreach drafts. Email: {profile.email}</p>
+      <h1 className="section-title">Research profile</h1>
+      <p className="mt-1 text-gray-600">One profile used for matching, drafts, and the dashboard. Email: {profile.email}</p>
       {(() => {
         const fit = scoreProfile(profile);
         return (
@@ -167,8 +169,8 @@ export default function ProfilePage() {
         <label className="text-sm">English test
           <input className="input mt-1 max-w-md" value={profile.englishTest ?? ""} onChange={(e) => setField("englishTest", e.target.value)} placeholder="e.g. IELTS 7.0 or TOEFL 100. Leave blank if you have not taken one." />
         </label>
-        <label className="text-sm">Academic background
-          <textarea className="input mt-1 min-h-[80px]" value={profile.academicBackground ?? ""} onChange={(e) => setField("academicBackground", e.target.value)} />
+        <label className="text-sm">Experience
+          <textarea className="input mt-1 min-h-[80px]" value={profile.academicBackground ?? ""} onChange={(e) => setField("academicBackground", e.target.value)} placeholder="Study, work, or research experience" />
         </label>
         <label className="text-sm">Research interests
           <textarea className="input mt-1 min-h-[80px]" value={profile.researchInterests ?? ""} onChange={(e) => setField("researchInterests", e.target.value)} required />
@@ -185,6 +187,9 @@ export default function ProfilePage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm">Preferred countries
             <input className="input mt-1" value={profile.preferredCountries ?? ""} onChange={(e) => setField("preferredCountries", e.target.value)} />
+          </label>
+          <label className="text-sm">Funding goals
+            <input className="input mt-1" value={profile.fundingGoals ?? ""} onChange={(e) => setField("fundingGoals", e.target.value)} placeholder="e.g. full scholarship, CSC, or self-funded" />
           </label>
           <label className="text-sm">Preferred universities
             <input className="input mt-1" value={profile.preferredUniversities ?? ""} onChange={(e) => setField("preferredUniversities", e.target.value)} />

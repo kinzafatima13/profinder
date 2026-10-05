@@ -11,6 +11,8 @@ export const COMMON_DOCUMENTS = [
 
 const MOVED_ON = new Set([
   "Contacted",
+  "Sent",
+  "Waiting",
   "Follow-up",
   "Replied",
   "Interested",

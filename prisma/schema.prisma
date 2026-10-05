@@ -173,6 +173,8 @@ model Student {
   nationality        String?
   gpa                String?
   englishTest        String?
+  fundingGoals       String?
+  matchCheckedAt     String?
   phone              String?
   resumeText         String?
   createdAt          DateTime @default(now())

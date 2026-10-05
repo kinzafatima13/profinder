@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { scoreProgram } from "@/lib/eligibility";
 import { prisma } from "@/lib/prisma";
 
 async function professorSide(id: string) {
@@ -62,5 +65,38 @@ export async function GET(req: NextRequest) {
     ? await Promise.all([universitySide(a), universitySide(b)])
     : await Promise.all([professorSide(a), professorSide(b)]);
   if (!left || !right) return NextResponse.json({ error: "One of those records was not found." }, { status: 404 });
+  if (kind === "university") {
+    const session = await getServerSession(authOptions);
+    const student = session?.user?.email
+      ? await prisma.student.findUnique({ where: { email: session.user.email } })
+      : null;
+    if (student?.researchInterests) {
+      for (const side of [left, right]) {
+        const programs = await prisma.program.findMany({ where: { universityId: side.id }, take: 8 });
+        const best = programs
+          .map((program) => scoreProgram(
+            {
+              degree: student.degree,
+              major: student.major,
+              interests: student.researchInterests,
+              gpa: student.gpa,
+              preferredUniversities: student.preferredUniversities,
+              preferredCountries: student.preferredCountries,
+            },
+            { degree: program.degree, major: program.major, universityName: side.name, deadline: program.deadline, gpaRequirement: program.gpaRequirement, englishReq: program.englishReq }
+          ))
+          .sort((a, b) => b.score - a.score)[0];
+        const verifiedProfessors = await prisma.professor.count({ where: { universityId: side.id, dataStatus: "verified" } });
+        Object.assign(side, {
+          personalFit: best ? `${best.score}%` : "No program stored",
+          fitReason: best?.reasons.find((reason) => reason.tone === "ok")?.text || best?.reasons[0]?.text || "No fit reason is stored.",
+          verifiedProfessors,
+          funding: "Unknown",
+          deadlineCheck: "Unverified. No countdown.",
+          yourFundingGoal: student.fundingGoals?.trim() || "Not saved on your profile",
+        });
+      }
+    }
+  }
   return NextResponse.json({ kind, left, right });
 }
