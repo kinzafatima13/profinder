@@ -1,15 +1,34 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
+import { SITE } from "@/lib/seo";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "PROFINDER — AI University & Professor Discovery",
-  description:
-    "Discover Chinese universities, programs, research areas, and professors. Match your research interests, personalize outreach, and track applications.",
+  metadataBase: new URL(SITE),
+  title: {
+    default: "ProFinder — Find Universities, Professors & Research Opportunities",
+    template: "%s | ProFinder",
+  },
+  description: "Find Chinese universities, professors, and research areas. Compare what is stored, then track an application.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "ProFinder",
+    url: SITE,
+    title: "ProFinder — Find Universities, Professors & Research Opportunities",
+    description: "Find Chinese universities, professors, and research areas. Compare what is stored, then track an application.",
+  },
+  twitter: {
+    card: "summary",
+    title: "ProFinder — Find Universities, Professors & Research Opportunities",
+    description: "Find Chinese universities, professors, and research areas.",
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
@@ -24,9 +43,14 @@ export default function RootLayout({
           <Navbar />
           <main>{children}</main>
           <footer className="mt-16 border-t border-[var(--gray-200)] py-8">
-            <div className="page-container flex flex-col items-start justify-between gap-2 text-sm text-[var(--gray-500)] sm:flex-row sm:items-center">
-              <p><span className="font-medium text-[var(--navy)]">ProFinder</span> · AI university and professor discovery</p>
-              <p>Minimalist and tech-forward</p>
+            <div className="page-container flex flex-col items-start justify-between gap-3 text-sm text-[var(--gray-500)] sm:flex-row sm:items-center">
+              <p><span className="font-medium text-[var(--navy)]">ProFinder</span></p>
+              <nav className="flex flex-wrap gap-3" aria-label="Footer">
+                <Link href="/universities">Universities</Link>
+                <Link href="/professors">Professors</Link>
+                <Link href="/research-areas">Research areas</Link>
+                <Link href="/scholarship">Scholarships</Link>
+              </nav>
             </div>
           </footer>
         </Providers>

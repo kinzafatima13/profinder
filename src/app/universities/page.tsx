@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import UniversityCard from "@/components/UniversityCard";
+import { SITE } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: { absolute: "Chinese Universities | ProFinder" },
+  description: "104 Chinese universities with stored programs and professor records. Open a university to see what is actually on file.",
+  alternates: { canonical: `${SITE}/universities` },
+};
 
 export default async function UniversitiesPage() {
   const universities = await prisma.university.findMany({

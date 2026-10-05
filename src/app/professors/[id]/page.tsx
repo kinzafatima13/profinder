@@ -32,6 +32,7 @@ function sourceDisplay(profileUrl: string | null, dataStatus: string) {
 }
 
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
@@ -39,6 +40,7 @@ import { authOptions } from "@/lib/auth";
 import { computeResearchMatch, profileGaps } from "@/lib/matching";
 import { assessTarget, fundingStatement, newestStoredYear, timelineGroups } from "@/lib/professor-assessment";
 import { isPro } from "@/lib/billing/usage";
+import { SITE, clip, slugify } from "@/lib/seo";
 import MatchScore from "@/components/MatchScore";
 import SaveToTrackerButton from "@/components/SaveToTrackerButton";
 import EmailGeneratorButton from "@/components/EmailGeneratorButton";
@@ -47,6 +49,25 @@ import ProposalButton from "@/components/ProposalButton";
 export const dynamic = "force-dynamic";
 
 type Props = { params: { id: string } };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const prof = await prisma.professor.findUnique({
+    where: { id: params.id },
+    include: { university: true, researchAreas: { include: { researchArea: true } } },
+  });
+  if (!prof) return { title: "Professor", robots: { index: false, follow: false } };
+  const area = prof.researchAreas[0]?.researchArea.name;
+  const title = `Professor ${prof.name}${area ? ` — ${area}` : ""} | ${prof.university.name} | ProFinder`;
+  const description = clip(
+    `${prof.name} is listed at ${prof.university.name}${prof.department ? `, ${prof.department}` : ""}. ${prof.researchInterests || "Research interests are not stored."} Status: ${prof.dataStatus}.`
+  );
+  return {
+    title: { absolute: title },
+    description,
+    alternates: { canonical: `${SITE}/professors/${prof.id}` },
+    robots: { index: true, follow: true },
+  };
+}
 
 function publicationLines(value: string | null) {
   if (!value) return [];
@@ -128,6 +149,30 @@ export default async function ProfessorDetailPage({ params }: Props) {
   ]);
 
   const personalProfile = Boolean(prof.profileUrl && prof.profileIsPersonal);
+  const canonical = `${SITE}/professors/${prof.id}`;
+  const personLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: prof.name,
+    url: canonical,
+    ...(prof.position ? { jobTitle: prof.position } : {}),
+    ...(prof.email ? { email: prof.email } : {}),
+    ...(prof.orcid ? { sameAs: [prof.orcid.startsWith("http") ? prof.orcid : `https://orcid.org/${prof.orcid}`] } : {}),
+    affiliation: {
+      "@type": "EducationalOrganization",
+      name: prof.university.name,
+      ...(prof.university.officialUrl ? { url: prof.university.officialUrl } : {}),
+    },
+  };
+  const crumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Professors", item: `${SITE}/professors` },
+      { "@type": "ListItem", position: 2, name: prof.university.name, item: `${SITE}/universities/${prof.university.id}` },
+      { "@type": "ListItem", position: 3, name: prof.name, item: canonical },
+    ],
+  };
   const statusLabel =
     prof.dataStatus === "verified"
       ? "Verified"
@@ -139,6 +184,8 @@ export default async function ProfessorDetailPage({ params }: Props) {
 
   return (
     <div className="page-container py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbLd) }} />
       <nav aria-label="Breadcrumb" className="text-sm text-[var(--gray-500)]">
         <Link href="/professors" className="hover:text-[var(--navy)]">Professors</Link>
         <span> / </span>
@@ -233,7 +280,7 @@ export default async function ProfessorDetailPage({ params }: Props) {
               {prof.researchAreas.map((r) => (
                 <Link
                   key={r.researchAreaId}
-                  href={`/professors?area=${encodeURIComponent(r.researchArea.name)}`}
+                  href={`/research-areas/${slugify(r.researchArea.name)}`}
                   className="badge-teal hover:opacity-80"
                 >
                   {r.researchArea.name}

@@ -1,12 +1,24 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { computeResearchMatch } from "@/lib/matching";
 import { assessTarget, newestStoredYear } from "@/lib/professor-assessment";
 import ProfessorCard from "@/components/ProfessorCard";
+import { SITE } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
+  const filtered = Boolean(searchParams.q || searchParams.area || searchParams.university || searchParams.verified || searchParams.email || searchParams.department || searchParams.papers || searchParams.page);
+  return {
+    title: { absolute: "Professors | ProFinder" },
+    description: "Professor records for Chinese universities. Verification, email, and research tags are shown only when stored.",
+    alternates: { canonical: `${SITE}/professors` },
+    robots: filtered ? { index: false, follow: true } : { index: true, follow: true },
+  };
+}
 
 const PAGE_SIZE = 24;
 

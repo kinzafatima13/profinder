@@ -1,12 +1,27 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import ProfessorCard from "@/components/ProfessorCard";
 import SaveOpportunityButton from "@/components/SaveOpportunityButton";
+import { SITE, clip, slugify } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: { id: string } };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const uni = await prisma.university.findUnique({
+    where: { id: params.id },
+    include: { _count: { select: { professors: true, programs: true } } },
+  });
+  if (!uni) return { title: "University", robots: { index: false, follow: false } };
+  return {
+    title: { absolute: `${uni.name} Professors & Research Opportunities | ProFinder` },
+    description: clip(`${uni.name}${uni.city ? `, ${uni.city}` : ""}, China. ${uni._count.programs} programs and ${uni._count.professors} professor records are stored.`),
+    alternates: { canonical: `${SITE}/universities/${uni.id}` },
+  };
+}
 
 export default async function UniversityDetailPage({ params }: Props) {
   const uni = await prisma.university.findUnique({
@@ -24,9 +39,18 @@ export default async function UniversityDetailPage({ params }: Props) {
   });
 
   if (!uni) notFound();
+  const areaNames = [...new Set(uni.professors.flatMap((professor) => professor.researchAreas.map((row) => row.researchArea.name)))].slice(0, 12);
+  const orgLd = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    name: uni.name,
+    url: uni.officialUrl || `${SITE}/universities/${uni.id}`,
+    address: { "@type": "PostalAddress", addressCountry: "CN", ...(uni.city ? { addressLocality: uni.city } : {}) },
+  };
 
   return (
     <div className="page-container py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgLd) }} />
       <nav aria-label="Breadcrumb" className="text-sm text-[var(--gray-500)]">
         <Link href="/universities" className="hover:text-[var(--navy)]">Universities</Link>
         <span> / </span>
@@ -51,8 +75,13 @@ export default async function UniversityDetailPage({ params }: Props) {
         )}
       </div>
 
-      {uni.description && (
-        <p className="mt-6 max-w-3xl text-gray-700">{uni.description}</p>
+      {uni.description && <p className="mt-6 max-w-3xl text-gray-700">{uni.description}</p>}
+      {areaNames.length > 0 && (
+        <p className="mt-4 text-sm text-[var(--gray-700)]">
+          Research areas: {areaNames.map((name, index) => (
+            <span key={name}>{index > 0 ? " · " : ""}<Link href={`/research-areas/${slugify(name)}`} className="text-[var(--navy)]">{name}</Link></span>
+          ))}
+        </p>
       )}
 
       {uni.officialUrl && (

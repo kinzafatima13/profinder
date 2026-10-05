@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { applicationPlan, parseDocuments } from "@/lib/application-plan";
 import { topProfessorMatches, topScholarshipMatches } from "@/lib/profile-matches";
+import { SITE } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +69,17 @@ export default async function HomePage() {
 
   return (
     <div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "ProFinder",
+        url: SITE,
+        potentialAction: {
+          "@type": "SearchAction",
+          target: `${SITE}/professors?q={search_term_string}`,
+          "query-input": "required name=search_term_string",
+        },
+      }) }} />
       {/* Hero */}
       <section className="border-b border-[var(--gray-200)] bg-white pt-12 pb-8">
         <div className="page-container text-center">
