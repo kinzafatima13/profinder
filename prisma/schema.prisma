@@ -177,6 +177,26 @@ model Student {
   matchCheckedAt     String?
   phone              String?
   resumeText         String?
+  currentUniversity  String?
+  graduationYear     String?
+  academicLevel      String?
+  publications       String?
+  researchExperience String?
+  researchMethods    String?
+  tools              String?
+  programmingLanguages String?
+  researchKeywords   String?
+  preferredResearchAreas String?
+  targetDegreeLevel  String?
+  intake             String?
+  fundingPreference  String?
+  fullyFundedPreference String?
+  scholarshipPreference String?
+  ielts              String?
+  toefl              String?
+  pte                String?
+  englishProof       String?
+  englishTestStatus  String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 

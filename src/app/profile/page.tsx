@@ -29,6 +29,26 @@ type Profile = {
   englishTest: string | null;
   fundingGoals: string | null;
   plan: string;
+  currentUniversity: string | null;
+  graduationYear: string | null;
+  academicLevel: string | null;
+  publications: string | null;
+  researchExperience: string | null;
+  researchMethods: string | null;
+  tools: string | null;
+  programmingLanguages: string | null;
+  researchKeywords: string | null;
+  preferredResearchAreas: string | null;
+  targetDegreeLevel: string | null;
+  intake: string | null;
+  fundingPreference: string | null;
+  fullyFundedPreference: string | null;
+  scholarshipPreference: string | null;
+  ielts: string | null;
+  toefl: string | null;
+  pte: string | null;
+  englishProof: string | null;
+  englishTestStatus: string | null;
 };
 
 const EMPTY: Profile = {
@@ -48,6 +68,26 @@ const EMPTY: Profile = {
   englishTest: "",
   fundingGoals: "",
   plan: "free",
+  currentUniversity: "",
+  graduationYear: "",
+  academicLevel: "",
+  publications: "",
+  researchExperience: "",
+  researchMethods: "",
+  tools: "",
+  programmingLanguages: "",
+  researchKeywords: "",
+  preferredResearchAreas: "",
+  targetDegreeLevel: "",
+  intake: "",
+  fundingPreference: "",
+  fullyFundedPreference: "",
+  scholarshipPreference: "",
+  ielts: "",
+  toefl: "",
+  pte: "",
+  englishProof: "",
+  englishTestStatus: "",
 };
 
 export default function ProfilePage() {
@@ -166,8 +206,31 @@ export default function ProfilePage() {
         <label className="text-sm">Nationality
           <input className="input mt-1 max-w-xs" value={profile.nationality ?? ""} onChange={(e) => setField("nationality", e.target.value)} placeholder="e.g. Pakistan" />
         </label>
-        <label className="text-sm">English test
-          <input className="input mt-1 max-w-md" value={profile.englishTest ?? ""} onChange={(e) => setField("englishTest", e.target.value)} placeholder="e.g. IELTS 7.0 or TOEFL 100. Leave blank if you have not taken one." />
+        <label className="text-sm">English test summary
+          <input className="input mt-1 max-w-md" value={profile.englishTest ?? ""} onChange={(e) => setField("englishTest", e.target.value)} placeholder="Optional summary. Leave blank if you have not taken one." />
+        </label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="text-sm">Current university
+            <input className="input mt-1" value={profile.currentUniversity ?? ""} onChange={(e) => setField("currentUniversity", e.target.value)} />
+          </label>
+          <label className="text-sm">Graduation year
+            <input className="input mt-1" value={profile.graduationYear ?? ""} onChange={(e) => setField("graduationYear", e.target.value)} placeholder="e.g. 2024" />
+          </label>
+          <label className="text-sm">Academic level
+            <input className="input mt-1" value={profile.academicLevel ?? ""} onChange={(e) => setField("academicLevel", e.target.value)} placeholder="Bachelor, Master, or other" />
+          </label>
+          <label className="text-sm">Target degree
+            <input className="input mt-1" value={profile.targetDegreeLevel ?? ""} onChange={(e) => setField("targetDegreeLevel", e.target.value)} placeholder="Master or PhD" />
+          </label>
+          <label className="text-sm">Intake
+            <input className="input mt-1" value={profile.intake ?? ""} onChange={(e) => setField("intake", e.target.value)} placeholder="e.g. Fall 2027" />
+          </label>
+        </div>
+        <label className="text-sm">Preferred research areas
+          <input className="input mt-1" value={profile.preferredResearchAreas ?? ""} onChange={(e) => setField("preferredResearchAreas", e.target.value)} />
+        </label>
+        <label className="text-sm">Research keywords
+          <input className="input mt-1" value={profile.researchKeywords ?? ""} onChange={(e) => setField("researchKeywords", e.target.value)} />
         </label>
         <label className="text-sm">Experience
           <textarea className="input mt-1 min-h-[80px]" value={profile.academicBackground ?? ""} onChange={(e) => setField("academicBackground", e.target.value)} placeholder="Study, work, or research experience" />
@@ -175,8 +238,23 @@ export default function ProfilePage() {
         <label className="text-sm">Research interests
           <textarea className="input mt-1 min-h-[80px]" value={profile.researchInterests ?? ""} onChange={(e) => setField("researchInterests", e.target.value)} required />
         </label>
+        <label className="text-sm">Publications
+          <textarea className="input mt-1 min-h-[80px]" value={profile.publications ?? ""} onChange={(e) => setField("publications", e.target.value)} placeholder="Only list work you authored. Leave blank if none." />
+        </label>
+        <label className="text-sm">Research experience
+          <textarea className="input mt-1 min-h-[80px]" value={profile.researchExperience ?? ""} onChange={(e) => setField("researchExperience", e.target.value)} />
+        </label>
         <label className="text-sm">Skills
           <input className="input mt-1" value={profile.skills ?? ""} onChange={(e) => setField("skills", e.target.value)} />
+        </label>
+        <label className="text-sm">Research methods
+          <input className="input mt-1" value={profile.researchMethods ?? ""} onChange={(e) => setField("researchMethods", e.target.value)} />
+        </label>
+        <label className="text-sm">Tools
+          <input className="input mt-1" value={profile.tools ?? ""} onChange={(e) => setField("tools", e.target.value)} />
+        </label>
+        <label className="text-sm">Programming languages
+          <input className="input mt-1" value={profile.programmingLanguages ?? ""} onChange={(e) => setField("programmingLanguages", e.target.value)} />
         </label>
         <label className="text-sm">Projects
           <textarea className="input mt-1 min-h-[80px]" value={profile.projects ?? ""} onChange={(e) => setField("projects", e.target.value)} />
@@ -190,6 +268,30 @@ export default function ProfilePage() {
           </label>
           <label className="text-sm">Funding goals
             <input className="input mt-1" value={profile.fundingGoals ?? ""} onChange={(e) => setField("fundingGoals", e.target.value)} placeholder="e.g. full scholarship, CSC, or self-funded" />
+          </label>
+          <label className="text-sm">Funding preference
+            <input className="input mt-1" value={profile.fundingPreference ?? ""} onChange={(e) => setField("fundingPreference", e.target.value)} placeholder="Fully funded, tuition, stipend, or assistantship" />
+          </label>
+          <label className="text-sm">Fully funded preference
+            <input className="input mt-1" value={profile.fullyFundedPreference ?? ""} onChange={(e) => setField("fullyFundedPreference", e.target.value)} placeholder="Required, preferred, or not required" />
+          </label>
+          <label className="text-sm">Scholarship preference
+            <input className="input mt-1" value={profile.scholarshipPreference ?? ""} onChange={(e) => setField("scholarshipPreference", e.target.value)} />
+          </label>
+          <label className="text-sm">IELTS
+            <input className="input mt-1" value={profile.ielts ?? ""} onChange={(e) => setField("ielts", e.target.value)} />
+          </label>
+          <label className="text-sm">TOEFL
+            <input className="input mt-1" value={profile.toefl ?? ""} onChange={(e) => setField("toefl", e.target.value)} />
+          </label>
+          <label className="text-sm">PTE
+            <input className="input mt-1" value={profile.pte ?? ""} onChange={(e) => setField("pte", e.target.value)} />
+          </label>
+          <label className="text-sm">Other English proof
+            <input className="input mt-1" value={profile.englishProof ?? ""} onChange={(e) => setField("englishProof", e.target.value)} />
+          </label>
+          <label className="text-sm">English test status
+            <input className="input mt-1" value={profile.englishTestStatus ?? ""} onChange={(e) => setField("englishTestStatus", e.target.value)} placeholder="Taken, planned, or exempt" />
           </label>
           <label className="text-sm">Preferred universities
             <input className="input mt-1" value={profile.preferredUniversities ?? ""} onChange={(e) => setField("preferredUniversities", e.target.value)} />

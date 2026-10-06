@@ -9,6 +9,10 @@ export type ProfileFacts = {
   projects?: string | null;
   preferredCountries?: string | null;
   academicBackground?: string | null;
+  publications?: string | null;
+  researchExperience?: string | null;
+  intake?: string | null;
+  fundingPreference?: string | null;
 };
 
 const CHECKS: { key: keyof ProfileFacts; label: string }[] = [
@@ -22,6 +26,10 @@ const CHECKS: { key: keyof ProfileFacts; label: string }[] = [
   { key: "skills", label: "Skills" },
   { key: "projects", label: "Projects" },
   { key: "preferredCountries", label: "Preferred country" },
+  { key: "publications", label: "Publications" },
+  { key: "researchExperience", label: "Research experience" },
+  { key: "intake", label: "Intake" },
+  { key: "fundingPreference", label: "Funding preference" },
 ];
 
 export function scoreProfile(profile: ProfileFacts) {
