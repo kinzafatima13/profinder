@@ -83,17 +83,18 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="border-b border-[var(--gray-200)] bg-white pt-12 pb-8">
         <div className="page-container text-center">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--gray-500)]">University and professor discovery</p>
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--gray-500)]">Graduate research and application assistant</p>
           <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--navy)] sm:text-4xl">
-            Discover the universities and professors that actually match your research.
+            Find the right university. Professor. Research opportunity.
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-[var(--gray-700)]">
-            Start with a country and a program, compare supervisors by research overlap, then keep the application in the tracker.
+            Discover verified universities and researchers, compare research overlap, explore funding records, and organize graduate applications in one place.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/find" className="btn-primary">Find Professors for Me</Link>
+            <Link href="/find" className="btn-primary">Find My Research Match</Link>
             <Link href="/universities" className="btn-secondary">Explore Universities</Link>
           </div>
+          <p className="mx-auto mt-3 max-w-xl text-xs text-[var(--muted)]">Match scores are informational recommendations from stored overlap, not admission predictions.</p>
 
           {/* Stats */}
           {(uniCount > 0 || profCount > 0) && (

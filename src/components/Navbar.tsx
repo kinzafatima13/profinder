@@ -7,27 +7,30 @@ import { useSession, signOut } from "next-auth/react";
 
 const primary = [
   { href: "/universities", label: "Universities" },
+  { href: "/programs", label: "Programs" },
   { href: "/professors", label: "Professors" },
-  { href: "/find", label: "Find" },
-  { href: "/scholarship", label: "Scholarships" },
-  { href: "/tracker", label: "Tracker" },
+  { href: "/find", label: "Find My Match" },
+  { href: "/scholarship", label: "Funding" },
 ];
 
 const more = [
+  { href: "/research-areas", label: "Research Areas" },
+  { href: "/shortlist", label: "My Shortlist" },
+  { href: "/tracker", label: "Applications" },
   { href: "/topics", label: "Topics" },
   { href: "/compare", label: "Compare" },
+  { href: "/search", label: "Search" },
   { href: "/notices", label: "Notices" },
   { href: "/assistant", label: "Assistant" },
-  { href: "/search", label: "Search" },
-  { href: "/profile#resume", label: "Resume" },
 ];
 
 const mobilePrimary = [
   { href: "/", label: "Home" },
-  { href: "/find", label: "Find" },
+  { href: "/find", label: "Match" },
+  { href: "/programs", label: "Programs" },
   { href: "/professors", label: "Professors" },
-  { href: "/scholarship", label: "Scholarships" },
-  { href: "/tracker", label: "Tracker" },
+  { href: "/shortlist", label: "Shortlist" },
+  { href: "/tracker", label: "Applications" },
 ];
 
 function isActive(pathname: string, href: string) {
