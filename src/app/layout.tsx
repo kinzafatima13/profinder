@@ -29,6 +29,14 @@ export const metadata: Metadata = {
     description: "Find Chinese universities, professors, and research areas.",
   },
   robots: { index: true, follow: true },
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.ico", sizes: "48x48" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
