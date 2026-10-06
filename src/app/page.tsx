@@ -83,15 +83,15 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="border-b border-[var(--gray-200)] bg-white pt-12 pb-8">
         <div className="page-container text-center">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--gray-500)]">University and professor discovery</p>
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--gray-500)]">Graduate research and application assistant</p>
           <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--navy)] sm:text-4xl">
-            Discover the universities and professors that actually match your research.
+            Find the right university, professor, and research opportunity.
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-[var(--gray-700)]">
-            Start with a country and a program, compare supervisors by research overlap, then keep the application in the tracker.
+            Discover stored universities and researchers, compare research overlap, review funding records, and keep the application in one place. Match scores are informational recommendations, not admission predictions.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/find" className="btn-primary">Find Professors for Me</Link>
+            <Link href="/find" className="btn-primary">Find My Research Match</Link>
             <Link href="/universities" className="btn-secondary">Explore Universities</Link>
           </div>
 
@@ -185,18 +185,18 @@ export default async function HomePage() {
       <section className="page-container py-16">
         <h2 className="section-title text-center">The core journey</h2>
         <p className="mx-auto mt-2 max-w-xl text-center text-gray-600">
-          From country to application tracker — one clear path.
+          From your profile to an application outcome — only with records already stored.
         </p>
 
         <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            ["01", "Country", false],
+            ["01", "Profile", false],
             ["02", "University", false],
             ["03", "Program", false],
-            ["04", "Research", false],
+            ["04", "Research area", false],
             ["05", "Professor", false],
             ["06", "Match", true],
-            ["07", "Outreach", false],
+            ["07", "Funding", false],
             ["08", "Application", false],
           ].map(([number, label, active]) => (
             <li key={String(number)} className={`border-t pt-3 ${active ? "border-[var(--teal)]" : "border-[var(--gray-200)]"}`}>
@@ -215,7 +215,7 @@ export default async function HomePage() {
             {[
               {
                 title: "University & Program Discovery",
-                desc: "Browse Chinese universities, English-taught Master's & PhD programs, CSC and university scholarships — with official links.",
+                desc: "Browse stored universities and programs. China is the current dataset. Missing fields stay blank instead of being guessed.",
               },
               {
                 title: "Professor Discovery",
@@ -223,15 +223,15 @@ export default async function HomePage() {
               },
               {
                 title: "Transparent Research Match",
-                desc: "See a clear match percentage with weighted components and an explanation — not a black-box score.",
+                desc: "A weighted overlap score with the reasons behind it. It is not an admission prediction, and it only uses stored interests and topics.",
               },
               {
-                title: "Find Professors for Me",
-                desc: "Enter your degree, major, and research interests. Get ranked professors with match explanations.",
+                title: "Find My Research Match",
+                desc: "Enter degree, major, and research interests. Ranked professors include the overlap that produced the score.",
               },
               {
                 title: "Personalized Outreach",
-                desc: "Generate research-aware emails you can edit and approve before sending. You stay in control.",
+                desc: "Draft an email from stored research interests. Nothing is sent unless you copy or send it yourself.",
               },
               {
                 title: "Application Tracker",
@@ -251,7 +251,7 @@ export default async function HomePage() {
       <section className="page-container py-16 text-center">
         <h2 className="section-title">Start discovering</h2>
         <p className="mx-auto mt-2 max-w-lg text-gray-600">
-          China MVP focused on Computer Science, AI, Cybersecurity, and related fields.
+          The current dataset is China-first. The product path is not limited to one country or one discipline.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Link href="/universities" className="btn-primary">

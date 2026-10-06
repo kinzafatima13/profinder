@@ -5,29 +5,25 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 
-const primary = [
+const publicPrimary = [
   { href: "/universities", label: "Universities" },
   { href: "/professors", label: "Professors" },
-  { href: "/find", label: "Find" },
-  { href: "/scholarship", label: "Scholarships" },
-  { href: "/tracker", label: "Tracker" },
+  { href: "/research-areas", label: "Research" },
+  { href: "/find", label: "Find My Match" },
+  { href: "/scholarship", label: "Funding" },
+];
+
+const privatePrimary = [
+  { href: "/tracker", label: "Applications" },
 ];
 
 const more = [
+  { href: "/search", label: "Search" },
   { href: "/topics", label: "Topics" },
   { href: "/compare", label: "Compare" },
   { href: "/notices", label: "Notices" },
   { href: "/assistant", label: "Assistant" },
-  { href: "/search", label: "Search" },
   { href: "/profile#resume", label: "Resume" },
-];
-
-const mobilePrimary = [
-  { href: "/", label: "Home" },
-  { href: "/find", label: "Find" },
-  { href: "/professors", label: "Professors" },
-  { href: "/scholarship", label: "Scholarships" },
-  { href: "/tracker", label: "Tracker" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -92,7 +88,7 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">
-          {primary.map((item) => (
+          {[...publicPrimary, ...(session ? privatePrimary : [])].map((item) => (
             <Link key={item.href} href={item.href} className={itemClass(isActive(pathname, item.href))} aria-current={isActive(pathname, item.href) ? "page" : undefined}>
               {item.label}
             </Link>
@@ -171,7 +167,7 @@ export default function Navbar() {
       </div>
 
       <nav className="flex flex-wrap gap-1 border-t border-[var(--gray-200)] px-4 py-2 lg:hidden" aria-label="Mobile">
-        {mobilePrimary.map((item) => (
+        {[...publicPrimary, ...(session ? privatePrimary : [])].map((item) => (
           <Link key={item.href} href={item.href} className={itemClass(isActive(pathname, item.href))} aria-current={isActive(pathname, item.href) ? "page" : undefined}>
             {item.label}
           </Link>
@@ -180,7 +176,12 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="border-t border-[var(--gray-200)] bg-white px-4 py-3 lg:hidden">
           <div className="grid gap-1">
-            <Link href="/universities" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">Universities</Link>
+            {publicPrimary.map((item) => (
+              <Link key={item.href} href={item.href} className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">{item.label}</Link>
+            ))}
+            {session && privatePrimary.map((item) => (
+              <Link key={item.href} href={item.href} className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">{item.label}</Link>
+            ))}
             {more.map((item) => (
               <Link key={item.href} href={item.href} className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">{item.label}</Link>
             ))}

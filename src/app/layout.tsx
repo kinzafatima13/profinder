@@ -11,22 +11,22 @@ const inter = Inter({ subsets: ["latin"], display: "swap" });
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
   title: {
-    default: "ProFinder — Find Universities, Professors & Research Opportunities",
+    default: "ProFinder — Find the Right University, Professor, and Research Opportunity",
     template: "%s | ProFinder",
   },
-  description: "Find Chinese universities, professors, and research areas. Compare what is stored, then track an application.",
+  description: "Discover stored universities and researchers, compare research overlap, explore funding records, and organize a graduate application. Current records focus on China.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     siteName: "ProFinder",
     url: SITE,
-    title: "ProFinder — Find Universities, Professors & Research Opportunities",
-    description: "Find Chinese universities, professors, and research areas. Compare what is stored, then track an application.",
+    title: "ProFinder — Find the Right University, Professor, and Research Opportunity",
+    description: "Discover stored universities and researchers, compare research overlap, explore funding records, and organize a graduate application. Current records focus on China.",
   },
   twitter: {
     card: "summary",
-    title: "ProFinder — Find Universities, Professors & Research Opportunities",
-    description: "Find Chinese universities, professors, and research areas.",
+    title: "ProFinder — Find the Right University, Professor, and Research Opportunity",
+    description: "Discover stored universities, professors, and research opportunities. Match scores use stored records only.",
   },
   robots: { index: true, follow: true },
   icons: {
