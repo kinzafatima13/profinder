@@ -1,55 +1,65 @@
-"use client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import AdminReview from "@/components/AdminReview";
 
-import { useEffect, useState } from "react";
+export const dynamic = "force-dynamic";
 
-type Row = { id: string; name: string; university: string; dataStatus: string };
-
-export default function AdminPage() {
-  const [rows, setRows] = useState<Row[]>([]);
-  const [error, setError] = useState("");
-
-  async function load() {
-    const res = await fetch("/api/admin/professors");
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error === "Forbidden" ? "Admin access only." : data.error);
-      return;
-    }
-    setRows(data.professors);
+export default async function AdminPage() {
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email || "";
+  const student = email ? await prisma.student.findUnique({ where: { email }, select: { role: true } }) : null;
+  const allow = student?.role === "admin" || (process.env.ADMIN_EMAILS || "").split(",").map((v) => v.trim()).includes(email);
+  if (!allow) {
+    return <div className="page-container py-16"><h1 className="section-title">Admin only</h1><p className="mt-2 text-gray-600">This account cannot view data operations.</p></div>;
   }
 
-  useEffect(() => { load(); }, []);
-
-  async function setStatus(id: string, dataStatus: string) {
-    const res = await fetch("/api/admin/professors", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, dataStatus }),
-    });
-    if (res.ok) load();
-  }
+  const [universities, programs, fields, majors, professors, verifiedProfessors, pendingPrograms, unverifiedPrograms, changes] = await Promise.all([
+    prisma.university.count(),
+    prisma.program.count(),
+    prisma.academicField.count(),
+    prisma.major.count(),
+    prisma.professor.count(),
+    prisma.professor.count({ where: { dataStatus: "verified" } }),
+    prisma.program.count({ where: { verificationStatus: "PENDING_REVIEW" } }),
+    prisma.program.count({ where: { verificationStatus: "UNVERIFIED" } }),
+    prisma.changeLog.findMany({ orderBy: { detectedAt: "desc" }, take: 8 }),
+  ]);
+  const stats = [
+    ["Universities", universities],
+    ["Programs", programs],
+    ["Academic fields", fields],
+    ["Majors", majors],
+    ["Professors", professors],
+    ["Verified professors", verifiedProfessors],
+    ["Pending programs", pendingPrograms],
+    ["Unverified programs", unverifiedPrograms],
+  ];
 
   return (
     <div className="page-container py-10">
-      <h1 className="section-title">Data review</h1>
-      <p className="mt-1 text-sm text-gray-600">Server-checked admin view. Set ADMIN_EMAILS or role=admin.</p>
-      {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
-      <div className="mt-6 space-y-3">
-        {rows.map((row) => (
-          <div key={row.id} className="card flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-medium text-[var(--navy)]">{row.name}</p>
-              <p className="text-sm text-gray-500">{row.university}</p>
-            </div>
-            <select className="input max-w-xs" value={row.dataStatus} onChange={(e) => setStatus(row.id, e.target.value)}>
-              <option value="unverified">Unverified</option>
-              <option value="needs_review">Needs review</option>
-              <option value="verified">Verified</option>
-              <option value="outdated">Outdated</option>
-            </select>
+      <h1 className="section-title">Admin</h1>
+      <p className="mt-1 max-w-2xl text-sm text-gray-600">Counts come from the live database. Official imports are marked from their source file. Seeded technology programs stay unverified until an official page is checked.</p>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map(([label, value]) => (
+          <div key={label} className="card p-4">
+            <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
+            <p className="mt-1 text-2xl font-semibold text-[var(--navy)]">{value}</p>
           </div>
         ))}
       </div>
+      <h2 className="mt-10 text-lg font-semibold text-[var(--navy)]">Recent source changes</h2>
+      <ul className="mt-3 space-y-2 text-sm">
+        {changes.map((row) => (
+          <li key={row.id} className="card p-3">
+            <span className="font-medium">{row.changeType}</span>
+            <span className="ml-2 text-gray-500">{row.entityType}</span>
+            {row.sourceUrl && <a className="ml-2 text-[var(--teal)]" href={row.sourceUrl}>source</a>}
+          </li>
+        ))}
+        {changes.length === 0 && <li className="text-gray-500">No source changes recorded yet. Run the academic sync.</li>}
+      </ul>
+      <AdminReview />
     </div>
   );
 }

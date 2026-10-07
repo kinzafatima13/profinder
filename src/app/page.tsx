@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { applicationPlan, parseDocuments } from "@/lib/application-plan";
 import { topProfessorMatches, topScholarshipMatches } from "@/lib/profile-matches";
 import { SITE } from "@/lib/seo";
+import AcademicSearchBox from "@/components/AcademicSearchBox";
 
 export const dynamic = "force-dynamic";
 
@@ -90,8 +91,10 @@ export default async function HomePage() {
           <p className="mx-auto mt-3 max-w-2xl text-sm text-[var(--gray-700)]">
             Discover verified universities and researchers, compare research overlap, explore funding records, and organize graduate applications in one place.
           </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <div className="mx-auto mt-6 max-w-2xl text-left"><AcademicSearchBox /></div>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <Link href="/find" className="btn-primary">Find My Research Match</Link>
+            <Link href="/fields" className="btn-secondary">Browse fields</Link>
             <Link href="/universities" className="btn-secondary">Explore Universities</Link>
           </div>
           <p className="mx-auto mt-3 max-w-xl text-xs text-[var(--muted)]">Match scores are informational recommendations from stored overlap, not admission predictions.</p>
