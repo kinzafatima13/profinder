@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import EligibilityButton from "@/components/EligibilityButton";
 import SaveOpportunityButton from "@/components/SaveOpportunityButton";
 
@@ -40,7 +40,7 @@ export default function ScholarshipPage() {
   const [matches, setMatches] = useState<Opportunity[]>([]);
   const [matchNote, setMatchNote] = useState("");
 
-  async function load(nextUni = universityId, nextType = type) {
+  const load = useCallback(async (nextUni = universityId, nextType = type) => {
     const q = new URLSearchParams();
     if (nextUni) q.set("universityId", nextUni);
     if (nextType) q.set("type", nextType);
@@ -62,7 +62,7 @@ export default function ScholarshipPage() {
         else setMatchNote("Scores use your saved profile. A warning means the fact is missing or not an official rule.");
       })
       .catch(() => setMatchNote("Matches could not be loaded."));
-  }, []);
+  }, [load]);
 
   return (
     <div className="page-container py-10">
@@ -101,11 +101,11 @@ export default function ScholarshipPage() {
         </div>
       </section>
       <div className="mt-4 flex flex-wrap gap-2">
-        <select className="input max-w-xs" value={universityId} onChange={(e) => { setUniversityId(e.target.value); load(e.target.value, type); }}>
+        <select className="input max-w-xs" value={universityId} onChange={(e) => setUniversityId(e.target.value)}>
           <option value="">All universities</option>
           {unis.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
         </select>
-        <select className="input max-w-xs" value={type} onChange={(e) => { setType(e.target.value); load(universityId, e.target.value); }}>
+        <select className="input max-w-xs" value={type} onChange={(e) => setType(e.target.value)}>
           <option value="">All types</option>
           <option value="CSC">CSC</option>
           <option value="University">University</option>
