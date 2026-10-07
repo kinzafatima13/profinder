@@ -7,63 +7,66 @@ function normalize(value: string) {
 
 export async function GET(request: NextRequest) {
   const raw = request.nextUrl.searchParams.get("q")?.trim() || "";
-  if (raw.length < 2) return NextResponse.json({ results: [] });
+  if (raw.length < 2 || raw.length > 120) return NextResponse.json({ results: [] });
   const q = normalize(raw);
 
-  const aliases = await prisma.academicAlias.findMany({
-    where: { OR: [{ normalizedTerm: { contains: q } }, { term: { contains: raw } }] },
-    include: {
-      major: { include: { discipline: { include: { academicField: true } } } },
-      discipline: { include: { academicField: true } },
-      academicField: true,
-    },
-    take: 8,
-  });
-
-  const [majors, disciplines, fields, programs] = await Promise.all([
+  const [majors, disciplines, fields, programs, professors, areas, scholarships] = await Promise.all([
     prisma.major.findMany({
-      where: { OR: [{ name: { contains: raw } }, { officialName: { contains: raw } }, { slug: { contains: q.replace(/ /g, "-") } }] },
+      where: { OR: [{ name: { contains: raw } }, { officialName: { contains: raw } }] },
       select: { name: true, officialName: true, slug: true, discipline: { select: { name: true, academicField: { select: { name: true } } } } },
-      take: 8,
+      take: 6,
       orderBy: { name: "asc" },
     }),
     prisma.discipline.findMany({
       where: { name: { contains: raw } },
-      select: { name: true, slug: true, academicField: { select: { name: true, slug: true } } },
+      select: { name: true, academicField: { select: { name: true } } },
       take: 5,
     }),
     prisma.academicField.findMany({
       where: { name: { contains: raw } },
-      select: { name: true, slug: true },
-      take: 5,
+      select: { name: true },
+      take: 4,
     }),
     prisma.program.findMany({
-      where: { OR: [{ major: { contains: raw } }, { officialName: { contains: raw } }] },
-      select: { id: true, major: true, degree: true, university: { select: { name: true, id: true } } },
+      where: { OR: [{ major: { contains: raw } }, { degree: { contains: raw } }, { officialName: { contains: raw } }, { university: { name: { contains: raw } } }, { university: { country: { contains: raw } } }] },
+      select: { id: true, major: true, degree: true, university: { select: { name: true, id: true, country: true } } },
+      take: 6,
+    }),
+    prisma.professor.findMany({
+      where: { OR: [{ name: { contains: raw } }, { researchInterests: { contains: raw } }, { department: { contains: raw } }, { university: { name: { contains: raw } } }] },
+      select: { id: true, name: true, department: true, university: { select: { name: true } } },
       take: 5,
+    }),
+    prisma.researchArea.findMany({
+      where: { name: { contains: raw } },
+      select: { name: true },
+      take: 5,
+    }),
+    prisma.scholarship.findMany({
+      where: { OR: [{ name: { contains: raw } }, { type: { contains: raw } }] },
+      select: { id: true, name: true, type: true, university: { select: { name: true } } },
+      take: 4,
     }),
   ]);
 
   const results = [
-    ...aliases.flatMap((alias) => {
-      if (alias.major) return [{ type: "alias", label: alias.major.officialName || alias.major.name, subtitle: `Matches “${alias.term}” · ${alias.major.discipline.academicField.name}`, href: "/majors/" + alias.major.slug }];
-      if (alias.discipline) return [{ type: "alias", label: alias.discipline.name, subtitle: `Matches “${alias.term}”`, href: "/fields/" + alias.discipline.academicField.slug }];
-      if (alias.academicField) return [{ type: "alias", label: alias.academicField.name, subtitle: `Matches “${alias.term}”`, href: "/fields/" + alias.academicField.slug }];
-      return [];
-    }),
-    ...majors.map((x) => ({ type: "major", label: x.officialName || x.name, subtitle: x.discipline.academicField.name + " · " + x.discipline.name, href: "/majors/" + x.slug })),
-    ...disciplines.map((x) => ({ type: "discipline", label: x.name, subtitle: x.academicField.name, href: "/fields/" + x.academicField.slug })),
-    ...fields.map((x) => ({ type: "field", label: x.name, subtitle: "Academic field", href: "/fields/" + x.slug })),
-    ...programs.map((x) => ({ type: "program", label: `${x.degree} · ${x.major}`, subtitle: x.university.name, href: "/universities/" + x.university.id })),
+    ...programs.map((x) => ({ type: "program", label: `${x.degree} · ${x.major}`, subtitle: `Program · ${x.university.name}${x.university.country ? ` · ${x.university.country}` : ""}`, href: "/universities/" + x.university.id })),
+    ...scholarships.map((x) => ({ type: "scholarship", label: x.name, subtitle: `Scholarship · ${x.university?.name || "No university linked"} · coverage unknown unless the source says otherwise`, href: "/scholarship" })),
+    ...professors.map((x) => ({ type: "supervisor", label: x.name, subtitle: `Supervisor · ${x.university.name}${x.department ? ` · ${x.department}` : ""}`, href: "/professors/" + x.id })),
+    ...areas.map((x) => ({ type: "research", label: x.name, subtitle: "Research area · view stored supervisors", href: "/professors?area=" + encodeURIComponent(x.name) })),
+    ...majors.map((x) => ({ type: "major", label: x.officialName || x.name, subtitle: `Stored major · ${x.discipline.academicField.name} · ${x.discipline.name}`, href: "/programs?q=" + encodeURIComponent(x.name) })),
+    ...disciplines.map((x) => ({ type: "discipline", label: x.name, subtitle: `Discipline · ${x.academicField.name}`, href: "/programs?q=" + encodeURIComponent(x.name) })),
+    ...fields.map((x) => ({ type: "field", label: x.name, subtitle: "Academic field", href: "/programs?q=" + encodeURIComponent(x.name) })),
   ];
 
   const seen = new Set<string>();
   return NextResponse.json({
     results: results.filter((row) => {
-      const key = row.href + row.label;
+      const key = row.type + row.href + row.label;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     }).slice(0, 12),
+    query: q,
   });
 }
