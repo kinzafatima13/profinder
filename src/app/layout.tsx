@@ -49,6 +49,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+      {GA_ID ? (
+        <>
+          <Script
+            src={"https://www.googletagmanager.com/gtag/js?id=" + GA_ID}
+            strategy="afterInteractive"
+          />
+          <Script id="google-analytics" strategy="afterInteractive">
+            {"window.dataLayer = window.dataLayer || [];
+function gtag(){window.dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '" + GA_ID + "');"}
+          </Script>
+        </>
+      ) : null}
+      </head>
       <body className={inter.className + " min-h-screen bg-white text-[var(--gray-900)] antialiased"}>
         <Providers>
           <Navbar />
