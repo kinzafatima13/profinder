@@ -201,7 +201,7 @@ export default async function UniversityDetailPage({ params }: Props) {
           <ul className="mt-4 flex flex-wrap gap-2">
             {researchAreas.map((name) => (
               <li key={name}>
-                <Link href={`${professorHref}&research=${encodeURIComponent(name)}`} className="inline-block rounded-full border border-gray-200 bg-white px-3 py-1 text-sm text-[var(--navy)] hover:border-[var(--teal)]">
+                <Link href={`${professorHref}&research=${encodeURIComponent(name)}`} className="tag">
                   {name}
                 </Link>
               </li>

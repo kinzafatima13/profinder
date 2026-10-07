@@ -133,7 +133,7 @@ export default function FindProfessorsPage() {
                     <p className="text-sm text-gray-600">{r.position}{r.department && ` · ${r.department}`}</p>
                     <p className="text-sm text-gray-500">{r.universityName}{r.universityCity && ` · ${r.universityCity}`}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      {r.researchAreas.map((a) => <span key={a} className="badge-teal">{a}</span>)}
+                      {r.researchAreas.map((a) => <span key={a} className="tag">{a}</span>)}
                     </div>
                     <p className="mt-3 text-sm font-medium text-[var(--navy)]">Why this matches you</p>
                     <p className="mt-1 text-sm text-gray-700">{r.match.explanation}</p>

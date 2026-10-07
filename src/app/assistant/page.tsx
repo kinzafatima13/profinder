@@ -54,7 +54,9 @@ export default function AssistantPage() {
 
   return (
     <div className="page-container py-10">
-      <h1 className="section-title">Research assistant</h1>
+      <div className="copilot max-w-3xl">
+      <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--violet)]">✦ Research assistant</p>
+      <h1 className="section-title mt-2">What are you curious about?</h1>
       <p className="mt-2 max-w-2xl text-sm text-gray-600">
         Describe what you want to study. Answers list only stored professors, programs, universities, and scholarships. If the database does not cover a subject, it says so.
       </p>
@@ -67,6 +69,7 @@ export default function AssistantPage() {
         {["machine learning", "agriculture", "renewable energy", "cancer genomics"].map((example) => (
           <button key={example} type="button" className="chip" onClick={() => ask(undefined, example)}>{example}</button>
         ))}
+      </div>
       </div>
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
       {understanding && (

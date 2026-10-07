@@ -41,7 +41,7 @@ function isActive(pathname: string, href: string) {
 
 function itemClass(active: boolean) {
   return `rounded-md px-2.5 py-2 text-sm ${
-    active ? "bg-[var(--light-teal)] font-medium text-[var(--navy)]" : "text-[var(--gray-700)] hover:bg-[var(--gray-100)]"
+    active ? "nav-active" : "text-[var(--gray-700)] hover:bg-[var(--gray-100)]"
   }`;
 }
 
@@ -92,7 +92,7 @@ export default function Navbar() {
   const initial = name.slice(0, 1).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--gray-200)] bg-white">
+    <header className="sticky top-0 z-50 border-b border-[var(--gray-200)] bg-[var(--paper)]">
       <div className="page-container flex h-14 items-center justify-between gap-3">
         <Link href="/" className="shrink-0 text-sm font-semibold tracking-tight text-[var(--navy)]">
           ProFinder

@@ -111,7 +111,7 @@ export default function SearchPage() {
                     <span className="text-xs uppercase text-gray-400">Supervisor</span>
                     <Link href={`/professors/${p.id}`} className="ml-2 font-semibold text-[var(--navy)] hover:text-[var(--teal)]">{p.name}</Link>
                     <span className="ml-2 text-sm text-gray-500">{p.universityName}</span>
-                    <div className="mt-1 flex flex-wrap gap-1">{p.researchAreas.map((a) => <span key={a} className="badge-teal">{a}</span>)}</div>
+                    <div className="mt-1 flex flex-wrap gap-1">{p.researchAreas.map((a) => <span key={a} className="tag">{a}</span>)}</div>
                   </li>
                 ))}
               </ul>

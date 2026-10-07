@@ -281,7 +281,7 @@ export default async function ProfessorDetailPage({ params }: Props) {
                 <Link
                   key={r.researchAreaId}
                   href={`/professors?area=${encodeURIComponent(r.researchArea.name)}`}
-                  className="badge-teal hover:opacity-80"
+                  className="tag hover:opacity-80"
                 >
                   {r.researchArea.name}
                 </Link>

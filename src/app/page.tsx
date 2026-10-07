@@ -69,10 +69,10 @@ export default async function HomePage() {
   return (
     <div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "WebSite", name: "ProFinder", url: SITE, potentialAction: { "@type": "SearchAction", target: `${SITE}/professors?q={search_term_string}`, "query-input": "required name=search_term_string" } }) }} />
-      <section className="border-b border-[var(--gray-200)] bg-white pt-12 pb-8">
+      <section className="hero-atmosphere border-b border-[var(--gray-200)] pt-14 pb-10">
         <div className="page-container text-center">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--gray-500)]">ProFinder</p>
-          <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--navy)] sm:text-4xl">Find the right research path for your future.</h1>
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--violet)]">✦ ProFinder</p>
+          <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--navy)] sm:text-4xl">Find the <span className="gradient-text">research path</span> that's yours.</h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-[var(--gray-700)]">Explore programs, universities, and professors based on what you actually want to study.</p>
           <div className="mx-auto mt-6 max-w-2xl text-left"><AcademicSearchBox /></div>
           <p className="mx-auto mt-3 max-w-2xl text-xs text-[var(--gray-500)]">
@@ -117,7 +117,8 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-      <section className="page-container pb-4">
+      <section className="band-lavender py-10">
+      <div className="page-container">
         <h2 className="section-title">Deadline radar</h2>
         <p className="mt-2 max-w-2xl text-sm text-gray-600">Stored program notes only. No countdown is shown, because these dates are not verified.</p>
         <ul className="mt-4 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100 bg-white">
@@ -130,6 +131,37 @@ export default async function HomePage() {
           {radar.length === 0 && <li className="px-4 py-3 text-sm text-gray-500">No program deadline notes are stored yet.</li>}
         </ul>
         <Link href="/scholarship" className="mt-4 inline-flex text-sm font-semibold text-[var(--teal)]">See scholarship records</Link>
+      </div>
+      </section>
+      <section className="orbit-band">
+        <div className="page-container py-16 text-center">
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#c4b5fd]">Your next research direction</p>
+          <h2 className="mx-auto mt-3 max-w-xl text-2xl font-semibold text-white">Open a stored professor, program, or university.</h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-[#ddd6fe]">The colors mark kinds of records. They are not a prediction of admission or funding.</p>
+          <div className="orbit" aria-hidden="true">
+            <span className="orbit-ring orbit-ring-a" />
+            <span className="orbit-ring orbit-ring-b" />
+            <span className="orbit-node node-interest" />
+            <span className="orbit-node node-research" />
+            <span className="orbit-node node-professor" />
+            <span className="orbit-node node-university" />
+            <span className="orbit-node node-program" />
+            <span className="orbit-node node-funding" />
+          </div>
+          <ul className="mx-auto mt-4 flex max-w-lg flex-wrap justify-center gap-2 text-xs text-[#e9e5ff]">
+            <li className="rounded-full bg-white/10 px-2 py-1">Interest</li>
+            <li className="rounded-full bg-white/10 px-2 py-1">Research</li>
+            <li className="rounded-full bg-white/10 px-2 py-1">Professor</li>
+            <li className="rounded-full bg-white/10 px-2 py-1">University</li>
+            <li className="rounded-full bg-white/10 px-2 py-1">Program</li>
+            <li className="rounded-full bg-white/10 px-2 py-1">Funding</li>
+          </ul>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href="/find" className="btn-primary">Find My Match</Link>
+            <Link href="/professors" className="btn-secondary">Professors</Link>
+            <Link href="/assistant" className="btn-secondary">Research assistant</Link>
+          </div>
+        </div>
       </section>
       <section className="page-container py-16 text-center">
         <h2 className="section-title">Free and Pro</h2>
