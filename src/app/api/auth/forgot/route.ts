@@ -27,37 +27,31 @@ export async function POST(req: NextRequest) {
   await ensureSchema();
   const body = await req.json().catch(() => ({}));
   const email = String(body.email || "").toLowerCase().trim();
-  if (!email) return NextResponse.json({ error: "Email is required." }, { status: 400 });
+  if (!email || !email.includes("@") || email.length > 200) {
+    return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
+  }
 
+  const generic = { ok: true, message: "If that account exists, a code was sent." };
   const student = await prisma.student.findUnique({ where: { email } });
-  if (!student) return NextResponse.json({ ok: true, message: "If that account exists, a code was sent." });
+  if (!student) return NextResponse.json(generic);
 
   const code = String(crypto.randomInt(100000, 999999));
   const tokenData = {
     resetToken: crypto.createHash("sha256").update(code).digest("hex"),
     resetTokenExp: new Date(Date.now() + 1000 * 60 * 15),
   };
-  try {
-    await prisma.student.update({ where: { id: student.id }, data: tokenData });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "";
-    if (!message.includes("resetToken")) throw error;
-    await prisma.$executeRawUnsafe("ALTER TABLE Student ADD COLUMN resetToken TEXT");
-    await prisma.$executeRawUnsafe("ALTER TABLE Student ADD COLUMN resetTokenExp DATETIME");
-    await prisma.student.update({ where: { id: student.id }, data: tokenData });
-  }
+  await prisma.student.update({ where: { id: student.id }, data: tokenData });
 
   try {
     const sent = await sendCode(email, code);
     if (!sent) {
-      return NextResponse.json({
-        ok: true,
-        message: "No mailbox is configured yet, so the reset code is shown here. It expires in 15 minutes.",
-        devCode: code,
-      });
+      if (process.env.NODE_ENV !== "production") {
+        return NextResponse.json({ ...generic, devCode: code });
+      }
+      return NextResponse.json({ error: "Password reset email is not configured." }, { status: 503 });
     }
   } catch {
-    return NextResponse.json({ error: "The mailbox rejected the message. Check the SMTP settings." }, { status: 502 });
+    return NextResponse.json({ error: "The mailbox rejected the message." }, { status: 502 });
   }
-  return NextResponse.json({ ok: true, message: "Verification code sent to that email." });
+  return NextResponse.json(generic);
 }
