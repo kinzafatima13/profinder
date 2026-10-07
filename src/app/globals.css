@@ -40,7 +40,16 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-md bg-[var(--teal)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--teal-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--teal)] focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center rounded-md bg-[var(--teal)] px-4 py-2 text-sm font-medium text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--teal)] focus-visible:ring-offset-2;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+  }
+
+  .btn-primary:hover {
+    background: var(--teal-dark);
+  }
+
+  .btn-primary:active {
+    transform: translateY(1px);
   }
 
   .btn-secondary {
@@ -52,7 +61,14 @@ body {
   }
 
   .card {
-    @apply rounded-lg border border-[var(--gray-200)] bg-white transition hover:border-[var(--gray-500)];
+    @apply rounded-lg border border-[var(--gray-200)] bg-white;
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .card:hover {
+    border-color: var(--gray-500);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
   }
 
   .badge {
@@ -98,4 +114,33 @@ body {
   .page-container {
     @apply mx-auto max-w-6xl px-4 sm:px-6 lg:px-8;
   }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border border-[var(--gray-200)] bg-white px-2.5 py-1 text-xs text-[var(--gray-700)];
+    animation: pf-in 0.18s ease;
+  }
+
+  .chip:hover {
+    border-color: var(--teal);
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, var(--gray-100) 25%, var(--gray-50) 50%, var(--gray-100) 75%);
+    background-size: 200% 100%;
+    animation: pf-shimmer 1.2s ease-in-out infinite;
+  }
+
+  .menu-pop {
+    animation: pf-in 0.16s ease;
+  }
+}
+
+@keyframes pf-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pf-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
 }

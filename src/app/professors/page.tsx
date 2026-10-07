@@ -1,11 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import { prisma } from "@/lib/prisma";
+import { prisma, ensureSchema } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { computeResearchMatch } from "@/lib/matching";
 import { assessTarget, newestStoredYear } from "@/lib/professor-assessment";
 import ProfessorCard from "@/components/ProfessorCard";
+import ProfessorFilters, { type ProfessorFilterValues } from "@/components/ProfessorFilters";
 import { SITE } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -24,13 +25,14 @@ type SearchParams = {
   field?: string;
   discipline?: string;
   major?: string;
+  country?: string;
 };
 
 export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
-  const filtered = Boolean(searchParams.q || searchParams.area || searchParams.research || searchParams.university || searchParams.verified || searchParams.email || searchParams.department || searchParams.papers || searchParams.page || searchParams.field || searchParams.discipline || searchParams.major);
+  const filtered = Boolean(searchParams.q || searchParams.area || searchParams.research || searchParams.university || searchParams.verified || searchParams.email || searchParams.department || searchParams.papers || searchParams.page || searchParams.field || searchParams.discipline || searchParams.major || searchParams.country);
   return {
     title: { absolute: "Professors | ProFinder" },
-    description: "Supervisor records currently stored. Verification, email, and research tags are shown only when stored. The catalog is not limited to one discipline.",
+    description: "Find professors who match your interests. Filters use stored links only.",
     alternates: { canonical: `${SITE}/professors` },
     robots: filtered ? { index: false, follow: true } : { index: true, follow: true },
   };
@@ -42,11 +44,13 @@ function pageHref(page: number, filters: Omit<SearchParams, "page">) {
   const params = new URLSearchParams();
   if (filters.q) params.set("q", filters.q);
   if (filters.area) params.set("area", filters.area);
+  if (filters.research) params.set("research", filters.research);
   if (filters.university) params.set("university", filters.university);
   if (filters.department) params.set("department", filters.department);
   if (filters.field) params.set("field", filters.field);
   if (filters.discipline) params.set("discipline", filters.discipline);
   if (filters.major) params.set("major", filters.major);
+  if (filters.country) params.set("country", filters.country);
   if (filters.verified === "1") params.set("verified", "1");
   if (filters.email === "1") params.set("email", "1");
   if (filters.papers === "1") params.set("papers", "1");
@@ -56,11 +60,16 @@ function pageHref(page: number, filters: Omit<SearchParams, "page">) {
   return query ? `/professors?${query}` : "/professors";
 }
 
+function normalizeTerm(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
 export default async function ProfessorsPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
+  await ensureSchema();
   const areaFilter = searchParams.area || searchParams.research;
   const q = searchParams.q?.trim();
   const universityId = searchParams.university;
@@ -72,18 +81,28 @@ export default async function ProfessorsPage({
   const fieldId = searchParams.field || "";
   const disciplineId = searchParams.discipline || "";
   const majorId = searchParams.major || "";
+  const country = searchParams.country?.trim() || "";
   const requested = Number(searchParams.page || "1");
-  const academicFilter = Boolean(fieldId || disciplineId || majorId);
+
+  let aliasFieldIds: string[] = [];
+  let aliasDisciplineIds: string[] = [];
+  let aliasMajorIds: string[] = [];
+  if (q && q.length >= 2) {
+    const aliases = await prisma.academicAlias.findMany({
+      where: { OR: [{ term: { contains: q } }, { normalizedTerm: { contains: normalizeTerm(q) } }] },
+      select: { academicFieldId: true, disciplineId: true, majorId: true },
+      take: 12,
+    });
+    aliasFieldIds = aliases.map((row) => row.academicFieldId).filter((id): id is string => Boolean(id));
+    aliasDisciplineIds = aliases.map((row) => row.disciplineId).filter((id): id is string => Boolean(id));
+    aliasMajorIds = aliases.map((row) => row.majorId).filter((id): id is string => Boolean(id));
+  }
+
   const where = {
     AND: [
-      areaFilter
-        ? {
-            researchAreas: {
-              some: { researchArea: { name: areaFilter } },
-            },
-          }
-        : {},
+      areaFilter ? { researchAreas: { some: { researchArea: { name: areaFilter } } } } : {},
       universityId ? { universityId } : {},
+      country ? { university: { country } } : {},
       department ? { department: { contains: department } } : {},
       fieldId ? { academicFields: { some: { academicFieldId: fieldId } } } : {},
       disciplineId ? { disciplines: { some: { disciplineId } } } : {},
@@ -102,8 +121,20 @@ export default async function ProfessorsPage({
         ? {
             OR: [
               { name: { contains: q } },
+              { nameZh: { contains: q } },
               { researchInterests: { contains: q } },
+              { researchKeywords: { contains: q } },
               { department: { contains: q } },
+              { publications: { contains: q } },
+              { university: { OR: [{ name: { contains: q } }, { nameZh: { contains: q } }, { city: { contains: q } }] } },
+              { researchAreas: { some: { researchArea: { OR: [{ name: { contains: q } }, { keywords: { contains: q } }] } } } },
+              { topics: { some: { topic: { name: { contains: q } } } } },
+              { academicFields: { some: { academicField: { name: { contains: q } } } } },
+              { disciplines: { some: { discipline: { name: { contains: q } } } } },
+              { majors: { some: { major: { OR: [{ name: { contains: q } }, { officialName: { contains: q } }] } } } },
+              ...(aliasFieldIds.length ? [{ academicFields: { some: { academicFieldId: { in: aliasFieldIds } } } }] : []),
+              ...(aliasDisciplineIds.length ? [{ disciplines: { some: { disciplineId: { in: aliasDisciplineIds } } } }] : []),
+              ...(aliasMajorIds.length ? [{ majors: { some: { majorId: { in: aliasMajorIds } } } }] : []),
             ],
           }
         : {},
@@ -125,8 +156,8 @@ export default async function ProfessorsPage({
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    prisma.researchArea.findMany({ orderBy: { name: "asc" } }),
-    prisma.university.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.researchArea.findMany({ orderBy: { name: "asc" }, select: { name: true } }),
+    prisma.university.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, country: true } }),
     prisma.academicField.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
     prisma.discipline.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, academicFieldId: true } }),
     prisma.major.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, officialName: true, disciplineId: true } }),
@@ -137,10 +168,10 @@ export default async function ProfessorsPage({
     ? await prisma.student.findUnique({ where: { email: session.user.email } })
     : null;
   const filters = {
-    q,
-    area: areaFilter,
-    university: universityId,
-    department,
+    q: q || "",
+    area: areaFilter || "",
+    university: universityId || "",
+    department: department || "",
     verified: verifiedOnly ? "1" : "",
     email: emailOnly ? "1" : "",
     papers: papersOnly ? "1" : "",
@@ -148,169 +179,154 @@ export default async function ProfessorsPage({
     field: fieldId,
     discipline: disciplineId,
     major: majorId,
+    country,
   };
-  const disciplineOptions = disciplines.filter((row) => !fieldId || row.academicFieldId === fieldId);
-  const majorOptions = majors.filter((row) => !disciplineId || row.disciplineId === disciplineId);
+  const values: ProfessorFilterValues = {
+    q: q || "",
+    area: areaFilter || "",
+    university: universityId || "",
+    department: department || "",
+    field: fieldId,
+    discipline: disciplineId,
+    major: majorId,
+    country,
+    verified: verifiedOnly,
+    email: emailOnly,
+    papers: papersOnly,
+    funding,
+  };
+  const fieldName = fields.find((row) => row.id === fieldId)?.name;
+  const disciplineName = disciplines.find((row) => row.id === disciplineId)?.name;
+  const majorName = majors.find((row) => row.id === majorId);
+  const universityName = universities.find((row) => row.id === universityId)?.name;
+  const chips: { label: string; href: string }[] = [];
+  const clearOne = (key: keyof typeof filters) => pageHref(1, { ...filters, [key]: "" });
+  if (q) chips.push({ label: q, href: clearOne("q") });
+  if (country) chips.push({ label: country, href: clearOne("country") });
+  if (universityName) chips.push({ label: universityName, href: clearOne("university") });
+  if (fieldName) chips.push({ label: fieldName, href: clearOne("field") });
+  if (disciplineName) chips.push({ label: disciplineName, href: clearOne("discipline") });
+  if (majorName) chips.push({ label: majorName.officialName || majorName.name, href: clearOne("major") });
+  if (areaFilter) chips.push({ label: areaFilter, href: clearOne("area") });
+  if (department) chips.push({ label: department, href: clearOne("department") });
+  if (verifiedOnly) chips.push({ label: "Verified", href: clearOne("verified") });
+  if (emailOnly) chips.push({ label: "Email available", href: clearOne("email") });
+  if (papersOnly) chips.push({ label: "Publications", href: clearOne("papers") });
+  const activeCount = chips.length;
   const start = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const end = total === 0 ? 0 : start + professors.length - 1;
 
   return (
-    <div className="page-container py-10">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="section-title">Professors</h1>
-          <p className="mt-1 text-gray-600">
-            {total} professor{total !== 1 ? "s" : ""} found
-            {total > 0 ? ` · showing ${start}–${end}` : ""}
-            {" · verified faculty first"}
-          </p>
+    <div className="page-container py-8">
+      <ProfessorFilters
+        values={values}
+        fields={fields}
+        disciplines={disciplines}
+        majors={majors.map((row) => ({ id: row.id, name: row.officialName || row.name, disciplineId: row.disciplineId }))}
+        universities={universities.map((row) => ({ id: row.id, name: row.name, country: row.country || "" }))}
+        areas={areas.map((row) => row.name)}
+        countries={[...new Set(universities.map((row) => row.country).filter((item): item is string => Boolean(item)))].sort()}
+        activeCount={activeCount}
+      >
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="section-title">Find your research match</h1>
+            <p className="mt-1 text-sm text-[var(--gray-700)]">
+              {total.toLocaleString()} professor{total === 1 ? "" : "s"} found
+              {total > 0 ? ` · showing ${start}–${end}` : ""}
+            </p>
+          </div>
         </div>
-
-        <form className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap" action="/professors" method="get">
-          <input
-            type="search"
-            name="q"
-            defaultValue={q}
-            placeholder="Search name or research..."
-            className="input w-full sm:max-w-xs"
-          />
-          <select
-            name="area"
-            defaultValue={areaFilter ?? ""}
-            className="input w-full sm:max-w-[200px]"
-          >
-            <option value="">All research areas</option>
-            {areas.map((a) => (
-              <option key={a.id} value={a.name}>
-                {a.name}
-              </option>
+        {chips.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-2" aria-label="Active filters">
+            {chips.map((chip) => (
+              <Link key={chip.label + chip.href} href={chip.href} className="chip">
+                {chip.label}
+                <span aria-hidden="true">×</span>
+                <span className="sr-only">Remove {chip.label}</span>
+              </Link>
             ))}
-          </select>
-          {fields.length > 0 && (
-            <select name="field" defaultValue={fieldId} className="input w-full sm:max-w-[200px]">
-              <option value="">All academic fields</option>
-              {fields.map((field) => (
-                <option key={field.id} value={field.id}>{field.name}</option>
-              ))}
-            </select>
-          )}
-          {disciplines.length > 0 && (
-            <select name="discipline" defaultValue={disciplineId} className="input w-full sm:max-w-[200px]">
-              <option value="">All disciplines</option>
-              {disciplineOptions.map((row) => (
-                <option key={row.id} value={row.id}>{row.name}</option>
-              ))}
-            </select>
-          )}
-          {majors.length > 0 && (
-            <select name="major" defaultValue={majorId} className="input w-full sm:max-w-[220px]">
-              <option value="">All majors</option>
-              {majorOptions.map((row) => (
-                <option key={row.id} value={row.id}>{row.officialName || row.name}</option>
-              ))}
-            </select>
-          )}
-          <select name="university" defaultValue={universityId ?? ""} className="input w-full sm:max-w-[220px]">
-            <option value="">All universities</option>
-            {universities.map((university) => (
-              <option key={university.id} value={university.id}>{university.name}</option>
-            ))}
-          </select>
-          <input className="input w-full sm:max-w-[180px]" name="department" defaultValue={department ?? ""} placeholder="Department" />
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" name="verified" value="1" defaultChecked={verifiedOnly} />
-            Verified only
-          </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" name="email" value="1" defaultChecked={emailOnly} />
-            Has email
-          </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" name="papers" value="1" defaultChecked={papersOnly} />
-            Has stored papers
-          </label>
-          <p className="text-sm text-[var(--gray-500)]">Field, discipline, and major use stored links only. Funding is not a filter because it is not publicly verified.</p>
-          <button type="submit" className="btn-primary w-full sm:w-auto">
-            Filter
-          </button>
-        </form>
-      </div>
+            <Link href="/professors" className="text-sm font-medium text-[var(--teal-dark)] hover:underline">Clear all</Link>
+          </div>
+        )}
+        <p className="mt-3 text-xs text-[var(--gray-500)]">Field, discipline, and major use stored links only. A missing combination is not guessed.</p>
 
-      {professors.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center text-gray-500">
-          {academicFilter
-            ? "No stored link matches this academic filter. Professors are not guessed from department names."
-            : "No professors match your filters."}
-        </div>
-      ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {professors.map((p) => {
-            const match = student?.researchInterests
-              ? computeResearchMatch(
-                  {
-                    researchInterests: student.researchInterests,
-                    major: student.major,
-                    degree: student.degree,
-                    skills: student.skills,
-                    academicBackground: student.academicBackground,
-                    projects: student.projects,
-                    cvText: student.cvText,
-                  },
-                  {
-                    researchInterests: p.researchInterests,
-                    department: p.department,
-                    publications: p.publications,
-                    researchAreas: p.researchAreas.map((area) => ({
-                      name: area.researchArea.name,
-                      keywords: area.researchArea.keywords,
-                    })),
-                  }
-                )
-              : null;
-            const target = assessTarget({
-              matchScore: match && !match.incomplete ? match.score : null,
-              verified: p.dataStatus === "verified",
-              hasEmail: Boolean(p.email?.trim()),
-              newestYear: newestStoredYear(p.publications),
-            });
-            return (
-            <ProfessorCard
-              key={p.id}
-              id={p.id}
-              name={p.name}
-              nameZh={p.nameZh}
-              position={p.position}
-              department={p.department}
-              universityName={p.university.name}
-              universityCity={p.university.city}
-              researchAreas={p.researchAreas.map((r) => r.researchArea.name)}
-              researchInterests={p.researchInterests}
-              verified={p.dataStatus === "verified"}
-              email={p.email}
-              recent={newestStoredYear(p.publications) ? `Newest stored year ${newestStoredYear(p.publications)}` : null}
-              matchScore={match && !match.incomplete ? match.score : null}
-              priority={target.level}
-            />
-            );
-          })}
-        </div>
-      )}
+        {professors.length === 0 ? (
+          <div className="mt-6 rounded-lg border border-dashed border-[var(--gray-200)] bg-white px-6 py-12 text-center">
+            <h2 className="text-lg font-semibold text-[var(--navy)]">No professors match these filters.</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-[var(--gray-700)]">Try a broader research area or remove one filter.</p>
+            <Link href="/professors" className="btn-primary mt-5">Clear filters</Link>
+          </div>
+        ) : (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {professors.map((p) => {
+              const match = student?.researchInterests
+                ? computeResearchMatch(
+                    {
+                      researchInterests: student.researchInterests,
+                      major: student.major,
+                      degree: student.degree,
+                      skills: student.skills,
+                      academicBackground: student.academicBackground,
+                      projects: student.projects,
+                      cvText: student.cvText,
+                    },
+                    {
+                      researchInterests: p.researchInterests,
+                      department: p.department,
+                      publications: p.publications,
+                      researchAreas: p.researchAreas.map((area) => ({
+                        name: area.researchArea.name,
+                        keywords: area.researchArea.keywords,
+                      })),
+                    }
+                  )
+                : null;
+              const target = assessTarget({
+                matchScore: match && !match.incomplete ? match.score : null,
+                verified: p.dataStatus === "verified",
+                hasEmail: Boolean(p.email?.trim()),
+                newestYear: newestStoredYear(p.publications),
+              });
+              return (
+                <ProfessorCard
+                  key={p.id}
+                  id={p.id}
+                  name={p.name}
+                  nameZh={p.nameZh}
+                  position={p.position}
+                  department={p.department}
+                  universityName={p.university.name}
+                  universityCity={p.university.city}
+                  researchAreas={p.researchAreas.map((r) => r.researchArea.name)}
+                  researchInterests={p.researchInterests}
+                  verified={p.dataStatus === "verified"}
+                  email={p.email}
+                  recent={newestStoredYear(p.publications) ? `Newest stored year ${newestStoredYear(p.publications)}` : null}
+                  matchScore={match && !match.incomplete ? match.score : null}
+                  priority={target.level}
+                />
+              );
+            })}
+          </div>
+        )}
 
-      {total > 0 && (
-        <nav className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Professor pages">
-          {page <= 1 ? (
-            <span className="btn-secondary pointer-events-none opacity-40">Previous</span>
-          ) : (
-            <Link className="btn-secondary text-center" href={pageHref(page - 1, filters)}>Previous</Link>
-          )}
-          <p className="text-center text-sm text-gray-600">Page {page} of {pageCount}</p>
-          {page >= pageCount ? (
-            <span className="btn-secondary pointer-events-none opacity-40">Next</span>
-          ) : (
-            <Link className="btn-secondary text-center" href={pageHref(page + 1, filters)}>Next</Link>
-          )}
-        </nav>
-      )}
+        {total > 0 && (
+          <nav className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Professor pages">
+            {page <= 1 ? (
+              <span className="btn-secondary pointer-events-none opacity-40">Previous</span>
+            ) : (
+              <Link className="btn-secondary text-center" href={pageHref(page - 1, filters)}>Previous</Link>
+            )}
+            <p className="text-center text-sm text-[var(--gray-700)]">Page {page} of {pageCount}</p>
+            {page >= pageCount ? (
+              <span className="btn-secondary pointer-events-none opacity-40">Next</span>
+            ) : (
+              <Link className="btn-secondary text-center" href={pageHref(page + 1, filters)}>Next</Link>
+            )}
+          </nav>
+        )}
+      </ProfessorFilters>
     </div>
   );
 }

@@ -87,6 +87,17 @@ export function ensureSchema() {
         CONSTRAINT "Major_disciplineId_fkey" FOREIGN KEY ("disciplineId") REFERENCES "Discipline" ("id") ON DELETE CASCADE ON UPDATE CASCADE
       )`);
       await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Major_slug_key" ON "Major"("slug")`);
+      await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "AcademicAlias" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "term" TEXT NOT NULL,
+        "normalizedTerm" TEXT NOT NULL,
+        "kind" TEXT NOT NULL,
+        "academicFieldId" TEXT,
+        "disciplineId" TEXT,
+        "majorId" TEXT
+      )`);
+      await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "AcademicAlias_normalizedTerm_kind_key" ON "AcademicAlias"("normalizedTerm", "kind")`);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "AcademicAlias_normalizedTerm_idx" ON "AcademicAlias"("normalizedTerm")`);
       await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "ProfessorMajor" (
         "professorId" TEXT NOT NULL,
         "majorId" TEXT NOT NULL,
@@ -158,6 +169,14 @@ export function ensureSchema() {
         ["departmentId", "TEXT"],
       ] as const) {
         await addColumn("Professor", column, type);
+      }
+      for (const [column, type] of [
+        ["verificationStatus", "TEXT DEFAULT 'UNVERIFIED'"],
+        ["lastCheckedAt", "DATETIME"],
+        ["lastVerifiedAt", "DATETIME"],
+        ["confidence", "REAL"],
+      ] as const) {
+        await addColumn("Scholarship", column, type);
       }
       for (const [column, type] of [
         ["collegeId", "TEXT"],

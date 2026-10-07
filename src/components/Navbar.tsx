@@ -13,19 +13,14 @@ const primary = [
   { href: "/scholarship", label: "Funding" },
 ];
 
-const publicMore = [
-  { href: "/research-areas", label: "Research Areas" },
-  { href: "/fields", label: "Fields" },
-  { href: "/majors", label: "Majors" },
-  { href: "/search", label: "Search" },
-  { href: "/topics", label: "Topics" },
+const moreLinks = [
   { href: "/compare", label: "Compare" },
   { href: "/notices", label: "Notices" },
   { href: "/assistant", label: "Assistant" },
 ];
 
 const privateMore = [
-  { href: "/shortlist", label: "My Shortlist" },
+  { href: "/shortlist", label: "Shortlist" },
   { href: "/tracker", label: "Applications" },
 ];
 
@@ -35,6 +30,7 @@ const mobilePublic = [
   { href: "/programs", label: "Programs" },
   { href: "/professors", label: "Professors" },
   { href: "/find", label: "Match" },
+  { href: "/scholarship", label: "Funding" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -59,7 +55,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
-  const more = session ? [...privateMore, ...publicMore] : publicMore;
+  const more = session ? [...privateMore, ...moreLinks] : moreLinks;
   const mobilePrimary = session
     ? [...mobilePublic, { href: "/shortlist", label: "Shortlist" }, { href: "/tracker", label: "Applications" }]
     : mobilePublic;
@@ -183,7 +179,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      <nav className="flex flex-wrap gap-1 border-t border-[var(--gray-200)] px-4 py-2 lg:hidden" aria-label="Mobile">
+      <nav className="flex gap-1 overflow-x-auto border-t border-[var(--gray-200)] px-4 py-2 lg:hidden" aria-label="Mobile">
         {mobilePrimary.map((item) => (
           <Link key={item.href} href={item.href} className={itemClass(isActive(pathname, item.href))} aria-current={isActive(pathname, item.href) ? "page" : undefined}>
             {item.label}

@@ -20,9 +20,11 @@ export async function GET(req: NextRequest) {
             ? {
                 OR: [
                   { name: { contains: q } },
+                  { nameZh: { contains: q } },
                   { researchInterests: { contains: q } },
                   { department: { contains: q } },
                   { university: { name: { contains: q } } },
+                  { researchAreas: { some: { researchArea: { name: { contains: q } } } } },
                 ],
               }
             : {},

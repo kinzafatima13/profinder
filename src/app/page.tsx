@@ -72,9 +72,8 @@ export default async function HomePage() {
       <section className="border-b border-[var(--gray-200)] bg-white pt-12 pb-8">
         <div className="page-container text-center">
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--gray-500)]">ProFinder</p>
-          <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--navy)] sm:text-4xl">Find the right university, program, funding and research opportunity for you.</h1>
-          <p className="mx-auto mt-3 text-sm text-[var(--gray-500)]">Master’s · PhD · Scholarships · Research · Universities · Supervisors</p>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-[var(--gray-700)]">Discover stored academic opportunities, compare what is actually on file, and organize applications. A program does not need a supervisor. A scholarship does not need a university.</p>
+          <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--navy)] sm:text-4xl">Find the right university, program, and professor.</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-[var(--gray-700)]">Explore research opportunities, discover supervisors, and build your application shortlist in one place.</p>
           <div className="mx-auto mt-6 max-w-2xl text-left"><AcademicSearchBox /></div>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <Link href="/search" className="btn-primary">Search opportunities</Link>
