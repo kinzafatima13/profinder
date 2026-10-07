@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { ensureSchema, prisma } from "@/lib/prisma";
 import AcademicSearchBox from "@/components/AcademicSearchBox";
 import { SITE } from "@/lib/seo";
 
@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function FieldsPage() {
+  await ensureSchema();
   const fields = await prisma.academicField.findMany({
     orderBy: { name: "asc" },
     include: { _count: { select: { disciplines: true, programs: true, professors: true } } },

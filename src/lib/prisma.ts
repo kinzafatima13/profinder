@@ -87,6 +87,24 @@ export function ensureSchema() {
         CONSTRAINT "Major_disciplineId_fkey" FOREIGN KEY ("disciplineId") REFERENCES "Discipline" ("id") ON DELETE CASCADE ON UPDATE CASCADE
       )`);
       await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Major_slug_key" ON "Major"("slug")`);
+      await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "ProfessorMajor" (
+        "professorId" TEXT NOT NULL,
+        "majorId" TEXT NOT NULL,
+        CONSTRAINT "ProfessorMajor_professorId_fkey" FOREIGN KEY ("professorId") REFERENCES "Professor" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT "ProfessorMajor_majorId_fkey" FOREIGN KEY ("majorId") REFERENCES "Major" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+        PRIMARY KEY ("professorId", "majorId")
+      )`);
+      await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "ProfessorDiscipline" (
+        "professorId" TEXT NOT NULL,
+        "disciplineId" TEXT NOT NULL,
+        PRIMARY KEY ("professorId", "disciplineId")
+      )`);
+      await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "ProfessorAcademicField" (
+        "professorId" TEXT NOT NULL,
+        "academicFieldId" TEXT NOT NULL,
+        PRIMARY KEY ("professorId", "academicFieldId")
+      )`);
+
       await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "College" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "universityId" TEXT NOT NULL,
