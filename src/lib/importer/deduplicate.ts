@@ -22,8 +22,8 @@ export async function findUniversityDuplicate(
   const allUnis = await prisma.university.findMany({
     select: { id: true, name: true },
   });
-  const targetNorm = uni.name.trim().toLowerCase();
-  const matched = allUnis.find((u) => u.name.trim().toLowerCase() === targetNorm);
+  const targetNorm = normalizeName(uni.name);
+  const matched = allUnis.find((u) => normalizeName(u.name) === targetNorm);
   if (matched) {
     return prisma.university.findUnique({ where: { id: matched.id } });
   }
