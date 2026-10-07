@@ -74,11 +74,27 @@ async function main() {
     } else {
       await prisma.program.create({ data: { universityId: uni.id, degree: row.degree.trim(), ...data } });
     }
-    await prisma.sourceRecord.upsert({
-      where: { id: `program-${existing?.id || uni.id}-${slugifyAcademic(row.degree + "-" + row.name)}` },
-      update: { url: row.sourceUrl, verificationStatus: data.verificationStatus, checkedAt: new Date(), verifiedAt: data.lastVerifiedAt, confidence: data.confidence },
-      create: { id: `program-${existing?.id || uni.id}-${slugifyAcademic(row.degree + "-" + row.name)}`, entityType: "PROGRAM", entityId: existing?.id || "pending", url: row.sourceUrl, sourceType: "OFFICIAL_UNIVERSITY", verificationStatus: data.verificationStatus, checkedAt: new Date(), verifiedAt: data.lastVerifiedAt, confidence: data.confidence },
-    });
+    const savedProgram = existing
+      ? await prisma.program.findUnique({ where: { id: existing.id }, select: { id: true } })
+      : await prisma.program.findFirst({
+          where: { universityId: uni.id, degree: row.degree.trim(), major: row.name.trim() },
+          select: { id: true },
+        });
+    if (savedProgram) {
+      const existingSource = await prisma.sourceRecord.findFirst({
+        where: { entityType: "PROGRAM", entityId: savedProgram.id, url: row.sourceUrl },
+      });
+      if (existingSource) {
+        await prisma.sourceRecord.update({
+          where: { id: existingSource.id },
+          data: { verificationStatus: data.verificationStatus, checkedAt: new Date(), verifiedAt: data.lastVerifiedAt, confidence: data.confidence },
+        });
+      } else {
+        await prisma.sourceRecord.create({
+          data: { entityType: "PROGRAM", entityId: savedProgram.id, url: row.sourceUrl, sourceType: "OFFICIAL_UNIVERSITY", verificationStatus: data.verificationStatus, checkedAt: new Date(), verifiedAt: data.lastVerifiedAt, confidence: data.confidence },
+        });
+      }
+    }
     createdOrUpdated++;
   }
   console.log(JSON.stringify({ university: universityName, rows: rows.length, createdOrUpdated }, null, 2));
