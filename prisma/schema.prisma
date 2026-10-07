@@ -41,6 +41,8 @@ model University {
   programs      Program[]
   professors    Professor[]
   scholarships  Scholarship[]
+  colleges      College[]
+  departments   Department[]
 }
 
 model Program {
@@ -160,6 +162,7 @@ model ResearchArea {
   createdAt   DateTime @default(now())
 
   professors  ProfessorResearchArea[]
+  programs    ProgramResearchArea[]
 }
 
 model ProfessorResearchArea {
