@@ -24,23 +24,21 @@ export default function UniversityCard({
   programCount,
 }: Props) {
   return (
-    <Link href={`/universities/${id}`} className="card block p-5 hover:border-[var(--teal)]">
+    <Link
+      href={`/universities/${id}`}
+      aria-label={`View university: ${name}`}
+      className="card group block p-5 transition duration-150 hover:-translate-y-0.5 hover:border-[var(--teal)] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--teal)] focus-visible:ring-offset-2"
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-[var(--navy)]">{name}</h3>
+          <h3 className="text-lg font-semibold text-[var(--navy)] group-hover:underline">{name}</h3>
           {nameZh && <p className="text-sm text-gray-400">{nameZh}</p>}
-          <p className="mt-1 text-sm text-gray-500">
-            {[city, province, "China"].filter(Boolean).join(" · ")}
-          </p>
+          <p className="mt-1 text-sm text-gray-500">{[city, province, "China"].filter(Boolean).join(" · ")}</p>
         </div>
-        {agencyNumber && (
-          <span className="badge-navy shrink-0">Agency {agencyNumber}</span>
-        )}
+        {agencyNumber && <span className="badge-navy shrink-0">Agency {agencyNumber}</span>}
       </div>
 
-      {description && (
-        <p className="mt-3 line-clamp-2 text-sm text-gray-600">{description}</p>
-      )}
+      {description && <p className="mt-3 line-clamp-2 text-sm text-gray-600">{description}</p>}
 
       <div className="mt-4 flex items-center justify-between text-xs text-[var(--gray-500)]">
         <span>

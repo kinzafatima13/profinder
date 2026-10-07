@@ -14,13 +14,15 @@ export const metadata: Metadata = {
 export default async function ProgramsPage({
   searchParams,
 }: {
-  searchParams: { degree?: string; q?: string };
+  searchParams: { degree?: string; q?: string; university?: string };
 }) {
   const degree = searchParams.degree?.trim() || "";
   const q = searchParams.q?.trim() || "";
+  const universityId = searchParams.university?.trim() || "";
 
   const programs = await prisma.program.findMany({
     where: {
+      ...(universityId ? { universityId } : {}),
       ...(degree ? { degree } : {}),
       ...(q
         ? {
@@ -49,6 +51,7 @@ export default async function ProgramsPage({
         Country, university, degree, then program. Deadlines and fees appear only when they are stored. Unverified notes are not official admissions advice.
       </p>
       <form className="mt-6 flex flex-wrap gap-2" action="/programs">
+        {universityId && <input type="hidden" name="university" value={universityId} />}
         <input name="q" defaultValue={q} placeholder="University or major" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
         <select name="degree" defaultValue={degree} className="rounded-md border border-gray-300 px-3 py-2 text-sm">
           <option value="">All degrees</option>
@@ -58,6 +61,7 @@ export default async function ProgramsPage({
         </select>
         <button className="btn-primary" type="submit">Filter</button>
       </form>
+      {universityId && <p className="mt-3 text-sm text-gray-600">Filtered to one university. <Link href="/programs" className="underline">Clear university filter</Link></p>}
       <p className="mt-4 text-xs text-gray-500">{programs.length} stored programs shown{programs.length === 200 ? " (first 200)" : ""}.</p>
       <div className="mt-4 overflow-x-auto rounded-xl border border-gray-200 bg-white">
         <table className="min-w-full text-left text-sm">

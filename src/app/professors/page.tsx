@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 type SearchParams = {
   area?: string;
+  research?: string;
   q?: string;
   page?: string;
   university?: string;
@@ -26,7 +27,7 @@ type SearchParams = {
 };
 
 export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
-  const filtered = Boolean(searchParams.q || searchParams.area || searchParams.university || searchParams.verified || searchParams.email || searchParams.department || searchParams.papers || searchParams.page || searchParams.field || searchParams.discipline || searchParams.major);
+  const filtered = Boolean(searchParams.q || searchParams.area || searchParams.research || searchParams.university || searchParams.verified || searchParams.email || searchParams.department || searchParams.papers || searchParams.page || searchParams.field || searchParams.discipline || searchParams.major);
   return {
     title: { absolute: "Professors | ProFinder" },
     description: "Supervisor records currently stored. Verification, email, and research tags are shown only when stored. The catalog is not limited to one discipline.",
@@ -60,7 +61,7 @@ export default async function ProfessorsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const areaFilter = searchParams.area;
+  const areaFilter = searchParams.area || searchParams.research;
   const q = searchParams.q?.trim();
   const universityId = searchParams.university;
   const verifiedOnly = searchParams.verified === "1";

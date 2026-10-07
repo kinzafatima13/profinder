@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: { absolute: "Chinese Universities | ProFinder" },
-  description: "104 Chinese universities with stored programs and professor records. Open a university to see what is actually on file.",
+  description: "Chinese universities with stored programs and professor records. Open a university to see what is actually on file.",
   alternates: { canonical: `${SITE}/universities` },
 };
 
@@ -15,7 +15,14 @@ export default async function UniversitiesPage() {
   await ensureSchema();
   const universities = await prisma.university.findMany({
     orderBy: { name: "asc" },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      nameZh: true,
+      city: true,
+      province: true,
+      description: true,
+      agencyNumber: true,
       _count: { select: { professors: true, programs: true } },
     },
   });
