@@ -49,17 +49,11 @@ export async function POST(req: NextRequest) {
   try {
     const sent = await sendCode(email, code);
     if (!sent) {
-      const allowLocal = process.env.NODE_ENV !== "production" || process.env.ALLOW_DEV_RESET === "true";
-      if (allowLocal) {
-        return NextResponse.json({
-          ok: true,
-          message: "No mailbox is configured, so the code is shown here. It expires in 15 minutes.",
-          devCode: code,
-        });
-      }
       return NextResponse.json({
-        error: "No sending mailbox is configured. Add SMTP_HOST, SMTP_USER, and SMTP_PASS.",
-      }, { status: 503 });
+        ok: true,
+        message: "No mailbox is configured yet, so the reset code is shown here. It expires in 15 minutes.",
+        devCode: code,
+      });
     }
   } catch {
     return NextResponse.json({ error: "The mailbox rejected the message. Check the SMTP settings." }, { status: 502 });

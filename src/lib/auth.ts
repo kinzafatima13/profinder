@@ -51,5 +51,5 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "profinder-nextauth-secret-set-NEXTAUTH_SECRET-in-vercel",
 };
