@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { applicationPlan, parseDocuments, readinessScore, COMMON_DOCUMENTS } from "@/lib/application-plan";
+import { applicationPlan, parseDocuments, readinessScore, COMMON_DOCUMENTS, OPTIONAL_DOCUMENTS } from "@/lib/application-plan";
 
 const OUTREACH = ["Drafted", "Sent", "Waiting", "Replied", "Interested", "Rejected"];
 
@@ -17,17 +17,21 @@ const STATUSES = [
   "Follow-up",
   "Replied",
   "Interested",
+  "Supervisor Interested",
   "Application Started",
   "Application Submitted",
+  "Interview",
+  "Offer",
   "Accepted",
   "Rejected",
+  "Withdrawn",
 ];
 
 function outreachStage(status: string) {
   if (status === "Saved" || status === "Researching" || status === "Drafted") return "Drafted";
   if (status === "Contacted" || status === "Sent") return "Sent";
   if (status === "Follow-up" || status === "Waiting") return "Waiting";
-  if (status === "Accepted") return "Interested";
+  if (status === "Accepted" || status === "Offer" || status === "Supervisor Interested") return "Interested";
   return OUTREACH.includes(status) ? status : "Drafted";
 }
 
@@ -159,17 +163,11 @@ export default function TrackerPage() {
   if (!session) {
     return (
       <div className="page-container py-16 text-center">
-        <h1 className="section-title">Application Tracker</h1>
-        <p className="mt-2 text-gray-600">
-          Log in to save professors and track your applications.
-        </p>
+        <h1 className="section-title">Applications</h1>
+        <p className="mt-2 text-gray-600">Log in to track programs, scholarships, and supervisors.</p>
         <div className="mt-6 flex justify-center gap-3">
-          <Link href="/login?callbackUrl=/tracker" className="btn-primary">
-            Log in
-          </Link>
-          <Link href="/signup" className="btn-secondary">
-            Sign up free
-          </Link>
+          <Link href="/login?callbackUrl=/tracker" className="btn-primary">Log in</Link>
+          <Link href="/signup" className="btn-secondary">Sign up free</Link>
         </div>
       </div>
     );
@@ -179,28 +177,19 @@ export default function TrackerPage() {
     <div className="page-container py-10">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="section-title">Application dashboard</h1>
+          <h1 className="section-title">Applications</h1>
           <p className="mt-1 text-gray-600">
-            {apps.length} tracked · Plan:{" "}
-            <span className="font-medium capitalize">{plan === "pro" ? "Pro" : plan === "free" ? "Free" : "Upgrade pending"}</span>
-            {plan === "free" && (
-              <Link href="/pricing" className="ml-2 text-[var(--teal)] hover:underline">
-                Upgrade for unlimited
-              </Link>
-            )}
+            {apps.length} tracked · Plan: <span className="font-medium capitalize">{plan === "pro" ? "Pro" : plan === "free" ? "Free" : "Upgrade pending"}</span>
+            {plan === "free" && <Link href="/pricing" className="ml-2 text-[var(--teal)] hover:underline">Upgrade for unlimited</Link>}
           </p>
         </div>
-        <Link href="/find" className="btn-primary text-sm">
-          Find professors
-        </Link>
+        <Link href="/search" className="btn-primary text-sm">Search opportunities</Link>
       </div>
       {apps.length > 0 && (
         <section className="mt-6 grid gap-3 sm:grid-cols-3">
           <article className="card p-4">
             <p className="text-xs text-gray-500">Readiness</p>
-            <p className="text-3xl font-bold text-[var(--navy)]">
-              {Math.round(apps.reduce((sum, row) => sum + scoreFor(row).score, 0) / apps.length)}%
-            </p>
+            <p className="text-3xl font-bold text-[var(--navy)]">{Math.round(apps.reduce((sum, row) => sum + scoreFor(row).score, 0) / apps.length)}%</p>
           </article>
           <article className="card p-4 sm:col-span-2">
             <p className="text-xs text-gray-500">Next</p>
@@ -208,22 +197,12 @@ export default function TrackerPage() {
           </article>
         </section>
       )}
-
-      {error && (
-        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
+      {error && <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
       {apps.length === 0 ? (
         <div className="mt-10 rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
-          <p className="text-gray-500">No applications tracked yet.</p>
-          <p className="mt-1 text-sm text-gray-400">
-            Open a professor profile and click &quot;Save to Tracker&quot;.
-          </p>
-          <Link href="/professors" className="btn-primary mt-4 inline-flex">
-            Browse professors
-          </Link>
+          <p className="text-gray-500">Nothing is tracked yet.</p>
+          <p className="mt-1 text-sm text-gray-400">Save a program, scholarship, or supervisor. A supervisor is optional.</p>
+          <Link href="/search" className="btn-primary mt-4 inline-flex">Search opportunities</Link>
         </div>
       ) : (
         <>
@@ -246,28 +225,31 @@ export default function TrackerPage() {
                 <div className="min-w-0">
                   <p className="font-medium text-[var(--navy)]">{row.professor?.university.name ?? row.programName ?? row.scholarship ?? "Saved item"}</p>
                   {row.professor ? (
-                    <Link href={`/professors/${row.professor.id}`} className="text-[var(--teal)] hover:underline">
-                      {row.professor.name}
-                    </Link>
+                    <Link href={`/professors/${row.professor.id}`} className="text-[var(--teal)] hover:underline">{row.professor.name}</Link>
                   ) : (
-                    <p className="text-sm text-gray-500">{row.programName || row.scholarship || "No professor linked"}</p>
+                    <p className="text-sm text-gray-500">{row.programName || row.scholarship || "No supervisor linked"}</p>
                   )}
                   <p className="mt-2 text-sm text-gray-700">Next: {planFor(row).next}</p>
                   <p className="mt-1 text-sm font-semibold text-[var(--navy)]">Readiness {scoreFor(row).score}%</p>
-                  <p className="mt-1 text-xs text-[var(--gray-500)]">What to check: {scoreFor(row).notes.filter((note) => /not|unknown|unverified|incomplete|missing/i.test(note)).join(" ") || "No stored gap."}</p>
-                  <ul className="mt-2 space-y-1 text-xs text-gray-600">
-                    {scoreFor(row).notes.map((note) => (
-                      <li key={note}>{note}</li>
-                    ))}
-                  </ul>
                   <div className="mt-3">
-                    <p className="text-xs font-semibold text-gray-500">Documents. Common materials, not an official university list.</p>
+                    <p className="text-xs font-semibold text-gray-500">Common materials. Not required for every discipline.</p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {COMMON_DOCUMENTS.map((name) => {
                         const done = parseDocuments(row.documentsJson)[name] === "done";
                         return (
                           <button key={name} type="button" onClick={() => toggleDocument(row, name)} className={`rounded-full px-2 py-1 text-xs ${done ? "bg-[var(--light-teal)] text-[var(--teal-dark)]" : "bg-gray-100 text-gray-600"}`}>
-                            {done ? "Done" : "Missing"} · {name}
+                            {done ? "Uploaded" : "Missing"} · {name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-3 text-xs font-semibold text-gray-500">Optional</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {OPTIONAL_DOCUMENTS.map((name) => {
+                        const done = parseDocuments(row.documentsJson)[name] === "done";
+                        return (
+                          <button key={name} type="button" onClick={() => toggleDocument(row, name)} className={`rounded-full px-2 py-1 text-xs ${done ? "bg-[var(--light-teal)] text-[var(--teal-dark)]" : "bg-gray-100 text-gray-600"}`}>
+                            {done ? "Uploaded" : "Optional"} · {name}
                           </button>
                         );
                       })}
@@ -282,32 +264,27 @@ export default function TrackerPage() {
                       </button>
                     ))}
                   </div>
-                  <select className="input w-full py-1.5 sm:w-52" value={row.status} onChange={(e) => updateStatus(row.id, e.target.value)}>
-                    {STATUSES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
+                  <select className="input w-full py-1.5 sm:w-52" value={STATUSES.includes(row.status) ? row.status : "Saved"} onChange={(e) => updateStatus(row.id, e.target.value)}>
+                    {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                   <button className="text-left text-xs text-red-600 hover:underline sm:text-right" onClick={() => remove(row.id)}>Remove</button>
                 </div>
               </div>
-              <form
-                className="mt-4 grid gap-3 sm:grid-cols-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const form = new FormData(e.currentTarget);
-                  saveDetails(row.id, {
-                    notes: String(form.get("notes") || ""),
-                    deadline: String(form.get("deadline") || ""),
-                    followUpDate: String(form.get("followUpDate") || ""),
-                    scholarship: String(form.get("scholarship") || ""),
-                    applicationUrl: String(form.get("applicationUrl") || ""),
-                  });
-                }}
-              >
-                <input className="input" name="deadline" defaultValue={row.deadline ?? ""} placeholder="Deadline" />
+              <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={(e) => {
+                e.preventDefault();
+                const form = new FormData(e.currentTarget);
+                saveDetails(row.id, {
+                  notes: String(form.get("notes") || ""),
+                  deadline: String(form.get("deadline") || ""),
+                  followUpDate: String(form.get("followUpDate") || ""),
+                  scholarship: String(form.get("scholarship") || ""),
+                  applicationUrl: String(form.get("applicationUrl") || ""),
+                });
+              }}>
+                <input className="input" name="deadline" defaultValue={row.deadline ?? ""} placeholder="Deadline, if you confirmed it" />
                 <input className="input" name="followUpDate" defaultValue={row.followUpDate ?? ""} placeholder="Follow-up date" />
                 <input className="input" name="scholarship" defaultValue={row.scholarship ?? ""} placeholder="Scholarship" />
-                <input className="input" name="applicationUrl" defaultValue={row.applicationUrl ?? ""} placeholder="Application link" />
+                <input className="input" name="applicationUrl" defaultValue={row.applicationUrl ?? ""} placeholder="Official application link" />
                 <textarea className="input min-h-20 sm:col-span-2" name="notes" defaultValue={row.notes ?? ""} placeholder="Notes" />
                 <button className="btn-secondary w-full sm:col-span-2 sm:w-auto" type="submit">Save details</button>
               </form>
@@ -316,16 +293,6 @@ export default function TrackerPage() {
         </div>
         </>
       )}
-
-      <section className="mt-12">
-        <h2 className="text-lg font-bold text-[var(--navy)]">CSC workspace</h2>
-        <p className="mt-2 text-sm text-gray-600">Agency numbers already stored for the universities in this tracker. Confirm each code on the official CSC notice before applying.</p>
-        <div className="mt-4 space-y-2">
-          {apps.length === 0 ? <p className="text-sm text-gray-500">Save a professor to see the university agency number here.</p> : apps.map((row) => (
-            <p key={row.id} className="text-sm text-gray-700">{row.professor?.university.name ?? "University not linked"} · {row.professor?.university.agencyNumber ? `Agency ${row.professor.university.agencyNumber}` : "Agency number not recorded"}</p>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
