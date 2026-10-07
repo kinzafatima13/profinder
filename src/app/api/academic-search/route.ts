@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { ensureSchema, prisma } from "@/lib/prisma";
 
 function normalize(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
 export async function GET(request: NextRequest) {
+  await ensureSchema();
   const raw = request.nextUrl.searchParams.get("q")?.trim() || "";
   if (raw.length < 2 || raw.length > 120) return NextResponse.json({ results: [] });
   const q = normalize(raw);
 
-  const [majors, disciplines, fields, programs, professors, areas, scholarships] = await Promise.all([
+  const [majors, disciplines, fields, programs, professors, areas, scholarships, aliases] = await Promise.all([
     prisma.major.findMany({
       where: { OR: [{ name: { contains: raw } }, { officialName: { contains: raw } }] },
       select: { name: true, officialName: true, slug: true, discipline: { select: { name: true, academicField: { select: { name: true } } } } },
@@ -47,6 +48,11 @@ export async function GET(request: NextRequest) {
       select: { id: true, name: true, type: true, university: { select: { name: true } } },
       take: 4,
     }),
+    prisma.academicAlias.findMany({
+      where: { OR: [{ term: { contains: raw } }, { normalizedTerm: { contains: q } }] },
+      select: { term: true, kind: true, academicField: { select: { name: true } }, discipline: { select: { name: true } }, major: { select: { name: true } } },
+      take: 5,
+    }),
   ]);
 
   const results = [
@@ -54,6 +60,10 @@ export async function GET(request: NextRequest) {
     ...scholarships.map((x) => ({ type: "scholarship", label: x.name, subtitle: `Scholarship · ${x.university?.name || "No university linked"} · coverage unknown unless the source says otherwise`, href: "/scholarship" })),
     ...professors.map((x) => ({ type: "supervisor", label: x.name, subtitle: `Supervisor · ${x.university.name}${x.department ? ` · ${x.department}` : ""}`, href: "/professors/" + x.id })),
     ...areas.map((x) => ({ type: "research", label: x.name, subtitle: "Research area · view stored supervisors", href: "/professors?area=" + encodeURIComponent(x.name) })),
+    ...aliases.map((x) => {
+      const target = x.major?.name || x.discipline?.name || x.academicField?.name || x.term;
+      return { type: "alias", label: x.term, subtitle: `Stored alias · ${x.kind} · ${target}`, href: "/programs?q=" + encodeURIComponent(target) };
+    }),
     ...majors.map((x) => ({ type: "major", label: x.officialName || x.name, subtitle: `Stored major · ${x.discipline.academicField.name} · ${x.discipline.name}`, href: "/programs?q=" + encodeURIComponent(x.name) })),
     ...disciplines.map((x) => ({ type: "discipline", label: x.name, subtitle: `Discipline · ${x.academicField.name}`, href: "/programs?q=" + encodeURIComponent(x.name) })),
     ...fields.map((x) => ({ type: "field", label: x.name, subtitle: "Academic field", href: "/programs?q=" + encodeURIComponent(x.name) })),

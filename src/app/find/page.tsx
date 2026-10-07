@@ -87,6 +87,7 @@ export default function FindProfessorsPage() {
             <select className="input" value={degree} onChange={(e) => setDegree(e.target.value)}>
               <option value="Master">Master's</option>
               <option value="PhD">PhD</option>
+              <option value="Other">Other</option>
             </select>
           </div>
           <div>
