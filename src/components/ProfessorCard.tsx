@@ -66,7 +66,14 @@ export default function ProfessorCard({
       </div>
 
       {researchAreas.length > 0 && (
-        <p className="mt-3 text-sm text-[var(--gray-700)]">{researchAreas.slice(0, 4).join(" · ")}</p>
+        <p className="mt-3 text-sm text-[var(--gray-700)]">
+          {researchAreas.slice(0, 4).map((area, index) => (
+            <span key={area}>
+              {index > 0 ? " · " : ""}
+              <Link href={`/professors?area=${encodeURIComponent(area)}`} className="hover:text-[var(--teal)]">{area}</Link>
+            </span>
+          ))}
+        </p>
       )}
 
       {researchInterests && (

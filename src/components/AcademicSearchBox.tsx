@@ -80,7 +80,7 @@ export default function AcademicSearchBox() {
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
-        placeholder="Search professors, research, universities, programs..."
+        placeholder="What do you want to study or research?"
         autoComplete="off"
         role="combobox"
         aria-expanded={open && (loading || results.length > 0)}

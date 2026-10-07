@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureSchema, prisma } from "@/lib/prisma";
+import { discoveryTokens, professorQueryWhere } from "@/lib/discovery";
 
 function normalize(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -28,7 +29,12 @@ export async function GET(request: NextRequest) {
   if (raw.length < 2 || raw.length > 120) return NextResponse.json({ results: [] });
   const q = normalize(raw);
 
-  const [majors, disciplines, fields, programs, professors, universities, areas, aliases] = await Promise.all([
+  const tokens = discoveryTokens(raw);
+  const programWhere = tokens.length >= 2
+    ? { AND: tokens.map((token) => ({ OR: [{ major: { contains: token } }, { degree: { contains: token } }, { officialName: { contains: token } }, { university: { name: { contains: token } } }] })) }
+    : { OR: [{ major: { contains: raw } }, { degree: { contains: raw } }, { officialName: { contains: raw } }, { university: { name: { contains: raw } } }] };
+
+  const [majors, disciplines, fields, programs, professors, universities, areas, topics, aliases] = await Promise.all([
     prisma.major.findMany({
       where: { OR: [{ name: { contains: raw } }, { officialName: { contains: raw } }] },
       select: { id: true, name: true, officialName: true, discipline: { select: { name: true, academicField: { select: { name: true } } } } },
@@ -46,21 +52,12 @@ export async function GET(request: NextRequest) {
       take: 3,
     }),
     prisma.program.findMany({
-      where: { OR: [{ major: { contains: raw } }, { degree: { contains: raw } }, { officialName: { contains: raw } }, { university: { name: { contains: raw } } }] },
+      where: programWhere,
       select: { id: true, major: true, degree: true, university: { select: { name: true, id: true, country: true } } },
       take: 5,
     }),
     prisma.professor.findMany({
-      where: {
-        OR: [
-          { name: { contains: raw } },
-          { nameZh: { contains: raw } },
-          { researchInterests: { contains: raw } },
-          { department: { contains: raw } },
-          { university: { name: { contains: raw } } },
-          { researchAreas: { some: { researchArea: { name: { contains: raw } } } } },
-        ],
-      },
+      where: professorQueryWhere(raw),
       select: { id: true, name: true, department: true, university: { select: { name: true } } },
       take: 5,
     }),
@@ -70,9 +67,18 @@ export async function GET(request: NextRequest) {
       take: 4,
     }),
     prisma.researchArea.findMany({
-      where: { OR: [{ name: { contains: raw } }, { keywords: { contains: raw } }] },
+      where: tokens.length >= 2
+        ? { OR: tokens.map((token) => ({ OR: [{ name: { contains: token } }, { keywords: { contains: token } }] })) }
+        : { OR: [{ name: { contains: raw } }, { keywords: { contains: raw } }] },
       select: { name: true },
       take: 4,
+    }),
+    prisma.topic.findMany({
+      where: tokens.length >= 2
+        ? { AND: tokens.map((token) => ({ name: { contains: token } })) }
+        : { name: { contains: raw } },
+      select: { name: true },
+      take: 3,
     }),
     prisma.academicAlias.findMany({
       where: { OR: [{ term: { contains: raw } }, { normalizedTerm: { contains: q } }] },
@@ -105,6 +111,12 @@ export async function GET(request: NextRequest) {
       label: x.name,
       subtitle: "Research area",
       href: "/professors?area=" + encodeURIComponent(x.name),
+    })),
+    ...topics.map((x) => ({
+      type: "research",
+      label: x.name,
+      subtitle: "Stored topic",
+      href: "/professors?q=" + encodeURIComponent(x.name),
     })),
     ...fields.map((x) => ({
       type: "field",

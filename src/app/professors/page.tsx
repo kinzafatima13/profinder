@@ -7,6 +7,7 @@ import { computeResearchMatch } from "@/lib/matching";
 import { assessTarget, newestStoredYear } from "@/lib/professor-assessment";
 import ProfessorCard from "@/components/ProfessorCard";
 import ProfessorFilters, { type ProfessorFilterValues } from "@/components/ProfessorFilters";
+import { professorQueryWhere } from "@/lib/discovery";
 import { SITE } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -120,18 +121,7 @@ export default async function ProfessorsPage({
       q
         ? {
             OR: [
-              { name: { contains: q } },
-              { nameZh: { contains: q } },
-              { researchInterests: { contains: q } },
-              { researchKeywords: { contains: q } },
-              { department: { contains: q } },
-              { publications: { contains: q } },
-              { university: { OR: [{ name: { contains: q } }, { nameZh: { contains: q } }, { city: { contains: q } }] } },
-              { researchAreas: { some: { researchArea: { OR: [{ name: { contains: q } }, { keywords: { contains: q } }] } } } },
-              { topics: { some: { topic: { name: { contains: q } } } } },
-              { academicFields: { some: { academicField: { name: { contains: q } } } } },
-              { disciplines: { some: { discipline: { name: { contains: q } } } } },
-              { majors: { some: { major: { OR: [{ name: { contains: q } }, { officialName: { contains: q } }] } } } },
+              ...professorQueryWhere(q).OR,
               ...(aliasFieldIds.length ? [{ academicFields: { some: { academicFieldId: { in: aliasFieldIds } } } }] : []),
               ...(aliasDisciplineIds.length ? [{ disciplines: { some: { disciplineId: { in: aliasDisciplineIds } } } }] : []),
               ...(aliasMajorIds.length ? [{ majors: { some: { majorId: { in: aliasMajorIds } } } }] : []),

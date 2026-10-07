@@ -68,15 +68,25 @@ export default async function HomePage() {
 
   return (
     <div>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "WebSite", name: "ProFinder", url: SITE, potentialAction: { "@type": "SearchAction", target: `${SITE}/search?q={search_term_string}`, "query-input": "required name=search_term_string" } }) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "WebSite", name: "ProFinder", url: SITE, potentialAction: { "@type": "SearchAction", target: `${SITE}/professors?q={search_term_string}`, "query-input": "required name=search_term_string" } }) }} />
       <section className="border-b border-[var(--gray-200)] bg-white pt-12 pb-8">
         <div className="page-container text-center">
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--gray-500)]">ProFinder</p>
-          <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--navy)] sm:text-4xl">Find the right university, program, and professor.</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-[var(--gray-700)]">Explore research opportunities, discover supervisors, and build your application shortlist in one place.</p>
+          <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--navy)] sm:text-4xl">Find the right research path for your future.</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-[var(--gray-700)]">Explore programs, universities, and professors based on what you actually want to study.</p>
           <div className="mx-auto mt-6 max-w-2xl text-left"><AcademicSearchBox /></div>
+          <p className="mx-auto mt-3 max-w-2xl text-xs text-[var(--gray-500)]">
+            Examples from stored records:{" "}
+            <Link className="underline" href="/professors?q=machine%20learning">machine learning</Link>
+            {" · "}
+            <Link className="underline" href="/professors?q=cancer%20genomics">cancer genomics</Link>
+            {" · "}
+            <Link className="underline" href="/professors?q=renewable%20energy">renewable energy</Link>
+            {" · "}
+            <Link className="underline" href="/professors?q=agriculture">agriculture</Link>
+          </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/search" className="btn-primary">Search opportunities</Link>
+            <Link href="/professors" className="btn-primary">Explore professors</Link>
             <Link href="/find" className="btn-secondary">Find my match</Link>
             <Link href="/programs" className="btn-secondary">Browse programs</Link>
           </div>
@@ -125,7 +135,7 @@ export default async function HomePage() {
         <h2 className="section-title">Free and Pro</h2>
         <p className="mx-auto mt-2 max-w-2xl text-gray-600">Basic discovery stays open. Pro does not unlock invented programs, scholarships, or deadlines.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link href="/search" className="btn-primary">Search opportunities</Link>
+          <Link href="/professors" className="btn-primary">Explore professors</Link>
           <Link href="/pricing" className="btn-secondary">See Pro</Link>
         </div>
       </section>

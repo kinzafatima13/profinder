@@ -40,7 +40,7 @@ import { authOptions } from "@/lib/auth";
 import { computeResearchMatch, profileGaps } from "@/lib/matching";
 import { assessTarget, fundingStatement, newestStoredYear, timelineGroups } from "@/lib/professor-assessment";
 import { isPro } from "@/lib/billing/usage";
-import { SITE, clip, slugify } from "@/lib/seo";
+import { SITE, clip } from "@/lib/seo";
 import MatchScore from "@/components/MatchScore";
 import SaveToTrackerButton from "@/components/SaveToTrackerButton";
 import EmailGeneratorButton from "@/components/EmailGeneratorButton";
@@ -280,7 +280,7 @@ export default async function ProfessorDetailPage({ params }: Props) {
               {prof.researchAreas.map((r) => (
                 <Link
                   key={r.researchAreaId}
-                  href={`/research-areas/${slugify(r.researchArea.name)}`}
+                  href={`/professors?area=${encodeURIComponent(r.researchArea.name)}`}
                   className="badge-teal hover:opacity-80"
                 >
                   {r.researchArea.name}
