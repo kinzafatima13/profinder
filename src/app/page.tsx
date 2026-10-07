@@ -26,9 +26,14 @@ export default async function HomePage() {
       prisma.professor.count({ where: { AND: [{ email: { not: null } }, { NOT: { email: "" } }] } }),
     ]);
     const programs = await prisma.program.findMany({
-      where: { degree: "Master", major: { contains: "Computer" } },
+      where: {
+        OR: [
+          { AND: [{ deadline: { not: null } }, { NOT: { deadline: "" } }] },
+          { AND: [{ scholarshipDeadline: { not: null } }, { NOT: { scholarshipDeadline: "" } }] },
+        ],
+      },
       include: { university: { select: { name: true } } },
-      orderBy: { university: { name: "asc" } },
+      orderBy: { updatedAt: "desc" },
       take: 8,
     });
     radar = programs.map((program) => ({
@@ -36,7 +41,7 @@ export default async function HomePage() {
       university: program.university.name,
       degree: program.degree,
       major: program.major,
-      deadline: program.deadline,
+      deadline: program.deadline || program.scholarshipDeadline,
     }));
   } catch {
     // DB not ready yet
@@ -46,6 +51,21 @@ export default async function HomePage() {
   const student = session?.user?.email
     ? await prisma.student.findUnique({ where: { email: session.user.email } })
     : null;
+  const profileBits = student
+    ? [
+        student.degree,
+        student.major,
+        student.researchInterests,
+        student.gpa,
+        student.currentUniversity,
+        student.preferredCountries,
+        student.fundingPreference,
+        student.englishTest || student.ielts || student.toefl,
+      ]
+    : [];
+  const profilePct = profileBits.length
+    ? Math.round((profileBits.filter((value) => value?.trim()).length / profileBits.length) * 100)
+    : 0;
   const matches = student ? await topProfessorMatches(student, 3) : [];
   const scholarships = student ? await topScholarshipMatches(student, 3) : [];
   const applications = student
@@ -77,11 +97,10 @@ export default async function HomePage() {
         url: SITE,
         potentialAction: {
           "@type": "SearchAction",
-          target: `${SITE}/professors?q={search_term_string}`,
+          target: `${SITE}/search?q={search_term_string}`,
           "query-input": "required name=search_term_string",
         },
       }) }} />
-      {/* Hero */}
       <section className="border-b border-[var(--gray-200)] bg-white pt-12 pb-8">
         <div className="page-container text-center">
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--gray-500)]">Graduate research and application assistant</p>
@@ -89,20 +108,18 @@ export default async function HomePage() {
             Find the right university. Professor. Research opportunity.
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-[var(--gray-700)]">
-            Discover verified universities and researchers, compare research overlap, explore funding records, and organize graduate applications in one place.
+            Discover verified universities and researchers, find research matches, explore funding records, and organize your graduate applications in one place.
           </p>
           <div className="mx-auto mt-6 max-w-2xl text-left"><AcademicSearchBox /></div>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <Link href="/find" className="btn-primary">Find My Research Match</Link>
-            <Link href="/fields" className="btn-secondary">Browse fields</Link>
             <Link href="/universities" className="btn-secondary">Explore Universities</Link>
           </div>
           <p className="mx-auto mt-3 max-w-xl text-xs text-[var(--muted)]">Match scores are informational recommendations from stored overlap, not admission predictions.</p>
 
-          {/* Stats */}
           {(uniCount > 0 || profCount > 0) && (
             <>
-            <p className="mt-10 text-xs font-medium uppercase tracking-[0.14em] text-[var(--gray-500)]">ProFinder intelligence</p>
+            <p className="mt-10 text-xs font-medium uppercase tracking-[0.14em] text-[var(--gray-500)]">What is actually stored</p>
             <dl className="mx-auto mt-4 grid max-w-3xl grid-cols-2 sm:grid-cols-4">
               {[
                 [uniCount, "Universities"],
@@ -116,7 +133,7 @@ export default async function HomePage() {
                 </div>
               ))}
             </dl>
-            <p className="mt-2 text-xs text-[var(--muted)]">{areaCount} research areas are also stored.</p>
+            <p className="mt-2 text-xs text-[var(--muted)]">{areaCount} research areas are stored. A count is not the same as official verification.</p>
             </>
           )}
         </div>
@@ -125,7 +142,8 @@ export default async function HomePage() {
       {student && (
         <section className="page-container py-8">
           <h2 className="section-title">Your dashboard</h2>
-          <p className="mt-2 text-sm text-gray-600">Next: {next}</p>
+          <p className="mt-2 text-sm text-gray-600">Your profile is {profilePct}% complete. <Link className="font-semibold text-[var(--teal)]" href="/profile">Edit profile</Link></p>
+          <p className="mt-1 text-sm text-gray-600">Next: {next}</p>
           <p className="mt-1 text-sm text-gray-600">Funding goal: {student.fundingGoals?.trim() || "not saved"}. Stored deadlines are unverified, so no countdown is shown.</p>
           <div className="mt-4 grid gap-4 lg:grid-cols-3">
             <article className="card p-4">
@@ -163,7 +181,7 @@ export default async function HomePage() {
       <section className="page-container pb-4">
         <h2 className="section-title">Deadline radar</h2>
         <p className="mt-2 max-w-2xl text-sm text-gray-600">
-          A countdown appears only when the date was verified from an official source. These program notes are not verified, so no countdown is shown.
+          These are stored program notes across disciplines. A countdown appears only when a date was verified from an official source. None of these notes are treated as verified.
         </p>
         <ul className="mt-4 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100 bg-white">
           {radar.map((item) => (
@@ -174,72 +192,69 @@ export default async function HomePage() {
               </span>
               <span className="flex flex-wrap items-center gap-2">
                 <span className="badge-muted">Unverified</span>
-                <span className="text-sm text-[var(--gray-700)]">Check official admissions page</span>
+                <span className="text-sm text-[var(--gray-700)]">{item.deadline || "Check the official admissions page"}</span>
               </span>
             </li>
           ))}
-          {radar.length === 0 && <li className="px-4 py-3 text-sm text-gray-500">No program notes are stored yet.</li>}
+          {radar.length === 0 && <li className="px-4 py-3 text-sm text-gray-500">No program deadline notes are stored yet.</li>}
         </ul>
         <Link href="/scholarship" className="mt-4 inline-flex text-sm font-semibold text-[var(--teal)]">
-          See scholarship matches
+          See scholarship records
         </Link>
       </section>
 
-      {/* Journey */}
       <section className="page-container py-16">
         <h2 className="section-title text-center">The core journey</h2>
         <p className="mx-auto mt-2 max-w-xl text-center text-gray-600">
-          From country to application tracker — one clear path.
+          From your profile to an application you can track.
         </p>
-
         <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            ["01", "Country", false],
-            ["02", "University", false],
-            ["03", "Program", false],
-            ["04", "Research", false],
-            ["05", "Professor", false],
-            ["06", "Match", true],
-            ["07", "Outreach", false],
-            ["08", "Application", false],
-          ].map(([number, label, active]) => (
-            <li key={String(number)} className={`border-t pt-3 ${active ? "border-[var(--teal)]" : "border-[var(--gray-200)]"}`}>
-              <p className={`text-xs font-medium ${active ? "text-[var(--teal)]" : "text-[var(--muted)]"}`}>{number}</p>
+            ["01", "Profile"],
+            ["02", "University"],
+            ["03", "Program"],
+            ["04", "Research"],
+            ["05", "Professor"],
+            ["06", "Match"],
+            ["07", "Funding"],
+            ["08", "Application"],
+          ].map(([number, label]) => (
+            <li key={number} className={`border-t pt-3 ${label === "Match" ? "border-[var(--teal)]" : "border-[var(--gray-200)]"}`}>
+              <p className={`text-xs font-medium ${label === "Match" ? "text-[var(--teal)]" : "text-[var(--muted)]"}`}>{number}</p>
               <p className="mt-1 text-sm font-medium text-[var(--navy)]">{label}</p>
             </li>
           ))}
         </ol>
       </section>
 
-      {/* Features */}
       <section className="bg-white py-16">
         <div className="page-container">
           <h2 className="section-title text-center">Built for international applicants</h2>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[
               {
-                title: "University & Program Discovery",
-                desc: "Browse Chinese universities, English-taught Master's & PhD programs, CSC and university scholarships — with official links.",
+                title: "University and program discovery",
+                desc: "Browse stored universities, degree programs, and scholarship records. Official links appear only when they are on file.",
               },
               {
-                title: "Professor Discovery",
-                desc: "Find professors by research area, major, or university. See research interests, departments, and official profiles.",
+                title: "Professor discovery",
+                desc: "Find professors by research area, department, or university. Interests and emails are shown only when stored.",
               },
               {
-                title: "Transparent Research Match",
-                desc: "See a clear match percentage with weighted components and an explanation — not a black-box score.",
+                title: "Transparent research match",
+                desc: "Scores use stored overlap: interests, research areas, topics, major, and degree. They are not admission predictions.",
               },
               {
-                title: "Find Professors for Me",
-                desc: "Enter your degree, major, and research interests. Get ranked professors with match explanations.",
+                title: "Funding records",
+                desc: "Review scholarship rows that exist in the database. A record is not a guarantee of eligibility or full funding.",
               },
               {
-                title: "Personalized Outreach",
-                desc: "Generate research-aware emails you can edit and approve before sending. You stay in control.",
+                title: "Outreach you approve",
+                desc: "Drafts use your profile and the professor record. Nothing is sent unless you choose to send it yourself.",
               },
               {
-                title: "Application Tracker",
-                desc: "Save universities and professors. Track status from Email Draft to Accepted — plus CSC workspace.",
+                title: "Application tracker",
+                desc: "Save a professor or program and track status, notes, and follow-up dates in your own account.",
               },
             ].map((f) => (
               <div key={f.title} className="card p-6">
@@ -251,19 +266,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="page-container py-16 text-center">
-        <h2 className="section-title">Start discovering</h2>
-        <p className="mx-auto mt-2 max-w-lg text-gray-600">
-          China MVP focused on Computer Science, AI, Cybersecurity, and related fields.
+        <h2 className="section-title">Free and Pro</h2>
+        <p className="mx-auto mt-2 max-w-2xl text-gray-600">
+          Discovery, basic matching, and public records stay open. Pro is the paid workspace for billing-backed tools already in the product. It does not invent missing academic data.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link href="/universities" className="btn-primary">
-            Explore Universities
-          </Link>
-          <Link href="/professors" className="btn-secondary">
-            Browse Professors
-          </Link>
+          <Link href="/find" className="btn-primary">Find My Research Match</Link>
+          <Link href="/pricing" className="btn-secondary">See Pro</Link>
         </div>
       </section>
     </div>
