@@ -14,7 +14,7 @@ export default async function AdminPage() {
     return <div className="page-container py-16"><h1 className="section-title">Admin only</h1><p className="mt-2 text-gray-600">This account cannot view data operations.</p></div>;
   }
 
-  const [universities, programs, fields, majors, professors, verifiedProfessors, pendingPrograms, unverifiedPrograms, changes] = await Promise.all([
+  const [universities, programs, fields, majors, professors, verifiedProfessors, pendingPrograms, unverifiedPrograms, changes, missingEmail, missingProfessorSource, programsMissingSource, scholarshipsMissingUrl, universitiesMissingUrl, linkedFields, linkedDisciplines, linkedMajors, nameGroups] = await Promise.all([
     prisma.university.count(),
     prisma.program.count(),
     prisma.academicField.count(),
@@ -24,7 +24,17 @@ export default async function AdminPage() {
     prisma.program.count({ where: { verificationStatus: "PENDING_REVIEW" } }),
     prisma.program.count({ where: { verificationStatus: "UNVERIFIED" } }),
     prisma.changeLog.findMany({ orderBy: { detectedAt: "desc" }, take: 8 }),
+    prisma.professor.count({ where: { OR: [{ email: null }, { email: "" }] } }),
+    prisma.professor.count({ where: { OR: [{ dataSource: null }, { dataSource: "" }] } }),
+    prisma.program.count({ where: { OR: [{ sourceUrl: null }, { sourceUrl: "" }] } }),
+    prisma.scholarship.count({ where: { OR: [{ officialUrl: null }, { officialUrl: "" }] } }),
+    prisma.university.count({ where: { OR: [{ officialUrl: null }, { officialUrl: "" }] } }),
+    prisma.professorAcademicField.count(),
+    prisma.professorDiscipline.count(),
+    prisma.professorMajor.count(),
+    prisma.professor.groupBy({ by: ["name"], _count: { _all: true } }),
   ]);
+  const duplicateNames = nameGroups.filter((row) => row._count._all > 1).length;
   const stats = [
     ["Universities", universities],
     ["Programs", programs],
@@ -35,6 +45,17 @@ export default async function AdminPage() {
     ["Pending programs", pendingPrograms],
     ["Unverified programs", unverifiedPrograms],
   ];
+  const quality = [
+    ["Professors without a public email", missingEmail],
+    ["Professors without a stored source", missingProfessorSource],
+    ["Programs without a source URL", programsMissingSource],
+    ["Scholarships without an official URL", scholarshipsMissingUrl],
+    ["Universities without an official URL", universitiesMissingUrl],
+    ["Professor names that repeat", duplicateNames],
+    ["Stored professor-field links", linkedFields],
+    ["Stored professor-discipline links", linkedDisciplines],
+    ["Stored professor-major links", linkedMajors],
+  ];
 
   return (
     <div className="page-container py-10">
@@ -42,6 +63,16 @@ export default async function AdminPage() {
       <p className="mt-1 max-w-2xl text-sm text-gray-600">Counts come from the live database. Official imports are marked from their source file. Seeded technology programs stay unverified until an official page is checked.</p>
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map(([label, value]) => (
+          <div key={label} className="card p-4">
+            <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
+            <p className="mt-1 text-2xl font-semibold text-[var(--navy)]">{value}</p>
+          </div>
+        ))}
+      </div>
+      <h2 className="mt-10 text-lg font-semibold text-[var(--navy)]">Data quality</h2>
+      <p className="mt-1 max-w-2xl text-sm text-gray-600">These are missing fields and stored links. A missing field is not treated as a fact, and a repeated name is not automatically merged. Zero academic links means no professor was connected to that taxonomy. The app does not guess a major from a department name.</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {quality.map(([label, value]) => (
           <div key={label} className="card p-4">
             <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
             <p className="mt-1 text-2xl font-semibold text-[var(--navy)]">{value}</p>
