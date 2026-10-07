@@ -4805,8 +4805,8 @@
     "province": "Anhui",
     "city": "Hefei",
     "agencyNumber": "10357",
-    "officialUrl": "https://www.campuschina.org/",
-    "description": "CSC-participating Chinese university. Agency number is a commonly published code and must be confirmed on campuschina.org before applying. Professors are not included.",
+    "officialUrl": "https://www.ahu.edu.cn/",
+    "description": "Anhui University. International postgraduate program availability and teaching language must be verified against the CSC application system for the relevant intake; AHU's 2026/2027 CSC brochure explicitly delegates the authoritative major list to CSC. Domestic 2026 graduate catalog is recorded separately for academic coverage and must not be treated as an international-admission list.",
     "programs": [
       {
         "degree": "Master",
@@ -4861,7 +4861,523 @@
         "dataStatus": "unverified"
       }
     ],
-    "professors": []
+    "professors": [],
+    "dataStatus": "verified",
+    "internationalProgramSource": "https://sie.ahu.edu.cn/_upload/article/files/cf/ee/3543c52a4212b79315534aeeb995/98db637b-5d63-40a2-9d4b-1db3300f3701.pdf",
+    "internationalProgramStatus": "CSC system is authoritative; AHU brochure does not enumerate the international major list",
+    "internationalSupervisorRequirement": "Acceptance/intent document from an AHU supervisor is required for the 2026/2027 CSC University Program",
+    "domesticGraduateCatalogSource": "https://graschool.ahu.edu.cn/2025/0928/c9538a374922/pagem.htm",
+    "domesticGraduateCatalog2026": [
+      {
+        "code": "0101",
+        "major": "Philosophy",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0201",
+        "major": "Theoretical Economics",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0202",
+        "major": "Applied Economics",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0301",
+        "major": "Law",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0302",
+        "major": "Political Science",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0303",
+        "major": "Sociology",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0305",
+        "major": "Marxist Theory",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0401",
+        "major": "Education",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0501",
+        "major": "Chinese Language and Literature",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0502",
+        "major": "Foreign Languages and Literatures",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0503",
+        "major": "Journalism and Communication",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0601",
+        "major": "Archaeology",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0602",
+        "major": "Chinese History",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0701",
+        "major": "Mathematics",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0702",
+        "major": "Physics",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0703",
+        "major": "Chemistry",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0710",
+        "major": "Biology",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0713",
+        "major": "Ecology",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0714",
+        "major": "Statistics",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0803",
+        "major": "Optical Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0805",
+        "major": "Materials Science and Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0808",
+        "major": "Electrical Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0809",
+        "major": "Electronic Science and Technology",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0810",
+        "major": "Information and Communication Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0811",
+        "major": "Control Science and Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0812",
+        "major": "Computer Science and Technology",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0817",
+        "major": "Chemical Engineering and Technology",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0830",
+        "major": "Environmental Science and Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0835",
+        "major": "Software Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1202",
+        "major": "Business Administration",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1204",
+        "major": "Public Administration",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1205",
+        "major": "Information Resource Management",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1301",
+        "major": "Arts",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1401",
+        "major": "Integrated Circuit Science and Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1404",
+        "major": "Remote Sensing Science and Technology",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1405",
+        "major": "Intelligent Science and Technology",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0151",
+        "major": "Applied Ethics (professional degree)",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0251",
+        "major": "Finance",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0252",
+        "major": "Applied Statistics",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0253",
+        "major": "Taxation",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0254",
+        "major": "International Business",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0258",
+        "major": "Digital Economy",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "035101",
+        "major": "Juris Master (Non-law)",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "035102",
+        "major": "Juris Master (Law)",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0352",
+        "major": "Social Work",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0355",
+        "major": "International Affairs",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0453",
+        "major": "International Chinese Language Education",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0454",
+        "major": "Applied Psychology",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0551",
+        "major": "Translation",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0552",
+        "major": "Journalism and Communication",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0553",
+        "major": "Publishing",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0651",
+        "major": "Museology",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "085401",
+        "major": "Next-Generation Electronic Information Technology",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "085403",
+        "major": "Integrated Circuit Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "085406",
+        "major": "Control Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "085408",
+        "major": "Optical Information Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "085410",
+        "major": "Artificial Intelligence",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "085411",
+        "major": "Big Data Technology and Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "0854",
+        "major": "Computer Technology / Artificial Intelligence / Network and Information Security / Software Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "085501",
+        "major": "Mechanical Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "085601",
+        "major": "Materials Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "085602",
+        "major": "Chemical Engineering",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "085700",
+        "major": "Resources and Environment",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "086000",
+        "major": "Biology and Medicine",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1251",
+        "major": "Master of Business Administration",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1252",
+        "major": "Master of Public Administration",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1253",
+        "major": "Master of Accounting",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1255",
+        "major": "Library and Information",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1352",
+        "major": "Music",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1356",
+        "major": "Fine Arts and Calligraphy",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1357",
+        "major": "Design",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1451",
+        "major": "Cultural Relics",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      },
+      {
+        "code": "1452",
+        "major": "Master of Cryptography",
+        "degree": "Master",
+        "catalogType": "Domestic 2026 graduate admissions"
+      }
+    ],
+    "computerScienceCatalog2026": [
+      {
+        "degree": "Master",
+        "major": "Computer Science and Technology",
+        "code": "081200",
+        "researchDirections": [
+          "Pattern recognition",
+          "Network security",
+          "Intelligent computing methods and applications",
+          "Intelligent software",
+          "Service computing",
+          "Image processing and recognition",
+          "Edge computing",
+          "Information security",
+          "Bioinformatics processing",
+          "Data mining and recommender systems",
+          "Machine learning methods and applications",
+          "Computer architecture",
+          "Trusted and fault-tolerant chips",
+          "Internet of Things technology and applications",
+          "Speech and human-computer interaction",
+          "Image and video understanding",
+          "Brain-computer interface technology"
+        ]
+      },
+      {
+        "degree": "Master",
+        "major": "Software Engineering",
+        "code": "083500",
+        "researchDirections": [
+          "Software theory and applications",
+          "Intelligent software",
+          "Data mining",
+          "Software security",
+          "Embedded software technology",
+          "Intelligent information processing",
+          "Machine learning",
+          "Mobile computing",
+          "Computer vision and human-computer interaction",
+          "Cloud computing and cloud service engineering",
+          "Artificial intelligence and applications",
+          "Big data and information security"
+        ]
+      },
+      {
+        "degree": "Master",
+        "major": "Computer Science and Technology",
+        "school": "School of Artificial Intelligence",
+        "code": "081200",
+        "researchDirections": [
+          "Intelligent computing methods and applications",
+          "Machine learning methods and applications",
+          "Image processing and pattern recognition",
+          "Bioinformatics processing",
+          "Swarm intelligence and evolutionary optimization",
+          "Deep learning and applications"
+        ]
+      },
+      {
+        "degree": "Master",
+        "major": "Intelligent Science and Technology",
+        "code": "140500",
+        "researchDirections": [
+          "Unmanned systems and swarm intelligence",
+          "Human-machine collaboration and intelligent systems",
+          "Machine learning and cognitive computing",
+          "Intelligent perception and understanding",
+          "Secure artificial intelligence"
+        ]
+      }
+    ]
   },
   {
     "name": "University of Science and Technology of China",
