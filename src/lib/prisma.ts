@@ -104,7 +104,6 @@ export function ensureSchema() {
         "academicFieldId" TEXT NOT NULL,
         PRIMARY KEY ("professorId", "academicFieldId")
       )`);
-
       await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "College" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "universityId" TEXT NOT NULL,
@@ -142,6 +141,23 @@ export function ensureSchema() {
         ["sourceUrl", "TEXT"],
       ] as const) {
         await addColumn("Program", column, type);
+      }
+      for (const [column, type] of [
+        ["verificationStatus", "TEXT DEFAULT 'UNVERIFIED'"],
+        ["lastCheckedAt", "DATETIME"],
+        ["confidence", "REAL"],
+      ] as const) {
+        await addColumn("University", column, type);
+      }
+      for (const [column, type] of [
+        ["verificationStatus", "TEXT DEFAULT 'UNVERIFIED'"],
+        ["lastCheckedAt", "DATETIME"],
+        ["lastVerifiedAt", "DATETIME"],
+        ["confidence", "REAL"],
+        ["collegeId", "TEXT"],
+        ["departmentId", "TEXT"],
+      ] as const) {
+        await addColumn("Professor", column, type);
       }
       for (const [column, type] of [
         ["collegeId", "TEXT"],
