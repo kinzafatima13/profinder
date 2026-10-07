@@ -10,18 +10,6 @@ import { SITE } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
-  const filtered = Boolean(searchParams.q || searchParams.area || searchParams.university || searchParams.verified || searchParams.email || searchParams.department || searchParams.papers || searchParams.page);
-  return {
-    title: { absolute: "Professors | ProFinder" },
-    description: "Professor records for Chinese universities. Verification, email, and research tags are shown only when stored.",
-    alternates: { canonical: `${SITE}/professors` },
-    robots: filtered ? { index: false, follow: true } : { index: true, follow: true },
-  };
-}
-
-const PAGE_SIZE = 24;
-
 type SearchParams = {
   area?: string;
   q?: string;
@@ -32,7 +20,22 @@ type SearchParams = {
   department?: string;
   papers?: string;
   funding?: string;
+  field?: string;
+  discipline?: string;
+  major?: string;
 };
+
+export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
+  const filtered = Boolean(searchParams.q || searchParams.area || searchParams.university || searchParams.verified || searchParams.email || searchParams.department || searchParams.papers || searchParams.page || searchParams.field || searchParams.discipline || searchParams.major);
+  return {
+    title: { absolute: "Professors | ProFinder" },
+    description: "Supervisor records currently stored. Verification, email, and research tags are shown only when stored. The catalog is not limited to one discipline.",
+    alternates: { canonical: `${SITE}/professors` },
+    robots: filtered ? { index: false, follow: true } : { index: true, follow: true },
+  };
+}
+
+const PAGE_SIZE = 24;
 
 function pageHref(page: number, filters: Omit<SearchParams, "page">) {
   const params = new URLSearchParams();
@@ -40,6 +43,9 @@ function pageHref(page: number, filters: Omit<SearchParams, "page">) {
   if (filters.area) params.set("area", filters.area);
   if (filters.university) params.set("university", filters.university);
   if (filters.department) params.set("department", filters.department);
+  if (filters.field) params.set("field", filters.field);
+  if (filters.discipline) params.set("discipline", filters.discipline);
+  if (filters.major) params.set("major", filters.major);
   if (filters.verified === "1") params.set("verified", "1");
   if (filters.email === "1") params.set("email", "1");
   if (filters.papers === "1") params.set("papers", "1");
@@ -62,7 +68,11 @@ export default async function ProfessorsPage({
   const department = searchParams.department?.trim();
   const papersOnly = searchParams.papers === "1";
   const funding = searchParams.funding === "known" ? "known" : searchParams.funding === "unknown" ? "unknown" : "";
+  const fieldId = searchParams.field || "";
+  const disciplineId = searchParams.discipline || "";
+  const majorId = searchParams.major || "";
   const requested = Number(searchParams.page || "1");
+  const academicFilter = Boolean(fieldId || disciplineId || majorId);
   const where = {
     AND: [
       areaFilter
@@ -74,6 +84,9 @@ export default async function ProfessorsPage({
         : {},
       universityId ? { universityId } : {},
       department ? { department: { contains: department } } : {},
+      fieldId ? { academicFields: { some: { academicFieldId: fieldId } } } : {},
+      disciplineId ? { disciplines: { some: { disciplineId } } } : {},
+      majorId ? { majors: { some: { majorId } } } : {},
       verifiedOnly ? { dataStatus: "verified" } : {},
       emailOnly ? { AND: [{ email: { not: null } }, { NOT: { email: "" } }] } : {},
       papersOnly
@@ -100,19 +113,24 @@ export default async function ProfessorsPage({
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Number.isFinite(requested) ? Math.min(Math.max(1, Math.floor(requested)), pageCount) : 1;
 
-  const professors = await prisma.professor.findMany({
-    where,
-    include: {
-      university: true,
-      researchAreas: { include: { researchArea: true } },
-    },
-    orderBy: [{ dataStatus: "desc" }, { name: "asc" }, { id: "asc" }],
-    skip: (page - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
-  });
+  const [professors, areas, universities, fields, disciplines, majors] = await Promise.all([
+    prisma.professor.findMany({
+      where,
+      include: {
+        university: true,
+        researchAreas: { include: { researchArea: true } },
+      },
+      orderBy: [{ dataStatus: "desc" }, { name: "asc" }, { id: "asc" }],
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.researchArea.findMany({ orderBy: { name: "asc" } }),
+    prisma.university.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.academicField.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.discipline.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, academicFieldId: true } }),
+    prisma.major.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, officialName: true, disciplineId: true } }),
+  ]);
 
-  const areas = await prisma.researchArea.findMany({ orderBy: { name: "asc" } });
-  const universities = await prisma.university.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } });
   const session = await getServerSession(authOptions);
   const student = session?.user?.email
     ? await prisma.student.findUnique({ where: { email: session.user.email } })
@@ -126,7 +144,12 @@ export default async function ProfessorsPage({
     email: emailOnly ? "1" : "",
     papers: papersOnly ? "1" : "",
     funding,
+    field: fieldId,
+    discipline: disciplineId,
+    major: majorId,
   };
+  const disciplineOptions = disciplines.filter((row) => !fieldId || row.academicFieldId === fieldId);
+  const majorOptions = majors.filter((row) => !disciplineId || row.disciplineId === disciplineId);
   const start = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const end = total === 0 ? 0 : start + professors.length - 1;
 
@@ -162,6 +185,30 @@ export default async function ProfessorsPage({
               </option>
             ))}
           </select>
+          {fields.length > 0 && (
+            <select name="field" defaultValue={fieldId} className="input w-full sm:max-w-[200px]">
+              <option value="">All academic fields</option>
+              {fields.map((field) => (
+                <option key={field.id} value={field.id}>{field.name}</option>
+              ))}
+            </select>
+          )}
+          {disciplines.length > 0 && (
+            <select name="discipline" defaultValue={disciplineId} className="input w-full sm:max-w-[200px]">
+              <option value="">All disciplines</option>
+              {disciplineOptions.map((row) => (
+                <option key={row.id} value={row.id}>{row.name}</option>
+              ))}
+            </select>
+          )}
+          {majors.length > 0 && (
+            <select name="major" defaultValue={majorId} className="input w-full sm:max-w-[220px]">
+              <option value="">All majors</option>
+              {majorOptions.map((row) => (
+                <option key={row.id} value={row.id}>{row.officialName || row.name}</option>
+              ))}
+            </select>
+          )}
           <select name="university" defaultValue={universityId ?? ""} className="input w-full sm:max-w-[220px]">
             <option value="">All universities</option>
             {universities.map((university) => (
@@ -181,7 +228,7 @@ export default async function ProfessorsPage({
             <input type="checkbox" name="papers" value="1" defaultChecked={papersOnly} />
             Has stored papers
           </label>
-          <p className="text-sm text-[var(--gray-500)]">Funding is not publicly verified, so it is not used as a filter.</p>
+          <p className="text-sm text-[var(--gray-500)]">Field, discipline, and major use stored links only. Funding is not a filter because it is not publicly verified.</p>
           <button type="submit" className="btn-primary w-full sm:w-auto">
             Filter
           </button>
@@ -190,7 +237,9 @@ export default async function ProfessorsPage({
 
       {professors.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center text-gray-500">
-          No professors match your filters.
+          {academicFilter
+            ? "No stored link matches this academic filter. Professors are not guessed from department names."
+            : "No professors match your filters."}
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
