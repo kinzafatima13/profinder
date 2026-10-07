@@ -3145,5 +3145,57 @@
     "profileUrl": "https://homepage.hit.edu.cn/school-dept?id=1&browseName=%E6%A0%A1%E5%86%85%E5%8D%95%E4%BD%8D&browseEnName=UNIT&deptName=000022",
     "researchInterests": "computer vision",
     "dataStatus": "unverified"
+  },
+  {
+    "university": "Anhui University",
+    "name": "Zhang Xingyi",
+    "nameZh": "张兴义",
+    "position": "Professor / Doctoral Supervisor",
+    "school": "School of Computer Science and Technology",
+    "department": "Computer Science and Technology",
+    "profileUrl": "https://www.ahu.edu.cn/_t992/2026/0708/c15129a397168/page.htm",
+    "researchInterests": "multi-objective evolutionary optimization, knowledge mining and cognitive computing, artificial intelligence, complex systems modeling, complex network cognitive computing",
+    "dataStatus": "verified",
+    "dataSource": "Official Anhui University",
+    "sourceUrl": "https://www.ahu.edu.cn/_t992/2026/0708/c15129a397168/page.htm"
+  },
+  {
+    "university": "Anhui University",
+    "name": "Luo Bin",
+    "nameZh": "罗斌",
+    "position": "Professor / Doctoral Supervisor",
+    "school": "School of Computer Science and Technology",
+    "department": "Computer Science and Technology",
+    "profileUrl": "https://www.ahu.edu.cn/_t992/2019/1127/c15129a214434/page.htm",
+    "researchInterests": "computer vision, image processing, image information security, computer science",
+    "dataStatus": "verified",
+    "dataSource": "Official Anhui University",
+    "sourceUrl": "https://www.ahu.edu.cn/_t992/2019/1127/c15129a214434/page.htm"
+  },
+  {
+    "university": "Anhui University",
+    "name": "Li Xuejun",
+    "nameZh": "李学俊",
+    "position": "Professor",
+    "school": "School of Computer Science and Technology",
+    "department": "Software Engineering",
+    "profileUrl": "https://www.ahu.edu.cn/_t992/2023/0911/c15129a314798/page.htm",
+    "researchInterests": "edge-intelligent software, medical artificial intelligence, software engineering, artificial intelligence",
+    "dataStatus": "verified",
+    "dataSource": "Official Anhui University",
+    "sourceUrl": "https://www.ahu.edu.cn/_t992/2023/0911/c15129a314798/page.htm"
+  },
+  {
+    "university": "Anhui University",
+    "name": "Zhong Hong",
+    "nameZh": "仲红",
+    "position": "Professor",
+    "school": "School of Computer Science and Technology / School of Cyber Security",
+    "department": "Computer Science and Technology",
+    "profileUrl": "https://www.ahu.edu.cn/2026/0818/c15129a398867/page.htm",
+    "researchInterests": "network behavior analysis, cybersecurity, Internet of Things security",
+    "dataStatus": "verified",
+    "dataSource": "Official Anhui University",
+    "sourceUrl": "https://www.ahu.edu.cn/2026/0818/c15129a398867/page.htm"
   }
 ]
