@@ -15,10 +15,14 @@ const STATUSES = [
   "Follow-up",
   "Replied",
   "Interested",
+  "Supervisor Interested",
   "Application Started",
   "Application Submitted",
+  "Interview",
+  "Offer",
   "Accepted",
   "Rejected",
+  "Withdrawn",
 ];
 
 async function currentStudent() {
