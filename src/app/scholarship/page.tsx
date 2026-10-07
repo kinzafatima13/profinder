@@ -48,7 +48,7 @@ export default function ScholarshipPage() {
     const data = await res.json();
     setRows(data.scholarships || []);
     setUnis(data.universities || []);
-  }
+  }, [universityId, type]);
 
   useEffect(() => {
     load();
