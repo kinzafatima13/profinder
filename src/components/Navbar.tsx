@@ -7,6 +7,8 @@ import { useSession, signOut } from "next-auth/react";
 
 const primary = [
   { href: "/universities", label: "Universities" },
+  { href: "/fields", label: "Fields" },
+  { href: "/majors", label: "Majors" },
   { href: "/programs", label: "Programs" },
   { href: "/professors", label: "Professors" },
   { href: "/find", label: "Find My Match" },
