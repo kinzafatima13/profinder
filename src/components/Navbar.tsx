@@ -7,32 +7,34 @@ import { useSession, signOut } from "next-auth/react";
 
 const primary = [
   { href: "/universities", label: "Universities" },
-  { href: "/fields", label: "Fields" },
-  { href: "/majors", label: "Majors" },
   { href: "/programs", label: "Programs" },
   { href: "/professors", label: "Professors" },
   { href: "/find", label: "Find My Match" },
   { href: "/scholarship", label: "Funding" },
 ];
 
-const more = [
+const publicMore = [
   { href: "/research-areas", label: "Research Areas" },
-  { href: "/shortlist", label: "My Shortlist" },
-  { href: "/tracker", label: "Applications" },
+  { href: "/fields", label: "Fields" },
+  { href: "/majors", label: "Majors" },
+  { href: "/search", label: "Search" },
   { href: "/topics", label: "Topics" },
   { href: "/compare", label: "Compare" },
-  { href: "/search", label: "Search" },
   { href: "/notices", label: "Notices" },
   { href: "/assistant", label: "Assistant" },
 ];
 
-const mobilePrimary = [
+const privateMore = [
+  { href: "/shortlist", label: "My Shortlist" },
+  { href: "/tracker", label: "Applications" },
+];
+
+const mobilePublic = [
   { href: "/", label: "Home" },
-  { href: "/find", label: "Match" },
+  { href: "/universities", label: "Universities" },
   { href: "/programs", label: "Programs" },
   { href: "/professors", label: "Professors" },
-  { href: "/shortlist", label: "Shortlist" },
-  { href: "/tracker", label: "Applications" },
+  { href: "/find", label: "Match" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -57,7 +59,11 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
-  const moreActive = more.some((item) => isActive(pathname, item.href) && item.href !== "/profile#resume");
+  const more = session ? [...privateMore, ...publicMore] : publicMore;
+  const mobilePrimary = session
+    ? [...mobilePublic, { href: "/shortlist", label: "Shortlist" }, { href: "/tracker", label: "Applications" }]
+    : mobilePublic;
+  const moreActive = more.some((item) => isActive(pathname, item.href));
 
   useEffect(() => {
     setMoreOpen(false);
@@ -113,7 +119,7 @@ export default function Navbar() {
               More
             </button>
             {moreOpen && (
-              <div role="menu" className="absolute left-0 z-50 mt-1 w-44 rounded-md border border-[var(--gray-200)] bg-white p-1">
+              <div role="menu" className="absolute left-0 z-50 mt-1 w-48 rounded-md border border-[var(--gray-200)] bg-white p-1">
                 {more.map((item) => (
                   <Link key={item.href} href={item.href} role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">
                     {item.label}
@@ -126,7 +132,7 @@ export default function Navbar() {
 
         <div className="flex items-center gap-2">
           <Link href={pro ? "/billing" : "/pricing"} className="rounded-md px-2.5 py-2 text-sm font-medium text-[var(--navy)] hover:bg-[var(--gray-100)]">
-            {pro ? "Pro ✓" : "Go Pro"}
+            {pro ? "Pro" : "Go Pro"}
           </Link>
           {status === "loading" ? (
             <span className="text-xs text-[var(--gray-500)]">...</span>
@@ -149,6 +155,8 @@ export default function Navbar() {
                     <p className="text-xs text-[var(--gray-500)]">{pro ? "ProFinder Pro" : "Free plan"}</p>
                   </div>
                   <Link href="/profile" role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">Profile</Link>
+                  <Link href="/shortlist" role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">My Shortlist</Link>
+                  <Link href="/tracker" role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">Applications</Link>
                   <Link href="/billing" role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">Billing & Subscription</Link>
                   <div className="my-1 border-t border-[var(--gray-200)]" />
                   <button type="button" role="menuitem" className="block w-full rounded-md px-3 py-2 text-left text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]" onClick={() => signOut({ callbackUrl: "/" })}>
@@ -185,11 +193,10 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="border-t border-[var(--gray-200)] bg-white px-4 py-3 lg:hidden">
           <div className="grid gap-1">
-            <Link href="/universities" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">Universities</Link>
             {more.map((item) => (
               <Link key={item.href} href={item.href} className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">{item.label}</Link>
             ))}
-            <Link href="/pricing" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">Pro</Link>
+            <Link href="/pricing" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">Pricing</Link>
             {session ? (
               <>
                 <Link href="/profile" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">Profile</Link>
