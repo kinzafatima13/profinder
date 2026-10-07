@@ -1,7 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
+import { ensureSchema, prisma } from "@/lib/prisma";
 import { hasProAccess } from "@/lib/billing/access";
 
 export const authOptions: NextAuthOptions = {
@@ -15,6 +15,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        await ensureSchema();
         if (!credentials?.email || !credentials?.password) return null;
         const student = await prisma.student.findUnique({
           where: { email: credentials.email.toLowerCase().trim() },

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { prisma } from "@/lib/prisma";
+import { ensureSchema, prisma } from "@/lib/prisma";
 
 async function sendCode(to: string, code: string) {
   const host = process.env.SMTP_HOST;
@@ -24,6 +24,7 @@ async function sendCode(to: string, code: string) {
 }
 
 export async function POST(req: NextRequest) {
+  await ensureSchema();
   const body = await req.json().catch(() => ({}));
   const email = String(body.email || "").toLowerCase().trim();
   if (!email) return NextResponse.json({ error: "Email is required." }, { status: 400 });
