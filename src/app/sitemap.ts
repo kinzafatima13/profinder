@@ -5,7 +5,7 @@ import { SITE, slugify } from "@/lib/seo";
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [universities, professors, areas, fields, majors, programs] = await Promise.all([
+  const [universities, professors, areas, fields, majors] = await Promise.all([
     prisma.university.findMany({ select: { id: true, updatedAt: true } }),
     prisma.professor.findMany({ select: { id: true, updatedAt: true } }),
     prisma.researchArea.findMany({ select: { name: true } }),
