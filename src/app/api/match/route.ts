@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { computeResearchMatch } from "@/lib/matching";
+import { findAcademicMatches } from "@/lib/matching/engine";
 import { assessTarget, newestStoredYear } from "@/lib/professor-assessment";
 import { consumeUsage, isPro, limitMessage } from "@/lib/billing/usage";
 import { FEATURES } from "@/lib/billing/plans";
@@ -15,6 +16,7 @@ export async function POST(req: NextRequest) {
       ? await prisma.student.findUnique({ where: { email: session.user.email } })
       : null;
 
+    const query = typeof body.query === "string" ? body.query.trim() : "";
     const student = {
       degree: body.degree || saved?.degree || null,
       major: body.major || saved?.major || null,
@@ -28,9 +30,9 @@ export async function POST(req: NextRequest) {
     if (!saved) {
       return NextResponse.json({ error: "Sign in to use professor matching. Free includes 10 searches a month." }, { status: 401 });
     }
-    if (!student.researchInterests && !student.major) {
+    if (!query && !student.researchInterests && !student.major) {
       return NextResponse.json(
-        { error: "Add research interests or a major in your profile or this form." },
+        { error: "Describe your goal, or add research interests or a major." },
         { status: 400 }
       );
     }
@@ -38,6 +40,44 @@ export async function POST(req: NextRequest) {
     const usage = await consumeUsage(saved.id, FEATURES.AI_PROFESSOR_MATCH, pro);
     if (!usage.ok) {
       return NextResponse.json({ error: limitMessage(FEATURES.AI_PROFESSOR_MATCH, usage.used, usage.limit || 0), code: "LIMIT" }, { status: 403 });
+    }
+
+    if (query || body.priority || body.country || body.funding) {
+      const academic = await findAcademicMatches({
+        query,
+        degree: body.degree || saved?.targetDegreeLevel || saved?.degree,
+        major: body.major || saved?.major,
+        researchInterests: body.researchInterests || query || saved?.researchInterests,
+        country: body.country || null,
+        funding: body.funding || (saved?.fundingPreference ? "required" : null),
+        priority: body.priority || "balanced",
+        limit: pro ? 12 : 8,
+      });
+      return NextResponse.json({
+        ...academic,
+        plan: pro ? "pro" : "free",
+        limited: !pro,
+        usage,
+        results: academic.matches.map((match) => ({
+          id: match.professor.id,
+          name: match.professor.name,
+          position: match.professor.position,
+          department: match.professor.department,
+          universityName: match.university.name,
+          universityCity: match.university.city,
+          researchAreas: match.professor.areas,
+          researchInterests: match.professor.researchInterests,
+          verified: match.verificationStatus.startsWith("Verified"),
+          email: match.professor.email,
+          match: {
+            score: match.score,
+            explanation: match.reasons.join(" "),
+            reasons: match.reasons,
+            breakdown: Object.fromEntries(match.scoreBreakdown.map((part) => [part.key, part.score])),
+          },
+          academic: match,
+        })),
+      });
     }
 
     const professors = await prisma.professor.findMany({

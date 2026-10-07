@@ -559,3 +559,18 @@ model ChangeLog {
   @@index([entityType, entityId])
   @@index([detectedAt])
 }
+
+model MatchFeedback {
+  id           String   @id @default(cuid())
+  studentId    String?
+  query        String?
+  professorId  String?
+  programId    String?
+  universityId String?
+  vote         String
+  reason       String?
+  createdAt    DateTime @default(now())
+
+  @@index([studentId])
+  @@index([professorId])
+}

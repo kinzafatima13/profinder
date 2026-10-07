@@ -5,6 +5,7 @@ import { ensureSchema, prisma } from "@/lib/prisma";
 import { focusTokens, labelTerm, professorQueryWhere } from "@/lib/discovery";
 import { parseDocuments } from "@/lib/application-plan";
 import { rateLimit, requestKey } from "@/lib/rate-limit";
+import { findAcademicMatches } from "@/lib/matching/engine";
 
 export async function POST(req: NextRequest) {
   if (!rateLimit(requestKey(req, "assistant"), 20, 10 * 60 * 1000).ok) {
@@ -35,6 +36,19 @@ export async function POST(req: NextRequest) {
   }
 
   const session = await getServerSession(authOptions);
+  const academic = await findAcademicMatches({ query: question, limit: 5 });
+  const rankedProfessors = academic.matches.map((match) => ({
+    id: match.professor.id,
+    name: match.professor.name,
+    university: match.university.name,
+    department: match.professor.department,
+    interests: match.professor.researchInterests,
+    areas: match.professor.areas,
+    verified: match.verificationStatus.startsWith("Verified"),
+    score: match.score,
+    why: match.reasons[0] || academic.note,
+  }));
+
   const [professors, programs, universities, areas, topics, scholarships] = await Promise.all([
     prisma.professor.findMany({
       where: professorQueryWhere(question),
@@ -91,10 +105,10 @@ export async function POST(req: NextRequest) {
       .map((row) => ({ label: row.name, href: "/professors?q=" + encodeURIComponent(row.name) })),
   ].slice(0, 6);
 
-  const limited = professors.length === 0 && programs.length === 0 && universities.length === 0;
+  const limited = rankedProfessors.length === 0 && professors.length === 0 && programs.length === 0 && universities.length === 0;
   const understanding = limited
-    ? `Nothing stored matches “${question}” closely. ProFinder’s programs are currently computer science and related majors. Some professor records mention other subjects in their stored interests or topics, but this wording did not match those records.`
-    : `These are stored ProFinder records that share words with “${question}”. A match is not proof that a professor supervises that exact project, and it is not an admissions decision.`;
+    ? `ProFinder does not currently have verified information for “${question}”.`
+    : academic.note;
 
   let tracker: string | undefined;
   if (/document|passport|checklist|transcript|deadline|my application|saved/.test(question.toLowerCase())) {
@@ -122,7 +136,7 @@ export async function POST(req: NextRequest) {
     understanding,
     limited,
     directions,
-    professors: professors.map((row) => ({
+    professors: (rankedProfessors.length ? rankedProfessors : professors.map((row) => ({
       id: row.id,
       name: row.name,
       university: row.university.name,
@@ -130,7 +144,7 @@ export async function POST(req: NextRequest) {
       interests: row.researchInterests,
       areas: row.researchAreas.map((item) => item.researchArea.name),
       verified: row.dataStatus === "verified",
-    })),
+    }))),
     programs: programs.map((row) => ({
       label: `${row.degree} · ${row.major}`,
       university: row.university.name,

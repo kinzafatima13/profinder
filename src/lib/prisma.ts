@@ -204,6 +204,18 @@ export function ensureSchema() {
       ] as const) {
         await addColumn("Student", column, type);
       }
+      await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "MatchFeedback" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "studentId" TEXT,
+        "query" TEXT,
+        "professorId" TEXT,
+        "programId" TEXT,
+        "universityId" TEXT,
+        "vote" TEXT NOT NULL,
+        "reason" TEXT,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )`);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "MatchFeedback_studentId_idx" ON "MatchFeedback"("studentId")`);
     })().catch((error) => {
       globalForPrisma.schemaReady = undefined;
       throw error;
