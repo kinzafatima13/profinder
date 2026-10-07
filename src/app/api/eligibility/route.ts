@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { ensureSchema, prisma } from "@/lib/prisma";
 import { scoreProgram, scoreScholarship, requirementChecklist, type FitProfile, type FitReason } from "@/lib/eligibility";
 
 function splitReasons(reasons: FitReason[]) {
@@ -12,6 +12,7 @@ function splitReasons(reasons: FitReason[]) {
 }
 
 export async function POST(req: NextRequest) {
+  await ensureSchema();
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Sign in and save your profile first." }, { status: 401 });

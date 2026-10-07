@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { ensureSchema, prisma } from "@/lib/prisma";
 import { scoreProgram, scoreScholarship, type FitProfile } from "@/lib/eligibility";
 
 const PROGRAM_CAP = 400;
 const SCHOLARSHIP_CAP = 400;
 
 export async function GET() {
+  await ensureSchema();
   const session = await getServerSession(authOptions);
   const student = session?.user?.email
     ? await prisma.student.findUnique({ where: { email: session.user.email } })

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { ensureSchema, prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
+  await ensureSchema();
   const universityId = req.nextUrl.searchParams.get("universityId") || undefined;
   const type = req.nextUrl.searchParams.get("type") || undefined;
   const q = req.nextUrl.searchParams.get("q")?.trim() || "";
