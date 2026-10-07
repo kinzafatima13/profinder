@@ -12,6 +12,11 @@ export function normalizeVerificationStatus(status?: string | null): string {
 export type ProgramInput = {
   degree: string;
   major: string;
+  officialName?: string | null;
+  academicField?: string | null;
+  discipline?: string | null;
+  studyMode?: string | null;
+  sourceUrl?: string | null;
   teachingLang?: string | null;
   requirements?: string | null;
   programUrl?: string | null;
