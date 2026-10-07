@@ -24,7 +24,7 @@ export default async function UniversitiesPage() {
       <div className="mb-8">
         <h1 className="section-title">Universities</h1>
         <p className="mt-1 text-gray-600">
-          China · Computer Science &amp; related technology fields
+          China · multidisciplinary graduate-study discovery
         </p>
       </div>
 
