@@ -224,7 +224,7 @@ export class ProFinderImporter {
       const uniqueProfs: ProfessorInput[] = [];
 
       for (const p of combinedProfs) {
-        const key = p.name.trim().toLowerCase();
+        const key = p.name.trim().toLowerCase().normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "").replace(/\\s+/g, " ");
         if (!seenProfNames.has(key)) {
           seenProfNames.add(key);
           uniqueProfs.push(p);
