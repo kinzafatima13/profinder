@@ -82,20 +82,6 @@ gtag('config', '" + GA_ID + "');"}
           </footer>
         </Providers>
       </body>
-      {GA_ID ? (
-        <>
-          <Script
-            src={"https://www.googletagmanager.com/gtag/js?id=" + GA_ID}
-            strategy="afterInteractive"
-          />
-          <Script id="google-analytics" strategy="afterInteractive">
-            {"window.dataLayer = window.dataLayer || [];
-function gtag(){window.dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', '" + GA_ID + "');"}
-          </Script>
-        </>
-      ) : null}
     </html>
   );
 }
