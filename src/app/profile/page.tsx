@@ -54,14 +54,14 @@ type Profile = {
 const EMPTY: Profile = {
   name: "",
   email: "",
-  degree: "Master",
+  degree: "",
   major: "",
   academicBackground: "",
   researchInterests: "",
   skills: "",
   projects: "",
   cvText: "",
-  preferredCountries: "China",
+  preferredCountries: "",
   preferredUniversities: "",
   gpa: "",
   nationality: "",
@@ -110,7 +110,7 @@ export default function ProfilePage() {
         }
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Could not load profile");
-        setProfile({ ...EMPTY, ...data.profile });
+        setProfile({ ...EMPTY, ...data.profile, preferredCountries: data.profile?.preferredCountries ?? "", degree: data.profile?.degree ?? "" });
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -136,7 +136,7 @@ export default function ProfilePage() {
       setError(data.error || "Could not save");
       return;
     }
-    setProfile({ ...EMPTY, ...data.profile });
+    setProfile({ ...EMPTY, ...data.profile, preferredCountries: data.profile?.preferredCountries ?? "", degree: data.profile?.degree ?? "" });
     setMessage("Profile saved. Matching and email drafts will use this information.");
   }
 
@@ -167,10 +167,14 @@ export default function ProfilePage() {
     );
   }
 
+  const degreeValue = profile.degree ?? "";
+  const knownDegrees = ["", "Master", "PhD", "Other"];
+
   return (
     <div className="page-container py-10">
       <h1 className="text-2xl font-semibold text-[var(--navy)]">Profile</h1>
       <p className="mt-1 text-sm text-[var(--gray-700)]">{profile.email}</p>
+      <p className="mt-1 max-w-3xl text-sm text-gray-600">Every field except your account email is optional. A saved country or major is kept. Nothing is prefilled with a country.</p>
       {(() => {
         const fit = scoreProfile(profile);
         return (
@@ -187,24 +191,26 @@ export default function ProfilePage() {
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         {message && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{message}</p>}
         <label className="text-sm">Full name
-          <input className="input mt-1" value={profile.name ?? ""} onChange={(e) => setField("name", e.target.value)} required />
+          <input className="input mt-1" value={profile.name ?? ""} onChange={(e) => setField("name", e.target.value)} />
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm">Degree
-            <select className="input mt-1" value={profile.degree ?? "Master"} onChange={(e) => setField("degree", e.target.value)}>
+            <select className="input mt-1" value={knownDegrees.includes(degreeValue) ? degreeValue : "Other"} onChange={(e) => setField("degree", e.target.value)}>
+              <option value="">Not set</option>
               <option>Master</option>
               <option>PhD</option>
+              <option>Other</option>
             </select>
           </label>
-          <label className="text-sm">Major
-            <input className="input mt-1" value={profile.major ?? ""} onChange={(e) => setField("major", e.target.value)} required />
+          <label className="text-sm">Major or discipline
+            <input className="input mt-1" value={profile.major ?? ""} onChange={(e) => setField("major", e.target.value)} placeholder="Any discipline. Optional." />
           </label>
         </div>
         <label className="text-sm">CGPA
           <input className="input mt-1 max-w-xs" value={profile.gpa ?? ""} onChange={(e) => setField("gpa", e.target.value)} placeholder="e.g. 3.41 / 4.00" />
         </label>
         <label className="text-sm">Nationality
-          <input className="input mt-1 max-w-xs" value={profile.nationality ?? ""} onChange={(e) => setField("nationality", e.target.value)} placeholder="e.g. Pakistan" />
+          <input className="input mt-1 max-w-xs" value={profile.nationality ?? ""} onChange={(e) => setField("nationality", e.target.value)} placeholder="Optional" />
         </label>
         <label className="text-sm">English test summary
           <input className="input mt-1 max-w-md" value={profile.englishTest ?? ""} onChange={(e) => setField("englishTest", e.target.value)} placeholder="Optional summary. Leave blank if you have not taken one." />
@@ -236,7 +242,7 @@ export default function ProfilePage() {
           <textarea className="input mt-1 min-h-[80px]" value={profile.academicBackground ?? ""} onChange={(e) => setField("academicBackground", e.target.value)} placeholder="Study, work, or research experience" />
         </label>
         <label className="text-sm">Research interests
-          <textarea className="input mt-1 min-h-[80px]" value={profile.researchInterests ?? ""} onChange={(e) => setField("researchInterests", e.target.value)} required />
+          <textarea className="input mt-1 min-h-[80px]" value={profile.researchInterests ?? ""} onChange={(e) => setField("researchInterests", e.target.value)} placeholder="Optional. Matching stays incomplete until this is saved." />
         </label>
         <label className="text-sm">Publications
           <textarea className="input mt-1 min-h-[80px]" value={profile.publications ?? ""} onChange={(e) => setField("publications", e.target.value)} placeholder="Only list work you authored. Leave blank if none." />
@@ -264,7 +270,7 @@ export default function ProfilePage() {
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm">Preferred countries
-            <input className="input mt-1" value={profile.preferredCountries ?? ""} onChange={(e) => setField("preferredCountries", e.target.value)} />
+            <input className="input mt-1" value={profile.preferredCountries ?? ""} onChange={(e) => setField("preferredCountries", e.target.value)} placeholder="Leave blank if you have no preference" />
           </label>
           <label className="text-sm">Funding goals
             <input className="input mt-1" value={profile.fundingGoals ?? ""} onChange={(e) => setField("fundingGoals", e.target.value)} placeholder="e.g. full scholarship, CSC, or self-funded" />
