@@ -4,6 +4,11 @@ import bcrypt from "bcryptjs";
 import { ensureSchema, prisma } from "@/lib/prisma";
 import { hasProAccess } from "@/lib/billing/access";
 
+const authSecret = process.env.NEXTAUTH_SECRET;
+if (process.env.NODE_ENV === "production" && !authSecret) {
+  throw new Error("NEXTAUTH_SECRET is required in production.");
+}
+
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   pages: { signIn: "/login", newUser: "/signup" },
@@ -41,6 +46,7 @@ export const authOptions: NextAuthOptions = {
       if (email) {
         const student = await prisma.student.findUnique({ where: { email }, include: { subscription: true } });
         token.plan = hasProAccess(student?.subscription ?? null) ? "pro" : "free";
+        token.role = student?.role || "student";
       }
       return token;
     },
@@ -52,5 +58,5 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET || "profinder-nextauth-secret-set-NEXTAUTH_SECRET-in-vercel",
+  secret: authSecret || "dev-only-nextauth-secret",
 };
