@@ -18,6 +18,22 @@ export async function POST(req: NextRequest) {
   }
 
   const tokens = focusTokens(question);
+  const smallTalk = /^(hi|hey|hello|yo|sup|ok|okay|thanks|thank you|help|good morning|good evening)[.!?\s]*$/i.test(question)
+    || tokens.length === 0
+    || (tokens.length === 1 && ["hey", "hello", "help", "thanks", "okay"].includes(tokens[0]));
+  if (smallTalk) {
+    return NextResponse.json({
+      understanding: "Tell me what you want to study or research. For example: machine learning, agriculture, renewable energy, or cancer genomics. I only use stored ProFinder records. I do not search the web, and I do not list saved applications or emails unless you ask about them.",
+      limited: true,
+      directions: [],
+      professors: [],
+      programs: [],
+      universities: [],
+      funding: [],
+      explore: { professors: "/professors", programs: "/programs", match: "/find" },
+    });
+  }
+
   const session = await getServerSession(authOptions);
   const [professors, programs, universities, areas, topics, scholarships] = await Promise.all([
     prisma.professor.findMany({

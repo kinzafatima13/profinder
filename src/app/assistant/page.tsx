@@ -24,14 +24,16 @@ export default function AssistantPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function ask(event: React.FormEvent) {
-    event.preventDefault();
+  async function ask(event?: React.FormEvent, preset?: string) {
+    event?.preventDefault();
+    const text = (preset ?? question).trim();
+    if (preset) setQuestion(preset);
     setLoading(true);
     setError("");
     const res = await fetch("/api/assistant", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question: text }),
     });
     const data = await res.json();
     setLoading(false);
@@ -61,6 +63,11 @@ export default function AssistantPage() {
         <textarea id="assistant-q" className="input min-h-[100px]" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Example: I want to research AI in healthcare" required />
         <button className="btn-primary" disabled={loading}>{loading ? "Checking stored records..." : "Ask"}</button>
       </form>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {["machine learning", "agriculture", "renewable energy", "cancer genomics"].map((example) => (
+          <button key={example} type="button" className="chip" onClick={() => ask(undefined, example)}>{example}</button>
+        ))}
+      </div>
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
       {understanding && (
         <div className="mt-8 max-w-3xl space-y-8">
