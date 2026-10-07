@@ -10,7 +10,11 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding PROFINDER database...");
+  if (process.env.ALLOW_DEMO_SEED !== "true") {
+    console.log("Seed skipped: destructive/demo seed is disabled. Set ALLOW_DEMO_SEED=true only for an empty development database.");
+    return;
+  }
+  console.log("🌱 Seeding PROFINDER demo database...");
 
   // Clean existing data (order matters for FKs)
   await prisma.application.deleteMany();
