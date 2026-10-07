@@ -14,7 +14,8 @@
     "db:studio": "prisma studio",
     "seed:taxonomy": "tsx prisma/seed-taxonomy.ts",
     "import:universities": "tsx scripts/import-pipeline.ts",
-    "test": "tsx --test src/lib/matching.test.ts src/lib/billing/access.test.ts"
+    "test": "tsx --test src/lib/matching.test.ts src/lib/billing/access.test.ts",
+    "import:official": "tsx scripts/import-official-programs.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
