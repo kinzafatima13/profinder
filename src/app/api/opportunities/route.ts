@@ -4,6 +4,9 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { scoreProgram, scoreScholarship, type FitProfile } from "@/lib/eligibility";
 
+const PROGRAM_CAP = 400;
+const SCHOLARSHIP_CAP = 400;
+
 export async function GET() {
   const session = await getServerSession(authOptions);
   const student = session?.user?.email
@@ -20,12 +23,18 @@ export async function GET() {
   };
   const ready = Boolean(profile.degree || profile.major || profile.interests);
 
-  const [programs, scholarships] = await Promise.all([
+  const [programTotal, scholarshipTotal, programs, scholarships] = await Promise.all([
+    prisma.program.count(),
+    prisma.scholarship.count(),
     prisma.program.findMany({
       include: { university: { select: { id: true, name: true, city: true } } },
+      orderBy: { updatedAt: "desc" },
+      take: PROGRAM_CAP,
     }),
     prisma.scholarship.findMany({
       include: { university: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: SCHOLARSHIP_CAP,
     }),
   ]);
 
@@ -49,6 +58,7 @@ export async function GET() {
         degree: program.degree,
         major: program.major,
         deadline: program.deadline,
+        funding: "UNKNOWN",
         score: fit?.score ?? null,
         reasons: fit?.reasons ?? [],
       };
@@ -80,6 +90,7 @@ export async function GET() {
         university: row.university?.name ?? "University not linked",
         deadline: row.deadline,
         officialUrl: row.officialUrl,
+        fundingCoverage: row.type && /full/i.test(row.type) ? "CHECK_SOURCE" : "UNKNOWN",
         score: fit?.score ?? null,
         reasons: fit?.reasons ?? [],
       };
@@ -87,9 +98,15 @@ export async function GET() {
     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
     .slice(0, 8);
 
+  const sampled = programTotal > programs.length || scholarshipTotal > scholarships.length;
+
   return NextResponse.json({
     signedIn: Boolean(student),
     profileReady: ready,
+    sampled,
+    sampleNote: sampled
+      ? "Ranking uses the most recently updated stored records, up to 400 programs and 400 scholarships. It is not a score of the entire catalog."
+      : null,
     programs: rankedPrograms,
     scholarships: rankedScholarships,
   });

@@ -13,17 +13,19 @@ export async function GET(req: NextRequest) {
               { nameZh: { contains: q } },
               { city: { contains: q } },
               { province: { contains: q } },
+              { country: { contains: q } },
               { description: { contains: q } },
             ],
           }
         : undefined,
       orderBy: { name: "asc" },
+      take: q ? 40 : 120,
       include: {
         _count: { select: { professors: true, programs: true } },
       },
     });
 
-    return NextResponse.json({ universities });
+    return NextResponse.json({ universities, capped: true });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to fetch universities" }, { status: 500 });
