@@ -11,7 +11,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     prisma.researchArea.findMany({ select: { name: true } }),
     prisma.academicField.findMany({ select: { slug: true, updatedAt: true }, where: { verificationStatus: "VERIFIED" } }),
     prisma.major.findMany({ select: { slug: true, updatedAt: true }, where: { verificationStatus: "VERIFIED" } }),
-    prisma.program.findMany({ select: { id: true, updatedAt: true }, where: { verificationStatus: "VERIFIED" } }),
   ]);
   const now = new Date();
   const staticPages = ["", "/universities", "/professors", "/research-areas", "/scholarship", "/pricing"].map((path) => ({
@@ -25,6 +24,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...areas.map((row) => ({ url: `${SITE}/research-areas/${slugify(row.name)}`, lastModified: now })),
     ...fields.map((row) => ({ url: `${SITE}/fields/${row.slug}`, lastModified: row.updatedAt })),
     ...majors.map((row) => ({ url: `${SITE}/majors/${row.slug}`, lastModified: row.updatedAt })),
-    ...programs.map((row) => ({ url: `${SITE}/programs/${row.id}`, lastModified: row.updatedAt })),
   ];
 }
