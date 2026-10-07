@@ -85,7 +85,7 @@ export default function FindProfessorsPage() {
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Degree</label>
             <select className="input" value={degree} onChange={(e) => setDegree(e.target.value)}>
-              <option value="Master">Master's</option>
+              <option value="Master">Masters</option>
               <option value="PhD">PhD</option>
               <option value="Other">Other</option>
             </select>
