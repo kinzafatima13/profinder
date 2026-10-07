@@ -5,6 +5,7 @@ import Script from "next/script";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
+import { ensureSchema } from "@/lib/prisma";
 import { SITE } from "@/lib/seo";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
@@ -21,7 +22,8 @@ export const metadata: Metadata = {
   icons: { icon: [{ url: "/icon.png", type: "image/png", sizes: "512x512" }, { url: "/favicon.ico", sizes: "48x48" }], apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }], shortcut: "/favicon.ico" },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  await ensureSchema();
   return (
     <html lang="en">
       <body className={inter.className + " min-h-screen bg-white text-[var(--gray-900)] antialiased"}>
