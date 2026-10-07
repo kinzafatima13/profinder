@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { ensureSchema, prisma } from "@/lib/prisma";
+import { rateLimit, requestKey } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
     await ensureSchema();
+    if (!rateLimit(requestKey(req, "signup"), 8, 60 * 60 * 1000).ok) {
+      return NextResponse.json({ error: "Too many signup attempts. Try again later." }, { status: 429 });
+    }
     const body = await req.json();
     const email = String(body.email ?? "").toLowerCase().trim();
     const password = String(body.password ?? "");
     const name = body.name ? String(body.name).trim() : null;
-    const degree = body.degree ? String(body.degree) : null;
-    const major = body.major ? String(body.major) : null;
+    const degree = body.degree ? String(body.degree).trim() : null;
+    const major = body.major ? String(body.major).trim() : null;
     const researchInterests = body.researchInterests
-      ? String(body.researchInterests)
+      ? String(body.researchInterests).trim()
       : null;
 
     if (!email || !password) {

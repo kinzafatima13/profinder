@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { ensureSchema, prisma } from "@/lib/prisma";
+import { rateLimit, requestKey } from "@/lib/rate-limit";
 
 async function sendCode(to: string, code: string) {
   const host = process.env.SMTP_HOST;
@@ -30,8 +31,11 @@ export async function POST(req: NextRequest) {
   if (!email || !email.includes("@") || email.length > 200) {
     return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
   }
-
   const generic = { ok: true, message: "If that account exists, a code was sent." };
+  if (!rateLimit(requestKey(req, "forgot"), 5, 60 * 60 * 1000).ok || !rateLimit(`forgot-email:${email}`, 3, 60 * 60 * 1000).ok) {
+    return NextResponse.json(generic);
+  }
+
   const student = await prisma.student.findUnique({ where: { email } });
   if (!student) return NextResponse.json(generic);
 

@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { ensureSchema, prisma } from "@/lib/prisma";
 import { hasProAccess } from "@/lib/billing/access";
+import { rateLimit } from "@/lib/rate-limit";
 
 const authSecret = process.env.NEXTAUTH_SECRET;
 if (process.env.NODE_ENV === "production" && !authSecret) {
@@ -22,8 +23,10 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         await ensureSchema();
         if (!credentials?.email || !credentials?.password) return null;
+        const email = credentials.email.toLowerCase().trim();
+        if (!rateLimit(`login:${email}`, 12, 15 * 60 * 1000).ok) return null;
         const student = await prisma.student.findUnique({
-          where: { email: credentials.email.toLowerCase().trim() },
+          where: { email },
         });
         if (!student?.passwordHash) return null;
         const valid = await bcrypt.compare(credentials.password, student.passwordHash);
