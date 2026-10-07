@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { findInstitution, authorsAtInstitution, recentWorks, searchAuthorAtInstitution } from "../openalex";
 import { authorByOrcid, authorPapers } from "../semanticScholar";
 import { splitName } from "../normalize";
+import { inferAcademicField, inferDiscipline, normalizeAcademicName, slugifyAcademic } from "../academic-taxonomy";
 import { matchResearchAreas } from "../taxonomy";
 import {
   UniversityInput,
@@ -153,10 +154,39 @@ export class ProFinderImporter {
       // 3. Process Programs
       if (uniInput.programs && uniInput.programs.length > 0) {
         for (const prog of uniInput.programs) {
+          const fieldName = prog.academicField || inferAcademicField(prog.major);
+          const disciplineName = prog.discipline || inferDiscipline(prog.major, fieldName);
+          const field = await this.prisma.academicField.upsert({
+            where: { slug: slugifyAcademic(fieldName) },
+            update: {},
+            create: { name: fieldName, slug: slugifyAcademic(fieldName), verificationStatus: "PENDING_REVIEW" },
+          });
+          const discipline = await this.prisma.discipline.upsert({
+            where: { slug: slugifyAcademic(fieldName + " " + disciplineName) },
+            update: {},
+            create: { academicFieldId: field.id, name: disciplineName, slug: slugifyAcademic(fieldName + " " + disciplineName), verificationStatus: "PENDING_REVIEW" },
+          });
+          const major = await this.prisma.major.upsert({
+            where: { slug: slugifyAcademic(fieldName + " " + disciplineName + " " + normalizeAcademicName(prog.major)) },
+            update: { officialName: prog.officialName ?? prog.major },
+            create: {
+              disciplineId: discipline.id,
+              name: prog.major,
+              officialName: prog.officialName ?? prog.major,
+              slug: slugifyAcademic(fieldName + " " + disciplineName + " " + normalizeAcademicName(prog.major)),
+              verificationStatus: "PENDING_REVIEW",
+            },
+          });
           const existingProg = await this.prisma.program.findFirst({
             where: { universityId, degree: prog.degree, major: prog.major },
           });
           const progData = {
+            officialName: prog.officialName ?? existingProg?.officialName ?? prog.major,
+            academicFieldId: field.id,
+            disciplineId: discipline.id,
+            majorId: major.id,
+            studyMode: prog.studyMode ?? existingProg?.studyMode ?? null,
+            sourceUrl: prog.sourceUrl ?? prog.programUrl ?? existingProg?.sourceUrl ?? null,
             teachingLang: prog.teachingLang ?? null,
             requirements: prog.requirements ?? null,
             programUrl: prog.programUrl ?? null,
