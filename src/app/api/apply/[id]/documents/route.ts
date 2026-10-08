@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logApplyActivity } from "@/lib/apply-admin";
+import { storeApplyFile } from "@/lib/apply-storage";
 
 const KINDS = new Set(["passport", "transcript", "cv", "statement", "other"]);
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -26,17 +26,30 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!(file instanceof File) || file.size < 1) return NextResponse.json({ error: "Choose a file." }, { status: 400 });
   if (file.size > MAX_BYTES) return NextResponse.json({ error: "Each file must be 8 MB or smaller." }, { status: 400 });
 
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80) || "document";
-  const storedName = `${request.id}-${Date.now()}-${safeName}`;
-  const dir = path.join(process.cwd(), "data", "apply-uploads");
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, storedName), Buffer.from(await file.arrayBuffer()));
+  let stored;
+  try {
+    stored = await storeApplyFile(request.id, file.name, Buffer.from(await file.arrayBuffer()));
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    if (code === "UNSUPPORTED_FILE") return NextResponse.json({ error: "Upload a PDF, image, or Word file. HTML and SVG are not accepted." }, { status: 400 });
+    if (code === "PRIVATE_STORAGE_UNCONFIGURED") return NextResponse.json({ error: "Private document storage is not configured." }, { status: 503 });
+    return NextResponse.json({ error: "Upload failed." }, { status: 500 });
+  }
 
   const document = await prisma.applyDocument.create({
-    data: { requestId: request.id, kind, name: file.name.slice(0, 180), storedName, size: file.size },
+    data: {
+      requestId: request.id,
+      kind,
+      name: file.name.slice(0, 180),
+      storedName: stored.storedName,
+      storageProvider: stored.storageProvider,
+      objectKey: stored.objectKey,
+      size: file.size,
+    },
   });
   if (request.status === "draft") {
     await prisma.applyRequest.update({ where: { id: request.id }, data: { status: "awaiting_payment" } });
   }
+  await logApplyActivity(request.id, "document_uploaded", student.id, { kind, name: stored.storedName });
   return NextResponse.json({ document: { id: document.id, kind: document.kind, name: document.name, size: document.size } });
 }

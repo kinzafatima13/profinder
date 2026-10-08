@@ -255,6 +255,20 @@ export function ensureSchema() {
       await addColumn("ApplyRequest", "package", "TEXT NOT NULL DEFAULT 'pair'");
       await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "ApplyRequestItem_requestId_universityId_key" ON "ApplyRequestItem"("requestId", "universityId")`);
       await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ApplyDocument_requestId_idx" ON "ApplyDocument"("requestId")`);
+      await addColumn("ApplyRequest", "paymentAt", "DATETIME");
+      await addColumn("ApplyRequest", "founderNote", "TEXT");
+      await addColumn("ApplyDocument", "storageProvider", "TEXT NOT NULL DEFAULT 'local'");
+      await addColumn("ApplyDocument", "objectKey", "TEXT");
+      await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "ApplyActivity" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "requestId" TEXT NOT NULL,
+        "actorId" TEXT,
+        "action" TEXT NOT NULL,
+        "meta" TEXT,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "ApplyActivity_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "ApplyRequest" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+      )`);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ApplyActivity_requestId_idx" ON "ApplyActivity"("requestId")`);
     })().catch((error) => {
       globalForPrisma.schemaReady = undefined;
       throw error;
