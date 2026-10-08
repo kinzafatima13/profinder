@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { ensureSchema, prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   const area = req.nextUrl.searchParams.get("area")?.trim();
 
   try {
+    await ensureSchema();
     const professors = await prisma.professor.findMany({
       where: {
         AND: [
@@ -30,9 +31,15 @@ export async function GET(req: NextRequest) {
             : {},
         ],
       },
-      include: {
-        university: true,
-        researchAreas: { include: { researchArea: true } },
+      select: {
+        id: true,
+        name: true,
+        nameZh: true,
+        position: true,
+        department: true,
+        researchInterests: true,
+        university: { select: { name: true, city: true } },
+        researchAreas: { select: { researchArea: { select: { name: true } } } },
       },
       orderBy: { name: "asc" },
       take: 50,
