@@ -120,6 +120,10 @@ model Professor {
   orcid             String?
   openAlexId        String?
   semanticScholarId String?
+  googleScholarId   String?
+  supervisesMasters Boolean?
+  supervisesPhd     Boolean?
+  acceptingStudents Boolean?
   profileIsPersonal Boolean  @default(false)
   dataStatus        String   @default("unverified") // verified | unverified | needs_review | outdated
   dataSource        String?
@@ -151,6 +155,7 @@ model Professor {
   @@index([orcid])
   @@index([openAlexId])
   @@index([semanticScholarId])
+  @@index([googleScholarId])
   @@index([universityId])
 }
 
@@ -191,6 +196,24 @@ model Scholarship {
   lastCheckedAt DateTime?
   lastVerifiedAt DateTime?
   confidence    Float?
+  funder        String?
+  degreeLevel   String?
+  sourceUrl     String?
+  tuitionCoverage String?
+  accommodationCoverage String?
+  monthlyStipend String?
+  insurance     String?
+  travelAllowance String?
+  applicationFeeCovered String?
+  otherBenefits String?
+  eligibility   String?
+  gpaRequirement String?
+  ageMin        Int?
+  ageMax        Int?
+  nationalityRestrictions String?
+  languageRequirements String?
+  supervisorRequired String?
+  requiredDocuments String?
   createdAt     DateTime @default(now())
 
   university    University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
@@ -336,14 +359,18 @@ model Publication {
   openAlexWorkId        String?
   semanticScholarPaperId String?
   sourceUrl             String?
+  authorMatchStatus     String?
+  verificationStatus    String   @default("UNVERIFIED")
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
   professor             Professor @relation(fields: [professorId], references: [id], onDelete: Cascade)
+  topics                PublicationTopic[]
 
   @@index([professorId])
   @@index([doi])
   @@index([openAlexWorkId])
+  @@index([authorMatchStatus])
 }
 
 model ProfessorSource {
@@ -365,6 +392,35 @@ model Topic {
   name           String   @unique
   openAlexTopicId String?
   professors     ProfessorTopic[]
+  publications   PublicationTopic[]
+}
+
+model PublicationTopic {
+  publicationId String
+  topicId       String
+  publication   Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  topic         Topic       @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([publicationId, topicId])
+  @@index([topicId])
+}
+
+model Deadline {
+  id                 String    @id @default(cuid())
+  entityType         String
+  entityId           String
+  kind               String
+  dateText           String?
+  dateStart          DateTime?
+  dateEnd            DateTime?
+  sourceUrl          String?
+  verificationStatus String    @default("UNVERIFIED")
+  notes              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([entityType, entityId, kind])
+  @@index([verificationStatus])
 }
 
 model ProfessorTopic {

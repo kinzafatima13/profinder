@@ -17,7 +17,8 @@
     "import:universities": "tsx scripts/import-pipeline.ts",
     "test": "tsx --test src/lib/matching.test.ts src/lib/matching/engine.test.ts src/lib/billing/access.test.ts",
     "import:official": "tsx scripts/import-official-programs.ts",
-    "audit:professors": "tsx scripts/audit-professor-duplicates.ts"
+    "audit:professors": "tsx scripts/audit-professor-duplicates.ts",
+    "enrich:academic": "tsx scripts/enrich-academic-data.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

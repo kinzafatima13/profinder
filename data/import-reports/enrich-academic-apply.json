@@ -1,0 +1,12 @@
+{
+  "appliedFrom": "semantic-scholar cache",
+  "publicationRowsUpdated": 5932,
+  "authorsFilled": 4132,
+  "venuesFilled": 4117,
+  "semanticScholarIdsFilled": 4132,
+  "confirmedAuthorLinks": 0,
+  "authorLinksNeedingReview": 5932,
+  "reason": "Semantic Scholar author records did not include ORCID, so professor links were not confirmed. OpenAlex daily budget was exhausted.",
+  "notSet": ["acceptingStudents", "supervisesMasters", "supervisesPhd", "deadlines", "scholarship structured fields"],
+  "backup": "prisma/dev.db.bak-20261008 and artifacts/dev.db.bak-20261008"
+}
