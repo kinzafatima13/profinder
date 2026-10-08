@@ -16,7 +16,7 @@ export default function ApplyPage() {
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<University[]>([]);
   const [chosen, setChosen] = useState<University[]>([]);
-  const [packageId, setPackageId] = useState<"pair" | "set" | "custom">("pair");
+  const [packageId, setPackageId] = useState<"intro" | "set" | "custom">("intro");
   const [customCount, setCustomCount] = useState(6);
   const [note, setNote] = useState("");
   const [requests, setRequests] = useState<RequestRow[]>([]);
@@ -48,22 +48,42 @@ export default function ApplyPage() {
 
   async function search(event: React.FormEvent) {
     event.preventDefault();
+    setMessage("");
     const res = await fetch(`/api/universities?q=${encodeURIComponent(query)}`);
-    const data = await res.json();
-    setHits((data.universities || []).slice(0, 8));
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setHits([]);
+      setMessage(data.error || "University search failed.");
+      return;
+    }
+    const rows = (data.universities || []).slice(0, 8);
+    setHits(rows);
+    if (!rows.length) setMessage("No stored university matched that name.");
   }
 
   function limit() {
-    if (packageId === "pair") return 2;
+    if (packageId === "intro") return 3;
     if (packageId === "set") return 5;
-    return Math.min(12, Math.max(6, customCount));
+    return Math.min(12, Math.max(6, customCount || 6));
   }
 
   function addUniversity(university: University) {
-    setChosen((current) => current.some((row) => row.id === university.id) || current.length >= limit() ? current : [...current, university]);
+    setMessage("");
+    setChosen((current) => {
+      if (current.some((row) => row.id === university.id)) return current;
+      if (current.length >= limit()) {
+        setMessage(`This package takes ${limit()} universities. Remove one to change the selection.`);
+        return current;
+      }
+      return [...current, university];
+    });
   }
 
   async function createRequest() {
+    if (chosen.length !== limit()) {
+      setMessage(`Select ${limit()} stored universities, then send the request. ${chosen.length} selected.`);
+      return;
+    }
     setBusy(true);
     setMessage("");
     const res = await fetch("/api/apply", {
@@ -71,15 +91,16 @@ export default function ApplyPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ universityIds: chosen.map((row) => row.id), studentNote: note, packageId, customCount }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) {
-      setMessage(data.error || "Could not start the request.");
+      setMessage(data.error || "Could not send the request.");
       return;
     }
     setActive(data.request.id);
     setChosen([]);
     setNote("");
+    setMessage("Request sent. Upload your documents, then pay.");
     await load();
   }
 
@@ -124,10 +145,10 @@ export default function ApplyPage() {
       <h1 className="section-title mt-2">Already know where you want to apply?</h1>
       <p className="mt-2 max-w-2xl text-sm text-gray-600">These are one-time application packages, not a subscription. Choose the universities yourself, upload documents once, then review and approve before anything is submitted.</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <button type="button" className={packageId === "pair" ? "card border-[#c4b5fd] p-4 text-left" : "card p-4 text-left"} onClick={() => { setPackageId("pair"); setChosen([]); }}>
-          <p className="text-sm font-semibold text-[var(--navy)]">Two applications</p>
+        <button type="button" className={packageId === "intro" ? "card border-[#c4b5fd] p-4 text-left" : "card p-4 text-left"} onClick={() => { setPackageId("intro"); setChosen([]); setMessage(""); }}>
+          <p className="text-sm font-semibold text-[var(--navy)]">Three applications</p>
           <p className="mt-1 text-2xl font-semibold text-[var(--navy)]">$30</p>
-          <p className="mt-1 text-xs text-gray-500">One-time. $15 each.</p>
+          <p className="mt-1 text-xs text-gray-500">One-time offer. $10 each.</p>
         </button>
         <button type="button" className={packageId === "set" ? "card border-[#c4b5fd] p-4 text-left" : "card p-4 text-left"} onClick={() => { setPackageId("set"); setChosen([]); }}>
           <p className="text-sm font-semibold text-[var(--navy)]">Five applications</p>
@@ -168,7 +189,9 @@ export default function ApplyPage() {
               {chosen.map((row) => <li key={row.id}>{row.name} <button type="button" className="text-xs text-[var(--gray-500)]" onClick={() => setChosen((current) => current.filter((item) => item.id !== row.id))}>Remove</button></li>)}
             </ul>
             <textarea className="input mt-3 min-h-[80px]" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Optional note for the application team" />
-            <button type="button" className="btn-primary mt-3" disabled={busy || chosen.length !== limit()} onClick={createRequest}>Start request</button>
+            <p className="mt-1 text-xs text-gray-500">{chosen.length} of {limit()} selected. The button stays usable and tells you what is missing.</p>
+            <button type="button" className="btn-primary mt-3" disabled={busy} onClick={createRequest}>Send request</button>
+            {message && <p className="mt-3 text-sm text-[var(--gray-700)]">{message}</p>}
           </section>
 
           <section className="card p-5">
