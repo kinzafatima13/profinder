@@ -43,6 +43,7 @@ model University {
   scholarships  Scholarship[]
   colleges      College[]
   departments   Department[]
+  applyItems    ApplyRequestItem[]
 }
 
 model Program {
@@ -245,6 +246,7 @@ model Student {
 
   applications       Application[]
   savedProfessors    SavedProfessor[]
+  applyRequests      ApplyRequest[]
   subscription       Subscription?
   usageCounters      UsageCounter[]
 }
@@ -573,4 +575,54 @@ model MatchFeedback {
 
   @@index([studentId])
   @@index([professorId])
+}
+
+
+model ApplyRequest {
+  id               String   @id @default(cuid())
+  studentId        String
+  status           String   @default("draft")
+  feeCents         Int      @default(3000)
+  paymentStatus    String   @default("unpaid")
+  paymentRef       String?
+  studentNote      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  student          Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  items            ApplyRequestItem[]
+  documents        ApplyDocument[]
+
+  @@index([studentId])
+}
+
+model ApplyRequestItem {
+  id                String    @id @default(cuid())
+  requestId         String
+  universityId      String
+  status            String    @default("selected")
+  preparationNote   String?
+  studentApprovedAt DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  request           ApplyRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  university        University   @relation(fields: [universityId], references: [id], onDelete: Restrict)
+
+  @@unique([requestId, universityId])
+  @@index([requestId])
+}
+
+model ApplyDocument {
+  id         String   @id @default(cuid())
+  requestId  String
+  kind       String
+  name       String
+  storedName String
+  size       Int
+  createdAt  DateTime @default(now())
+
+  request    ApplyRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
 }

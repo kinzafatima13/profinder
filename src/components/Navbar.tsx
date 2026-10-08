@@ -15,6 +15,7 @@ const primary = [
 
 const moreLinks = [
   { href: "/compare", label: "Compare" },
+  { href: "/apply", label: "Apply for Me" },
   { href: "/notices", label: "Notices" },
   { href: "/assistant", label: "Assistant" },
 ];

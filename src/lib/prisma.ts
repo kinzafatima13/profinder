@@ -216,6 +216,43 @@ export function ensureSchema() {
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       )`);
       await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "MatchFeedback_studentId_idx" ON "MatchFeedback"("studentId")`);
+      await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "ApplyRequest" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "studentId" TEXT NOT NULL,
+        "status" TEXT NOT NULL DEFAULT 'draft',
+        "feeCents" INTEGER NOT NULL DEFAULT 3000,
+        "paymentStatus" TEXT NOT NULL DEFAULT 'unpaid',
+        "paymentRef" TEXT,
+        "studentNote" TEXT,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "ApplyRequest_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+      )`);
+      await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "ApplyRequestItem" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "requestId" TEXT NOT NULL,
+        "universityId" TEXT NOT NULL,
+        "status" TEXT NOT NULL DEFAULT 'selected',
+        "preparationNote" TEXT,
+        "studentApprovedAt" DATETIME,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "ApplyRequestItem_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "ApplyRequest" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT "ApplyRequestItem_universityId_fkey" FOREIGN KEY ("universityId") REFERENCES "University" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+      )`);
+      await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "ApplyDocument" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "requestId" TEXT NOT NULL,
+        "kind" TEXT NOT NULL,
+        "name" TEXT NOT NULL,
+        "storedName" TEXT NOT NULL,
+        "size" INTEGER NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "ApplyDocument_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "ApplyRequest" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+      )`);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ApplyRequest_studentId_idx" ON "ApplyRequest"("studentId")`);
+      await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "ApplyRequestItem_requestId_universityId_key" ON "ApplyRequestItem"("requestId", "universityId")`);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ApplyDocument_requestId_idx" ON "ApplyDocument"("requestId")`);
     })().catch((error) => {
       globalForPrisma.schemaReady = undefined;
       throw error;
