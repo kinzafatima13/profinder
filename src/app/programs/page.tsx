@@ -74,7 +74,7 @@ export default async function ProgramsPage({
               <th className="px-4 py-3">Deadline</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="reveal-list">
             {programs.map((program) => (
               <tr key={program.id} className="border-b border-gray-100">
                 <td className="px-4 py-3">

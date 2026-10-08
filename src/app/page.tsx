@@ -71,11 +71,11 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "WebSite", name: "ProFinder", url: SITE, potentialAction: { "@type": "SearchAction", target: `${SITE}/professors?q={search_term_string}`, "query-input": "required name=search_term_string" } }) }} />
       <section className="hero-atmosphere border-b border-[var(--gray-200)] pt-14 pb-10">
         <div className="page-container text-center">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--violet)]">✦ ProFinder</p>
-          <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--navy)] sm:text-4xl">Find the <span className="gradient-text">research path</span> that's yours.</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-[var(--gray-700)]">Explore programs, universities, and professors based on what you actually want to study.</p>
-          <div className="mx-auto mt-6 max-w-2xl text-left"><AcademicSearchBox /></div>
-          <p className="mx-auto mt-3 max-w-2xl text-xs text-[var(--gray-500)]">
+          <p className="rise rise-1 text-xs font-medium uppercase tracking-[0.16em] text-[var(--violet)]">✦ ProFinder</p>
+          <h1 className="rise rise-2 mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--navy)] sm:text-4xl">Find the <span className="gradient-text">research path</span> that&apos;s yours.</h1>
+          <p className="rise rise-3 mx-auto mt-3 max-w-2xl text-sm text-[var(--gray-700)]">Explore programs, universities, and professors based on what you actually want to study.</p>
+          <div className="rise rise-4 mx-auto mt-6 max-w-2xl text-left"><AcademicSearchBox /></div>
+          <p className="rise rise-5 mx-auto mt-3 max-w-2xl text-xs text-[var(--gray-500)]">
             Examples from stored records:{" "}
             <Link className="underline" href="/professors?q=machine%20learning">machine learning</Link>
             {" · "}
@@ -85,7 +85,7 @@ export default async function HomePage() {
             {" · "}
             <Link className="underline" href="/professors?q=agriculture">agriculture</Link>
           </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+          <div className="rise rise-6 mt-4 flex flex-wrap items-center justify-center gap-3">
             <Link href="/professors" className="btn-primary">Explore professors</Link>
             <Link href="/find" className="btn-secondary">Find my match</Link>
             <Link href="/programs" className="btn-secondary">Browse programs</Link>
@@ -94,7 +94,7 @@ export default async function HomePage() {
           {(uniCount > 0 || profCount > 0) && (
             <>
             <p className="mt-10 text-xs font-medium uppercase tracking-[0.14em] text-[var(--gray-500)]">What is actually stored</p>
-            <dl className="mx-auto mt-4 grid max-w-3xl grid-cols-2 sm:grid-cols-4">
+            <dl className="reveal-grid mx-auto mt-4 grid max-w-3xl grid-cols-2 sm:grid-cols-4">
               {[[uniCount, "Universities"], [profCount, "Supervisors"], [verifiedCount, "Verified profiles"], [emailCount, "Public emails"]].map(([value, label]) => (
                 <div key={String(label)} className="px-3 py-2"><dd className="text-3xl font-semibold text-[var(--navy)]">{value}</dd><dt className="mt-1 text-xs text-[var(--muted)]">{label}</dt></div>
               ))}
@@ -110,7 +110,7 @@ export default async function HomePage() {
           <p className="mt-2 text-sm text-gray-600">Your profile is {profilePct}% complete. <Link className="font-semibold text-[var(--teal)]" href="/profile">Edit profile</Link></p>
           <p className="mt-1 text-sm text-gray-600">Next: {next}</p>
           <p className="mt-1 text-sm text-gray-600">Funding goal: {student.fundingGoals?.trim() || "not saved"}. Stored deadlines are unverified, so no countdown is shown.</p>
-          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          <div className="reveal-grid mt-4 grid gap-4 lg:grid-cols-3">
             <article className="card p-4"><h3 className="font-semibold text-[var(--navy)]">Supervisor matches</h3><ul className="mt-2 space-y-2 text-sm text-gray-700">{matches.map((row) => (<li key={row.id}><Link className="font-medium text-[var(--navy)]" href={`/professors/${row.id}`}>{row.name}</Link> · {row.match.score}% · {row.university}</li>))}{matches.length === 0 && <li>Save research interests to see matches.</li>}</ul></article>
             <article className="card p-4"><h3 className="font-semibold text-[var(--navy)]">Scholarships</h3><ul className="mt-2 space-y-2 text-sm text-gray-700">{scholarships.map((row) => (<li key={row.id}>{row.name} · {row.fit.score}% · {row.university}</li>))}{scholarships.length === 0 && <li>No scholarship record is stored.</li>}</ul></article>
             <article className="card p-4"><h3 className="font-semibold text-[var(--navy)]">Applications</h3><ul className="mt-2 space-y-2 text-sm text-gray-700">{applications.map((row) => (<li key={row.id}>{row.professor?.name || row.programName || "Saved item"} · {row.status}</li>))}{applications.length === 0 && <li>Nothing is on the tracker yet.</li>}</ul><Link href="/tracker" className="mt-3 inline-flex text-sm font-semibold text-[var(--teal)]">Open tracker</Link></article>
@@ -121,7 +121,7 @@ export default async function HomePage() {
       <div className="page-container">
         <h2 className="section-title">Deadline radar</h2>
         <p className="mt-2 max-w-2xl text-sm text-gray-600">Stored program notes only. No countdown is shown, because these dates are not verified.</p>
-        <ul className="mt-4 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100 bg-white">
+        <ul className="reveal-list mt-4 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100 bg-white">
           {radar.map((item) => (
             <li key={item.id} className="grid gap-2 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
               <span><span className="block text-sm font-medium text-[var(--navy)]">{item.university}</span><span className="block text-sm text-[var(--gray-500)]">{item.degree} · {item.major}</span></span>

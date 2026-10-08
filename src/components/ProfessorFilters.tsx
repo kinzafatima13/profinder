@@ -102,7 +102,7 @@ export default function ProfessorFilters({
     if (university && !universities.some((row) => row.id === university && (!next || row.country === next))) setUniversity("");
   }
 
-  const panel = `${open ? "fixed inset-0 z-50 block overflow-y-auto bg-white p-4" : "hidden"} lg:static lg:z-auto lg:block lg:overflow-visible lg:bg-transparent lg:p-0`;
+  const panel = `${open ? "filter-sheet fixed inset-0 z-50 block overflow-y-auto bg-white p-4" : "hidden"} lg:static lg:z-auto lg:block lg:overflow-visible lg:bg-transparent lg:p-0`;
 
   return (
     <form action="/professors" method="get" onSubmit={() => setOpen(false)} className="lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)] lg:items-start lg:gap-8">

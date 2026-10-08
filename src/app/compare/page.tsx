@@ -71,7 +71,7 @@ export default function ComparePage() {
             <ul className="mt-3 space-y-2 text-sm">
               {box.hits.map((hit) => (
                 <li key={hit.id}>
-                  <button type="button" className={box.id === hit.id ? "font-semibold text-[var(--teal)]" : "text-[var(--navy)]"} onClick={() => box.setId(hit.id)}>
+                  <button type="button" className={box.id === hit.id ? "is-selected px-1 font-semibold text-[var(--teal)]" : "px-1 text-[var(--navy)]"} onClick={() => box.setId(hit.id)}>
                     {hit.name}
                   </button>
                   <span className="text-gray-500"> · {hit.detail}</span>
@@ -84,7 +84,7 @@ export default function ComparePage() {
       <button type="button" className="btn-primary mt-4" onClick={compare} disabled={!leftId || !rightId}>Compare selected</button>
       {error && <p className="mt-3 text-sm text-amber-800">{error}</p>}
       {result && (
-        <div className="mt-6 overflow-x-auto">
+        <div className="compare-stage mt-6 overflow-x-auto">
           <table className="w-full min-w-[520px] text-left text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-gray-500">

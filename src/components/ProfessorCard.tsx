@@ -62,7 +62,7 @@ export default function ProfessorCard({
           <p className="mt-1 text-xs text-[var(--gray-500)]">{recent || "Recent activity not stored"}</p>
           {priority && <p className="mt-1 text-xs text-[var(--gray-500)]">{priority} priority</p>}
         </div>
-        {typeof matchScore === "number" && <MatchScore score={matchScore} compact />}
+        {typeof matchScore === "number" && <div className="match-pop"><MatchScore score={matchScore} compact /></div>}
       </div>
 
       {researchAreas.length > 0 && (

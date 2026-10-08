@@ -39,7 +39,7 @@ export default function MatchScore({
 
   if (compact) {
     return (
-      <div className="text-right">
+      <div className="match-pop text-right">
         <p className="text-xl font-semibold text-[var(--navy)]">{score}%</p>
         <p className={`mt-1 inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${tone.tone}`}>{tone.label}</p>
       </div>
@@ -63,7 +63,7 @@ export default function MatchScore({
               </div>
               {value != null && (
                 <div className="mt-1 h-1.5 rounded-full bg-[var(--gray-100)]">
-                  <div className="h-1.5 rounded-full bg-[var(--teal)]" style={{ width: `${Math.max(0, Math.min(100, Number(value)))}%` }} />
+                  <div className="meter-fill h-1.5 rounded-full bg-[var(--teal)]" style={{ width: `${Math.max(0, Math.min(100, Number(value)))}%` }} />
                 </div>
               )}
             </li>

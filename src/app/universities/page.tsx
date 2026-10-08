@@ -34,11 +34,11 @@ export default async function UniversitiesPage() {
         <p className="mt-1 text-gray-600">China · multidisciplinary graduate-study discovery</p>
       </div>
       {universities.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
+        <div className="empty-state rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
           <p className="text-gray-500">No universities yet.</p>
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="reveal-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {universities.map((u) => (
             <UniversityCard key={u.id} id={u.id} name={u.name} nameZh={u.nameZh} city={u.city} province={u.province} description={u.description} agencyNumber={u.agencyNumber} professorCount={u._count.professors} programCount={u._count.programs} />
           ))}

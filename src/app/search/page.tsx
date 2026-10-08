@@ -57,12 +57,14 @@ export default function SearchPage() {
         <button type="submit" className="btn-primary shrink-0" disabled={loading}>{loading ? "..." : "Search"}</button>
       </form>
 
+      {loading && <div className="loading-track mt-4 max-w-xl" aria-hidden="true"><span /></div>}
+
       {results && (
-        <div className="mt-10 space-y-10">
+        <div className="results-pane mt-10 space-y-10">
           <section>
             <h2 className="text-lg font-bold text-[var(--navy)]">Universities ({results.universities.length})</h2>
-            {results.universities.length === 0 ? <p className="mt-2 text-sm text-gray-500">No stored university matches.</p> : (
-              <ul className="mt-3 space-y-2">
+            {results.universities.length === 0 ? <p className="empty-state mt-2 text-sm text-gray-500">No stored university matches.</p> : (
+              <ul className="reveal-list mt-3 space-y-2">
                 {results.universities.map((u) => (
                   <li key={u.id}><span className="mr-2 text-xs uppercase text-gray-400">University</span><Link href={`/universities/${u.id}`} className="text-[var(--teal)] hover:underline">{u.name}</Link>{u.city && <span className="ml-2 text-sm text-gray-400">{u.city}</span>}</li>
                 ))}
@@ -72,8 +74,8 @@ export default function SearchPage() {
 
           <section>
             <h2 className="text-lg font-bold text-[var(--navy)]">Programs ({results.programs.length})</h2>
-            {results.programs.length === 0 ? <p className="mt-2 text-sm text-gray-500">No stored program matches.</p> : (
-              <ul className="mt-3 space-y-3">
+            {results.programs.length === 0 ? <p className="empty-state mt-2 text-sm text-gray-500">No stored program matches.</p> : (
+              <ul className="reveal-list mt-3 space-y-3">
                 {results.programs.map((p) => (
                   <li key={p.id} className="card p-4">
                     <span className="text-xs uppercase text-gray-400">Program</span>
@@ -88,8 +90,8 @@ export default function SearchPage() {
 
           <section>
             <h2 className="text-lg font-bold text-[var(--navy)]">Scholarships ({results.scholarships.length})</h2>
-            {results.scholarships.length === 0 ? <p className="mt-2 text-sm text-gray-500">No stored scholarship matches.</p> : (
-              <ul className="mt-3 space-y-3">
+            {results.scholarships.length === 0 ? <p className="empty-state mt-2 text-sm text-gray-500">No stored scholarship matches.</p> : (
+              <ul className="reveal-list mt-3 space-y-3">
                 {results.scholarships.map((s) => (
                   <li key={s.id} className="card p-4">
                     <span className="text-xs uppercase text-gray-400">Scholarship</span>
@@ -104,8 +106,8 @@ export default function SearchPage() {
 
           <section>
             <h2 className="text-lg font-bold text-[var(--navy)]">Supervisors ({results.professors.length})</h2>
-            {results.professors.length === 0 ? <p className="mt-2 text-sm text-gray-500">No stored supervisor matches.</p> : (
-              <ul className="mt-3 space-y-3">
+            {results.professors.length === 0 ? <p className="empty-state mt-2 text-sm text-gray-500">No stored supervisor matches.</p> : (
+              <ul className="reveal-list mt-3 space-y-3">
                 {results.professors.map((p) => (
                   <li key={p.id} className="card p-4">
                     <span className="text-xs uppercase text-gray-400">Supervisor</span>

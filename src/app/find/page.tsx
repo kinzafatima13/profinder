@@ -92,9 +92,10 @@ export default function FindProfessorsPage() {
         </div>
         <button type="submit" className="btn-primary" disabled={loading || query.trim().length < 8}>{loading ? "Matching..." : "Find my matches"}</button>
       </form>
+      {loading && <div className="loading-track mt-4 max-w-3xl" role="status" aria-label="Matching stored records"><span /></div>}
       {error && <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
       {results && (
-        <div className="mt-10 space-y-4">
+        <div className="results-pane mt-10 space-y-4">
           <h2 className="text-xl font-bold text-[var(--navy)]">Your top matches</h2>
           <p className="text-sm text-gray-500">{note}</p>
           {results.map((item) => (
@@ -106,7 +107,7 @@ export default function FindProfessorsPage() {
                   <p className="text-sm text-gray-500">{item.university.name}{item.university.city ? ` · ${item.university.city}` : ""} · {item.university.country}</p>
                   {item.program && <p className="mt-1 text-sm text-gray-700">{item.program.degree} · {item.program.major}</p>}
                 </div>
-                <div className="text-right">
+                <div className="match-pop text-right">
                   <p className="text-2xl font-semibold text-[var(--navy)]">{item.score}%</p>
                   <p className="text-xs text-gray-500">{item.label}</p>
                 </div>
@@ -115,7 +116,7 @@ export default function FindProfessorsPage() {
                 {item.scoreBreakdown.filter((part) => part.weight > 0).slice(0, 3).map((part) => (
                   <div key={part.key}>
                     <div className="flex justify-between text-xs text-gray-600"><span>{part.label}</span><span>{part.score == null ? "Information not available" : `${part.score}`}</span></div>
-                    <div className="h-1.5 rounded-full bg-gray-100"><div className="h-1.5 rounded-full bg-[var(--teal)]" style={{ width: `${part.score || 0}%` }} /></div>
+                    <div className="h-1.5 rounded-full bg-gray-100"><div className="meter-fill h-1.5 rounded-full bg-[var(--teal)]" style={{ width: `${part.score || 0}%` }} /></div>
                   </div>
                 ))}
               </div>
@@ -123,7 +124,7 @@ export default function FindProfessorsPage() {
               <ul className="mt-1 list-disc pl-5 text-sm text-gray-700">{item.reasons.slice(0, 4).map((reason) => <li key={reason}>{reason}</li>)}</ul>
               <button type="button" className="mt-2 text-xs text-[var(--teal)]" onClick={() => setOpen(open === item.professor.id ? null : item.professor.id)}>See how this score was calculated</button>
               {open === item.professor.id && (
-                <ul className="mt-2 space-y-1 text-xs text-gray-600">
+                <ul className="menu-panel mt-2 space-y-1 text-xs text-gray-600">
                   {item.scoreBreakdown.map((part) => <li key={part.key}>{part.label}: {part.score == null ? "Information not available" : part.score} · weight {part.weight}% · {part.note}</li>)}
                   {item.matchedPublicationTitles.map((title) => <li key={title}>Stored publication: {title}</li>)}
                 </ul>

@@ -242,13 +242,13 @@ export default async function ProfessorsPage({
         <p className="mt-3 text-xs text-[var(--gray-500)]">Field, discipline, and major use stored links only. A missing combination is not guessed.</p>
 
         {professors.length === 0 ? (
-          <div className="mt-6 rounded-lg border border-dashed border-[var(--gray-200)] bg-white px-6 py-12 text-center">
+          <div className="empty-state mt-6 rounded-lg border border-dashed border-[var(--gray-200)] bg-white px-6 py-12 text-center">
             <h2 className="text-lg font-semibold text-[var(--navy)]">No professors match these filters.</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-[var(--gray-700)]">Try a broader research area or remove one filter.</p>
             <Link href="/professors" className="btn-primary mt-5">Clear filters</Link>
           </div>
         ) : (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="reveal-grid mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {professors.map((p) => {
               const match = student?.researchInterests
                 ? computeResearchMatch(

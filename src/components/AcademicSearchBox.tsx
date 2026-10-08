@@ -88,7 +88,7 @@ export default function AcademicSearchBox() {
         aria-autocomplete="list"
       />
       {open && q.trim().length >= 2 && (
-        <div id={`${boxId}-list`} role="listbox" className="menu-pop absolute z-30 mt-2 w-full overflow-hidden rounded-lg border border-[var(--gray-200)] bg-white shadow-lg">
+        <div id={`${boxId}-list`} role="listbox" className="menu-panel absolute z-30 mt-2 w-full overflow-hidden rounded-lg border border-[var(--gray-200)] bg-white shadow-lg">
           {loading && results.length === 0 && <p className="px-4 py-3 text-sm text-[var(--gray-500)]">Searching stored records...</p>}
           {!loading && results.length === 0 && <p className="px-4 py-3 text-sm text-[var(--gray-500)]">Nothing stored matches that yet.</p>}
           {grouped.map((group) => (
