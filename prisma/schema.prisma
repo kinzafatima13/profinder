@@ -583,6 +583,7 @@ model ApplyRequest {
   studentId        String
   status           String   @default("draft")
   feeCents         Int      @default(3000)
+  package          String   @default("pair")
   paymentStatus    String   @default("unpaid")
   paymentRef       String?
   studentNote      String?

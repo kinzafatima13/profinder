@@ -16,6 +16,8 @@ export default function ApplyPage() {
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<University[]>([]);
   const [chosen, setChosen] = useState<University[]>([]);
+  const [packageId, setPackageId] = useState<"pair" | "set" | "custom">("pair");
+  const [customCount, setCustomCount] = useState(6);
   const [note, setNote] = useState("");
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [active, setActive] = useState<string>("");
@@ -51,8 +53,14 @@ export default function ApplyPage() {
     setHits((data.universities || []).slice(0, 8));
   }
 
+  function limit() {
+    if (packageId === "pair") return 2;
+    if (packageId === "set") return 5;
+    return Math.min(12, Math.max(6, customCount));
+  }
+
   function addUniversity(university: University) {
-    setChosen((current) => current.some((row) => row.id === university.id) || current.length >= 3 ? current : [...current, university]);
+    setChosen((current) => current.some((row) => row.id === university.id) || current.length >= limit() ? current : [...current, university]);
   }
 
   async function createRequest() {
@@ -61,7 +69,7 @@ export default function ApplyPage() {
     const res = await fetch("/api/apply", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ universityIds: chosen.map((row) => row.id), studentNote: note }),
+      body: JSON.stringify({ universityIds: chosen.map((row) => row.id), studentNote: note, packageId, customCount }),
     });
     const data = await res.json();
     setBusy(false);
@@ -114,7 +122,24 @@ export default function ApplyPage() {
     <div className="page-container py-10">
       <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--violet)]">Apply for Me</p>
       <h1 className="section-title mt-2">Already know where you want to apply?</h1>
-      <p className="mt-2 max-w-2xl text-sm text-gray-600">Choose up to 3 stored universities, upload your documents once, and pay the $30 service fee. ProFinder prepares the applications. You review each one and approve it before anything is submitted.</p>
+      <p className="mt-2 max-w-2xl text-sm text-gray-600">These are one-time application packages, not a subscription. Choose the universities yourself, upload documents once, then review and approve before anything is submitted.</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <button type="button" className={packageId === "pair" ? "card border-[#c4b5fd] p-4 text-left" : "card p-4 text-left"} onClick={() => { setPackageId("pair"); setChosen([]); }}>
+          <p className="text-sm font-semibold text-[var(--navy)]">Two applications</p>
+          <p className="mt-1 text-2xl font-semibold text-[var(--navy)]">$30</p>
+          <p className="mt-1 text-xs text-gray-500">One-time. $15 each.</p>
+        </button>
+        <button type="button" className={packageId === "set" ? "card border-[#c4b5fd] p-4 text-left" : "card p-4 text-left"} onClick={() => { setPackageId("set"); setChosen([]); }}>
+          <p className="text-sm font-semibold text-[var(--navy)]">Five applications</p>
+          <p className="mt-1 text-2xl font-semibold text-[var(--navy)]">$65</p>
+          <p className="mt-1 text-xs text-gray-500">One-time. $13 each.</p>
+        </button>
+        <button type="button" className={packageId === "custom" ? "card border-[#c4b5fd] p-4 text-left" : "card p-4 text-left"} onClick={() => { setPackageId("custom"); setChosen([]); }}>
+          <p className="text-sm font-semibold text-[var(--navy)]">Custom</p>
+          <p className="mt-1 text-2xl font-semibold text-[var(--navy)]">$12</p>
+          <p className="mt-1 text-xs text-gray-500">Each, for 6 to 12 applications.</p>
+        </button>
+      </div>
       <ol className="mt-4 flex flex-wrap gap-2 text-xs text-[var(--gray-700)]">
         {STEPS.map((step) => <li key={step} className="rounded-full border border-[#ddd6fe] bg-[#f5f3ff] px-2.5 py-1">{step}</li>)}
       </ol>
@@ -125,7 +150,8 @@ export default function ApplyPage() {
       ) : (
         <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <section className="card p-5">
-            <h2 className="font-semibold text-[var(--navy)]">1. Choose up to 3 universities</h2>
+            <h2 className="font-semibold text-[var(--navy)]">1. Choose {limit()} universities</h2>
+            {packageId === "custom" && <label className="mt-3 block text-xs text-gray-600">How many?<input className="input mt-1 max-w-[8rem]" type="number" min={6} max={12} value={customCount} onChange={(event) => { setCustomCount(Number(event.target.value)); setChosen([]); }} /></label>}
             <form onSubmit={search} className="mt-3 flex gap-2">
               <input className="input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Stored university name" />
               <button className="btn-secondary" type="submit">Search</button>
@@ -142,7 +168,7 @@ export default function ApplyPage() {
               {chosen.map((row) => <li key={row.id}>{row.name} <button type="button" className="text-xs text-[var(--gray-500)]" onClick={() => setChosen((current) => current.filter((item) => item.id !== row.id))}>Remove</button></li>)}
             </ul>
             <textarea className="input mt-3 min-h-[80px]" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Optional note for the application team" />
-            <button type="button" className="btn-primary mt-3" disabled={busy || chosen.length < 1} onClick={createRequest}>Start request</button>
+            <button type="button" className="btn-primary mt-3" disabled={busy || chosen.length !== limit()} onClick={createRequest}>Start request</button>
           </section>
 
           <section className="card p-5">
@@ -171,7 +197,7 @@ export default function ApplyPage() {
                   <input name="file" type="file" className="text-xs" required />
                   <button className="btn-secondary text-xs" type="submit" disabled={busy}>Upload once</button>
                 </form>
-                <button type="button" className="btn-primary" disabled={busy || current.paymentStatus === "paid"} onClick={() => pay(current.id)}>Pay $30</button>
+                <button type="button" className="btn-primary" disabled={busy || current.paymentStatus === "paid"} onClick={() => pay(current.id)}>Pay ${(current.feeCents / 100).toFixed(0)}</button>
               </div>
             )}
             {message && <p className="mt-3 text-sm text-[var(--gray-700)]">{message}</p>}

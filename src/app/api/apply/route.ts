@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-const FEE_CENTS = 3000;
-const MAX_UNIVERSITIES = 3;
+import { APPLY_PACKAGES, quoteApply } from "@/lib/apply-packages";
 
 async function studentFromSession() {
   const session = await getServerSession(authOptions);
@@ -23,7 +21,7 @@ export async function GET() {
       documents: { select: { id: true, kind: true, name: true, size: true, createdAt: true } },
     },
   });
-  return NextResponse.json({ requests, feeCents: FEE_CENTS, maxUniversities: MAX_UNIVERSITIES });
+  return NextResponse.json({ requests, packages: APPLY_PACKAGES });
 }
 
 export async function POST(req: NextRequest) {
@@ -34,8 +32,10 @@ export async function POST(req: NextRequest) {
     ? body.universityIds.map((value: unknown) => String(value)).filter((value: string) => value.length > 0).filter((value: string, index: number, all: string[]) => all.indexOf(value) === index)
     : [];
   const studentNote = typeof body.studentNote === "string" ? body.studentNote.slice(0, 2000) : "";
-  if (universityIds.length < 1 || universityIds.length > MAX_UNIVERSITIES) {
-    return NextResponse.json({ error: "Choose 1 to 3 stored universities." }, { status: 400 });
+  const quote = quoteApply(String(body.packageId || ""), Number(body.customCount || 0));
+  if (!quote) return NextResponse.json({ error: "Choose two applications, five applications, or a custom count from 6 to 12." }, { status: 400 });
+  if (universityIds.length !== quote.applications) {
+    return NextResponse.json({ error: `This package needs exactly ${quote.applications} stored universities.` }, { status: 400 });
   }
   const universities = await prisma.university.findMany({ where: { id: { in: universityIds } }, select: { id: true } });
   if (universities.length !== universityIds.length) {
@@ -45,7 +45,8 @@ export async function POST(req: NextRequest) {
     data: {
       studentId: student.id,
       status: "draft",
-      feeCents: FEE_CENTS,
+      feeCents: quote.feeCents,
+      package: quote.packageId,
       paymentStatus: "unpaid",
       studentNote,
       items: { create: universityIds.map((universityId) => ({ universityId, status: "selected" })) },

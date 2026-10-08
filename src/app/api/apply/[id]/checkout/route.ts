@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (request.documents.length < 1) return NextResponse.json({ error: "Upload at least one document first." }, { status: 400 });
   if (request.paymentStatus === "paid") return NextResponse.json({ request });
   if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json({ error: "Checkout is not configured. The $30 fee is not charged until Stripe is available." }, { status: 503 });
+    return NextResponse.json({ error: "Checkout is not configured. The package fee is not charged until Stripe is available." }, { status: 503 });
   }
 
   const origin = process.env.NEXTAUTH_URL || "https://www.profindernow.com";
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       price_data: {
         currency: "usd",
         unit_amount: request.feeCents,
-        product_data: { name: `Apply for Me — up to ${request.items.length} applications` },
+        product_data: { name: `Apply for Me — ${request.items.length} applications` },
       },
     }],
     success_url: `${origin}/apply?request=${request.id}&session_id={CHECKOUT_SESSION_ID}`,

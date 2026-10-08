@@ -221,6 +221,7 @@ export function ensureSchema() {
         "studentId" TEXT NOT NULL,
         "status" TEXT NOT NULL DEFAULT 'draft',
         "feeCents" INTEGER NOT NULL DEFAULT 3000,
+        "package" TEXT NOT NULL DEFAULT 'pair',
         "paymentStatus" TEXT NOT NULL DEFAULT 'unpaid',
         "paymentRef" TEXT,
         "studentNote" TEXT,
@@ -251,6 +252,7 @@ export function ensureSchema() {
         CONSTRAINT "ApplyDocument_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "ApplyRequest" ("id") ON DELETE CASCADE ON UPDATE CASCADE
       )`);
       await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ApplyRequest_studentId_idx" ON "ApplyRequest"("studentId")`);
+      await addColumn("ApplyRequest", "package", "TEXT NOT NULL DEFAULT 'pair'");
       await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "ApplyRequestItem_requestId_universityId_key" ON "ApplyRequestItem"("requestId", "universityId")`);
       await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ApplyDocument_requestId_idx" ON "ApplyDocument"("requestId")`);
     })().catch((error) => {
