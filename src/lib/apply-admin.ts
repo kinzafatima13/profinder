@@ -79,8 +79,18 @@ export async function logApplyActivity(requestId: string, action: string, actorI
   });
 }
 
-export function publicRequest<T extends { founderNote?: string | null }>(request: T) {
+export function publicRequest<T extends { founderNote?: string | null; activities?: unknown; documents?: Array<Record<string, unknown>> }>(request: T) {
   const copy = { ...request };
   delete copy.founderNote;
+  delete copy.activities;
+  if (Array.isArray(copy.documents)) {
+    copy.documents = copy.documents.map((document) => {
+      const safe = { ...document };
+      delete safe.storedName;
+      delete safe.objectKey;
+      delete safe.storageProvider;
+      return safe;
+    });
+  }
   return copy;
 }

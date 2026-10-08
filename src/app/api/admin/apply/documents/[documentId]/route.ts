@@ -12,7 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: { documentId: 
   const file = await readApplyFile(document.storageProvider, document.objectKey, document.storedName);
   if (!file) return NextResponse.json({ error: "Document is not available in private storage." }, { status: 404 });
   await logApplyActivity(document.requestId, "document_accessed", founder.id, { documentId: document.id, kind: document.kind });
-  const filename = document.name.replace(/[\r\n"]/g, "_").slice(0, 120) || "document";
+  const filename = document.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || "document";
   return new NextResponse(file.stream, {
     headers: {
       "Content-Type": file.contentType,

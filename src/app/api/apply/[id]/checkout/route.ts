@@ -16,7 +16,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   });
   if (!request) return NextResponse.json({ error: "Request not found" }, { status: 404 });
   if (request.documents.length < 1) return NextResponse.json({ error: "Upload at least one document first." }, { status: 400 });
-  if (request.paymentStatus === "paid") return NextResponse.json({ request });
+  if (request.paymentStatus === "paid") return NextResponse.json({ request: publicRequest(request) });
   if (!process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ error: "Checkout is not configured. The package fee is not charged until Stripe is available." }, { status: 503 });
   }

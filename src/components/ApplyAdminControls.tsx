@@ -54,7 +54,7 @@ function ItemRow({ item, onSave }: { item: { id: string; status: string; prepara
       <select className="input max-w-[12rem]" value={status} onChange={(event) => setStatus(event.target.value)}>
         {["selected", "pending", "preparing", "ready_for_review", "approved", "submitted", "successful", "rejected", "needs_action"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
       </select>
-      <input className="input max-w-sm" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Founder note for this application" />
+      <input className="input max-w-sm" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Shown to the student on this application" />
       <button type="button" className="btn-secondary" onClick={() => onSave(item.id, status, note)}>Update application</button>
     </div>
   );

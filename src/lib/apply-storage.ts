@@ -23,6 +23,14 @@ export function contentTypeFor(name: string) {
   return "application/octet-stream";
 }
 
+export function isSafeObjectKey(provider: string, objectKey: string | null, storedName: string) {
+  const raw = objectKey || storedName;
+  if (!raw || raw.includes("..") || raw.includes("\\") || raw.startsWith("/") || raw.includes("://")) return false;
+  if (provider === "blob") return raw.startsWith("apply/") && !raw.includes("?");
+  if (provider === "local") return !raw.includes("/") && raw === path.basename(raw);
+  return false;
+}
+
 export function privateStorageConfigured() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
@@ -50,18 +58,19 @@ export async function storeApplyFile(requestId: string, filename: string, bytes:
 }
 
 export async function readApplyFile(provider: string, objectKey: string | null, storedName: string) {
-  const key = path.basename(objectKey || storedName);
-  if (!key || key !== (objectKey || storedName).split("/").pop()) return null;
+  if (!isSafeObjectKey(provider, objectKey, storedName)) return null;
   if (provider === "blob") {
     if (!process.env.BLOB_READ_WRITE_TOKEN || !objectKey) return null;
     const { get } = await import("@vercel/blob");
     const result = await get(objectKey, { access: "private", token: process.env.BLOB_READ_WRITE_TOKEN });
-    if (!result || result.statusCode !== 200) return null;
+    if (!result || result.statusCode !== 200 || !result.stream) return null;
     return { stream: result.stream, contentType: result.blob.contentType || contentTypeFor(storedName) };
   }
   if (provider !== "local" || process.env.VERCEL) return null;
-  const filePath = path.join(process.cwd(), "data", "apply-uploads", key);
-  if (!filePath.startsWith(path.join(process.cwd(), "data", "apply-uploads"))) return null;
+  const key = path.basename(objectKey || storedName);
+  const root = path.join(process.cwd(), "data", "apply-uploads");
+  const filePath = path.join(root, key);
+  if (path.dirname(filePath) !== root) return null;
   const bytes = await readFile(filePath);
   return { stream: new ReadableStream({ start(controller) { controller.enqueue(bytes); controller.close(); } }), contentType: contentTypeFor(key) };
 }
