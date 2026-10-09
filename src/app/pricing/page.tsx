@@ -46,20 +46,38 @@ export default function PricingPage() {
     <div className="page-container py-8">
       <PageHeader
         title="ProFinder Free, or ProFinder Pro"
-        description="Free is enough to explore. Pro removes the monthly limits. Payment is handled by Stripe. A successful payment is confirmed by webhook, not by this page."
+        description="Free is enough to explore. Pro removes monthly limits. Payment is handled by Stripe when configured. A successful payment is confirmed by webhook, not by this page alone."
         eyebrow="Pricing"
+        actions={
+          <Link href="/support" className="btn-secondary text-sm">
+            Support & FAQ
+          </Link>
+        }
       />
       {cancelled && (
         <p className="mt-4 text-sm text-[var(--gray-700)]">Checkout was cancelled. Your plan was not changed.</p>
       )}
-      {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
+      {error && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {error}{" "}
+          <Link href="/support" className="font-semibold underline">
+            Contact support
+          </Link>
+        </div>
+      )}
+
       <div className="mt-8 grid gap-4 lg:grid-cols-3">
         <article className="card p-5">
           <h2 className="text-lg font-semibold text-[var(--navy)]">Free</h2>
           <p className="mt-2 text-3xl font-semibold text-[var(--navy)]">$0</p>
           <p className="mt-2 text-sm text-[var(--gray-700)]">Explore universities, professors, and a limited set of tools.</p>
-          <Link href="/universities" className="btn-secondary mt-5 w-full">
-            Start exploring
+          <ul className="mt-3 space-y-1 text-sm text-[var(--gray-600)]">
+            <li>10 match searches / month</li>
+            <li>2 active applications</li>
+            <li>3 comparisons / month</li>
+          </ul>
+          <Link href="/onboarding" className="btn-secondary mt-5 w-full">
+            Get started free
           </Link>
         </article>
         <article className="card border-[var(--teal)] p-5">
@@ -69,6 +87,11 @@ export default function PricingPage() {
             $9.99 <span className="text-base font-normal text-[var(--gray-500)]">/ month</span>
           </p>
           <p className="mt-2 text-sm text-[var(--gray-700)]">Unlimited matching, drafts, applications, and comparison.</p>
+          <ul className="mt-3 space-y-1 text-sm text-[var(--gray-600)]">
+            <li>Same stored catalog as Free</li>
+            <li>No invented programs or deadlines</li>
+            <li>Cancel anytime in Billing</li>
+          </ul>
           <button
             className="btn-primary mt-5 w-full"
             disabled={busy === "PRO_MONTHLY"}
@@ -92,6 +115,7 @@ export default function PricingPage() {
           </button>
         </article>
       </div>
+
       <table className="mt-10 w-full text-left text-sm">
         <thead>
           <tr className="border-b border-[var(--gray-200)] text-[var(--gray-500)]">
@@ -110,6 +134,26 @@ export default function PricingPage() {
           ))}
         </tbody>
       </table>
+
+      <section className="mt-10 rounded-lg border border-[var(--gray-200)] bg-white p-5">
+        <h2 className="font-semibold text-[var(--navy)]">What Pro does not change</h2>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--gray-600)]">
+          <li>Does not invent universities, professors, programs, or scholarships.</li>
+          <li>Does not turn unverified deadline notes into official dates.</li>
+          <li>Does not guarantee admission, funding, or supervisor replies.</li>
+          <li>Apply for Me is a separate paid service with its own package fees.</li>
+        </ul>
+        <p className="mt-3 text-sm text-[var(--gray-600)]">
+          Questions about charges or limits?{" "}
+          <Link href="/support" className="font-medium text-[var(--teal-dark)] hover:underline">
+            Support
+          </Link>
+          {" · "}
+          <Link href="/billing" className="font-medium text-[var(--teal-dark)] hover:underline">
+            Billing
+          </Link>
+        </p>
+      </section>
     </div>
   );
 }
