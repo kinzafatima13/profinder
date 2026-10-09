@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -90,8 +91,8 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--gray-200)] bg-[var(--paper)]">
       <div className="page-container flex h-14 items-center justify-between gap-3">
-        <Link href="/" className="shrink-0 text-sm font-semibold tracking-tight text-[var(--navy)]">
-          ProFinder
+        <Link href="/" className="shrink-0 flex items-center" aria-label="ProFinder home">
+          <Image src="/logo.png" alt="ProFinder Now" width={168} height={51} priority className="h-8 w-auto" />
         </Link>
 
         <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">

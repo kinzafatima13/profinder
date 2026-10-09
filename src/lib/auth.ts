@@ -5,6 +5,19 @@ import { ensureSchema, prisma } from "@/lib/prisma";
 import { hasProAccess } from "@/lib/billing/access";
 import { rateLimit } from "@/lib/rate-limit";
 
+
+function adminEmails() {
+  return (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isConfiguredAdmin(email?: string | null) {
+  if (!email) return false;
+  return adminEmails().includes(email.toLowerCase());
+}
+
 const authSecret = process.env.NEXTAUTH_SECRET;
 if (process.env.NODE_ENV === "production" && !authSecret) {
   throw new Error("NEXTAUTH_SECRET is required in production.");
@@ -59,7 +72,13 @@ export const authOptions: NextAuthOptions = {
           include: { subscription: true },
         });
         token.plan = hasProAccess(student?.subscription ?? null) ? "pro" : "free";
-        token.role = student?.role || "student";
+        const configuredAdmin = isConfiguredAdmin(email);
+        if (student && configuredAdmin && student.role !== "admin") {
+          await prisma.student.update({ where: { id: student.id }, data: { role: "admin" } });
+          token.role = "admin";
+        } else {
+          token.role = configuredAdmin ? "admin" : student?.role || "student";
+        }
       }
       return token;
     },

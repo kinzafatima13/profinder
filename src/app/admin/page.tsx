@@ -9,7 +9,7 @@ export default async function AdminPage() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email || "";
   const student = email ? await prisma.student.findUnique({ where: { email }, select: { role: true } }) : null;
-  const allow = student?.role === "admin" || (process.env.ADMIN_EMAILS || "").split(",").map((v) => v.trim()).includes(email);
+  const allow = student?.role === "admin" || (process.env.ADMIN_EMAILS || "").split(",").map((v) => v.trim().toLowerCase()).filter(Boolean).includes(email.toLowerCase());
   if (!allow) {
     return <div className="page-container py-16"><h1 className="section-title">Admin only</h1><p className="mt-2 text-gray-600">This account cannot view data operations.</p></div>;
   }

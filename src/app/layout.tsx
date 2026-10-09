@@ -51,7 +51,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <div className="page-container flex flex-col gap-6 text-sm text-[var(--gray-500)] sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p>
-                  <span className="font-medium text-[var(--navy)]">ProFinder</span>
+                  <img src="/logo.png" alt="ProFinder Now" className="h-7 w-auto" />
                 </p>
                 <p className="mt-1 max-w-xs text-xs text-[var(--gray-500)]">
                   Stored records only. Match scores are not admission predictions.
