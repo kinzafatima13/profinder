@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import EligibilityButton from "@/components/EligibilityButton";
 import SaveOpportunityButton from "@/components/SaveOpportunityButton";
+import PageHeader from "@/components/PageHeader";
 
 type Uni = { id: string; name: string };
 type Sch = {
@@ -65,19 +66,25 @@ export default function ScholarshipPage() {
   }, [load]);
 
   return (
-    <div className="page-container py-10">
-      <h1 className="section-title">Scholarships</h1>
-      <p className="mt-2 max-w-2xl text-sm text-gray-600">CSC, university, and presidential awards currently stored. Dates are unverified until checked against the official page.</p>
-      <section className="mt-6">
-        <h2 className="text-lg font-bold text-[var(--navy)]">Scholarship match</h2>
-        <p className="mt-1 text-sm text-gray-600">{matchNote || "Each score is a compatibility check against your saved profile, with the reason beside it."}</p>
+    <div className="page-container py-8">
+      <PageHeader
+        title="Funding"
+        description="CSC, university, and presidential awards currently stored. Dates are unverified until checked against the official page."
+      />
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold text-[var(--navy)]">Scholarship match</h2>
+        <p className="mt-1 text-sm text-[var(--gray-600)]">
+          {matchNote || "Each score is a compatibility check against your saved profile, with the reason beside it."}
+        </p>
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           {programs.slice(0, 4).map((item) => (
             <article key={item.id} className="card p-4">
-              <p className="text-xs font-semibold text-[var(--teal)]">{item.score === null ? "Not scored" : `${item.score}% compatibility`}</p>
+              <p className="text-xs font-semibold text-[var(--teal-dark)]">
+                {item.score === null ? "Not scored" : `${item.score}% compatibility`}
+              </p>
               <h3 className="mt-1 font-semibold text-[var(--navy)]">{item.university}</h3>
-              <p className="text-sm text-gray-600">{item.degree} · {item.major}</p>
-              <ul className="mt-2 space-y-1 text-sm text-gray-700">
+              <p className="text-sm text-[var(--gray-600)]">{item.degree} · {item.major}</p>
+              <ul className="mt-2 space-y-1 text-sm text-[var(--gray-700)]">
                 {item.reasons.slice(0, 4).map((reason) => (
                   <li key={reason.text}>{reason.tone === "ok" ? "Yes — " : "Check — "}{reason.text}</li>
                 ))}
@@ -87,10 +94,12 @@ export default function ScholarshipPage() {
           ))}
           {matches.slice(0, 4).map((item) => (
             <article key={item.id} className="card p-4">
-              <p className="text-xs font-semibold text-[var(--teal)]">{item.score === null ? "Not scored" : `${item.score}% compatibility`}</p>
+              <p className="text-xs font-semibold text-[var(--teal-dark)]">
+                {item.score === null ? "Not scored" : `${item.score}% compatibility`}
+              </p>
               <h3 className="mt-1 font-semibold text-[var(--navy)]">{item.name}</h3>
-              <p className="text-sm text-gray-600">{item.university} · {item.type}</p>
-              <ul className="mt-2 space-y-1 text-sm text-gray-700">
+              <p className="text-sm text-[var(--gray-600)]">{item.university} · {item.type}</p>
+              <ul className="mt-2 space-y-1 text-sm text-[var(--gray-700)]">
                 {item.reasons.slice(0, 4).map((reason) => (
                   <li key={reason.text}>{reason.tone === "ok" ? "Yes — " : "Check — "}{reason.text}</li>
                 ))}
@@ -100,10 +109,12 @@ export default function ScholarshipPage() {
           ))}
         </div>
       </section>
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-6 flex flex-wrap gap-2">
         <select className="input max-w-xs" value={universityId} onChange={(e) => setUniversityId(e.target.value)}>
           <option value="">All universities</option>
-          {unis.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+          {unis.map((u) => (
+            <option key={u.id} value={u.id}>{u.name}</option>
+          ))}
         </select>
         <select className="input max-w-xs" value={type} onChange={(e) => setType(e.target.value)}>
           <option value="">All types</option>
@@ -119,16 +130,31 @@ export default function ScholarshipPage() {
               <h2 className="font-semibold text-[var(--navy)]">{row.name}</h2>
               <span className="badge-teal">{row.type}</span>
             </div>
-            <p className="text-sm text-gray-500">{row.university?.name} · {row.dataStatus || "unverified"}</p>
+            <p className="text-sm text-[var(--gray-500)]">
+              {row.university?.name} · {row.dataStatus || "unverified"}
+            </p>
             <p className="mt-2 text-sm">Apply window: {row.deadline || "Not available"}</p>
-            <p className="mt-1 text-sm text-gray-700">{row.advantages || "Advantages not listed"}</p>
-            <p className="mt-1 text-sm text-gray-500">{row.requirements}</p>
+            <p className="mt-1 text-sm text-[var(--gray-700)]">{row.advantages || "Advantages not listed"}</p>
+            <p className="mt-1 text-sm text-[var(--gray-500)]">{row.requirements}</p>
             <EligibilityButton kind="scholarship" id={row.id} />
             <SaveOpportunityButton scholarshipId={row.id} label="Save scholarship" />
-            {row.officialUrl && <a className="mt-2 inline-block text-sm text-[var(--teal)]" href={row.officialUrl} target="_blank" rel="noreferrer">Official source</a>}
+            {row.officialUrl && (
+              <a
+                className="mt-2 inline-block text-sm font-medium text-[var(--teal-dark)] hover:underline"
+                href={row.officialUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Official source
+              </a>
+            )}
           </article>
         ))}
-        {rows.length === 0 && <p className="text-sm text-gray-500">No scholarships match that filter.</p>}
+        {rows.length === 0 && (
+          <div className="empty-state rounded-lg border border-dashed border-[var(--gray-200)] bg-white px-6 py-12 text-center">
+            <p className="text-sm text-[var(--gray-500)]">No scholarships match that filter.</p>
+          </div>
+        )}
       </div>
     </div>
   );
