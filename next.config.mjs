@@ -20,7 +20,10 @@ const nextConfig = {
       { source: "/alerts", destination: "/tracker", permanent: false },
       { source: "/notices", destination: "/tracker", permanent: false },
       { source: "/searches", destination: "/find", permanent: false },
-      // /onboarding stays available after registration; not in permanent nav.
+      // Public copy and old links say supervisors; the live directory is /professors.
+      { source: "/supervisors", destination: "/professors", permanent: false },
+      { source: "/supervisors/:path*", destination: "/professors/:path*", permanent: false },
+      { source: "/supervisor/:path*", destination: "/professors/:path*", permanent: false },
     ];
   },
   async headers() {
