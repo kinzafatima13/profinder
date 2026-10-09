@@ -37,57 +37,66 @@ export default function ProfessorCard({
   return (
     <div className="card flex flex-col p-5">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <Link
             href={`/professors/${id}`}
             className="text-lg font-semibold text-[var(--navy)] hover:text-[var(--teal)]"
           >
             {name}
             {nameZh && (
-              <span className="ml-2 text-sm font-normal text-gray-400">
-                {nameZh}
-              </span>
+              <span className="ml-2 text-sm font-normal text-[var(--gray-500)]">{nameZh}</span>
             )}
           </Link>
-          <p className="mt-0.5 text-sm text-gray-600">
+          <p className="mt-0.5 text-sm text-[var(--gray-600)]">
             {position}
             {department && ` · ${department}`}
           </p>
-          <p className="mt-0.5 text-sm text-gray-500">
+          <p className="mt-0.5 text-sm text-[var(--gray-500)]">
             {universityName}
             {universityCity && ` · ${universityCity}`}
           </p>
-          {verified ? <p className="mt-2 text-xs font-medium text-[var(--ok)]">Verified</p> : <p className="mt-2 text-xs text-[var(--gray-500)]">Unverified</p>}
-          <p className="mt-1 text-xs text-[var(--gray-500)]">{email?.trim() ? "Email on file" : "No public email"}</p>
+          {verified ? (
+            <p className="mt-2 text-xs font-medium text-[var(--ok)]">Verified</p>
+          ) : (
+            <p className="mt-2 text-xs text-[var(--gray-500)]">Unverified</p>
+          )}
+          <p className="mt-1 text-xs text-[var(--gray-500)]">
+            {email?.trim() ? "Email on file" : "No public email"}
+          </p>
           <p className="mt-1 text-xs text-[var(--gray-500)]">{recent || "Recent activity not stored"}</p>
           {priority && <p className="mt-1 text-xs text-[var(--gray-500)]">{priority} priority</p>}
         </div>
-        {typeof matchScore === "number" && <div className="match-pop"><MatchScore score={matchScore} compact /></div>}
+        {typeof matchScore === "number" && (
+          <div className="match-pop shrink-0">
+            <MatchScore score={matchScore} compact />
+          </div>
+        )}
       </div>
 
       {researchAreas.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {researchAreas.slice(0, 4).map((area) => (
-            <Link key={area} href={`/professors?area=${encodeURIComponent(area)}`} className="tag">{area}</Link>
+            <Link
+              key={area}
+              href={`/professors?area=${encodeURIComponent(area)}`}
+              className="tag"
+            >
+              {area}
+            </Link>
           ))}
         </div>
       )}
 
       {researchInterests && (
-        <p className="mt-3 line-clamp-2 text-sm text-gray-600">
-          {researchInterests}
-        </p>
+        <p className="mt-3 line-clamp-2 text-sm text-[var(--gray-600)]">{researchInterests}</p>
       )}
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Link href={`/professors/${id}`} className="btn-secondary text-xs">
-          View Profile
+          View profile
         </Link>
-        <Link
-          href={`/professors/${id}?tab=match`}
-          className="btn-ghost text-xs"
-        >
-          Research Match
+        <Link href={`/professors/${id}?tab=match`} className="btn-ghost text-xs">
+          Research match
         </Link>
       </div>
     </div>
