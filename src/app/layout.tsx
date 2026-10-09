@@ -63,11 +63,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 <Link href="/professors">Professors</Link>
                 <Link href="/find">Find My Match</Link>
                 <Link href="/scholarship">Funding</Link>
-                <Link href="/alerts">Deadlines</Link>
-                <Link href="/pricing">Plans</Link>
-                <Link href="/onboarding">Get started</Link>
-                <Link href="/support">Support</Link>
+                <Link href="/compare">Compare</Link>
                 <Link href="/apply">Apply for Me</Link>
+                <Link href="/pricing">Plans</Link>
+                <Link href="/support">Support</Link>
               </nav>
             </div>
           </footer>
