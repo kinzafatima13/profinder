@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import SaveToTrackerButton from "@/components/SaveToTrackerButton";
 import MatchScore from "@/components/MatchScore";
 import PageHeader from "@/components/PageHeader";
+import { saveSearch } from "@/lib/saved-searches";
 
 type Part = { key: string; label: string; score: number | null; weight: number; note: string };
 type MatchItem = {
@@ -33,6 +34,27 @@ export default function FindProfessorsPage() {
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [saveMsg, setSaveMsg] = useState("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q");
+    if (q) setQuery(q);
+    if (params.get("country")) setCountry(params.get("country") || "");
+    if (params.get("degree")) setDegree(params.get("degree") || "");
+    if (params.get("funding")) setFunding(params.get("funding") || "");
+    if (params.get("priority")) setPriority(params.get("priority") || "balanced");
+  }, []);
+
+  function handleSaveSearch() {
+    if (!query.trim()) {
+      setSaveMsg("Enter a search description first.");
+      return;
+    }
+    saveSearch({ query, country, degree, funding, priority });
+    setSaveMsg("Search saved on this device.");
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -76,6 +98,16 @@ export default function FindProfessorsPage() {
       <PageHeader
         title="Find My Match"
         description="Describe what you want to study. ProFinder ranks stored universities, programs, and professors from overlap — it does not invent records."
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Link href="/searches" className="btn-secondary text-sm">
+              Saved searches
+            </Link>
+            <Link href="/onboarding" className="btn-secondary text-sm">
+              Get started
+            </Link>
+          </div>
+        }
       />
 
       <form onSubmit={handleSubmit} className="mt-8 max-w-3xl space-y-4">
@@ -100,165 +132,128 @@ export default function FindProfessorsPage() {
           </select>
           <select className="input" value={funding} onChange={(e) => setFunding(e.target.value)}>
             <option value="">Funding</option>
-            <option value="required">Funding required</option>
-            <option value="not_required">Not required</option>
+            <option value="required">Funding preferred</option>
+            <option value="any">Any</option>
           </select>
           <select className="input" value={priority} onChange={(e) => setPriority(e.target.value)}>
             <option value="balanced">Balanced</option>
             <option value="research">Research fit</option>
-            <option value="funding">Funding</option>
-            <option value="professor">Professor research</option>
             <option value="program">Program</option>
             <option value="eligibility">Eligibility</option>
             <option value="location">Location</option>
           </select>
         </div>
-        <button
-          type="submit"
-          className="btn-primary"
-          disabled={loading || query.trim().length < 8}
-        >
-          {loading ? "Matching…" : "Find my matches"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="submit" className="btn-primary" disabled={loading || query.trim().length < 8}>
+            {loading ? "Matching…" : "Find my matches"}
+          </button>
+          <button type="button" className="btn-secondary" onClick={handleSaveSearch} disabled={!query.trim()}>
+            Save search
+          </button>
+          <Link href="/searches" className="text-sm font-medium text-[var(--teal-dark)] hover:underline">
+            View saved
+          </Link>
+        </div>
+        {saveMsg && <p className="text-sm text-[var(--gray-600)]">{saveMsg}</p>}
       </form>
 
       {loading && (
-        <div className="loading-track mt-4 max-w-3xl" role="status" aria-label="Matching stored records">
-          <span />
+        <div className="loading-panel mt-8 rounded-lg border border-[var(--gray-200)] bg-white px-4 py-8 text-sm text-[var(--gray-600)]">
+          Ranking stored records…
         </div>
       )}
 
       {error && (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {error}{" "}
+          {error.toLowerCase().includes("sign in") && (
+            <Link href="/login?callbackUrl=/find" className="font-semibold underline">
+              Log in
+            </Link>
+          )}
+        </div>
       )}
 
-      {results && (
-        <div className="results-pane mt-10 space-y-4">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-[var(--navy)]">Your top matches</h2>
-              <p className="text-sm text-[var(--gray-500)]">{note || `${results.length} stored match${results.length === 1 ? "" : "es"}`}</p>
-            </div>
-            <Link href="/professors" className="text-sm font-medium text-[var(--teal-dark)] hover:underline">
-              Browse all professors
+      {note && !error && <p className="mt-4 text-sm text-[var(--gray-600)]">{note}</p>}
+
+      {results && results.length === 0 && !loading && !error && (
+        <div className="empty-state mt-8 rounded-lg border border-dashed border-[var(--gray-200)] bg-white px-6 py-12 text-center">
+          <p className="font-medium text-[var(--navy)]">No strong matches in stored records</p>
+          <p className="mx-auto mt-2 max-w-md text-sm text-[var(--gray-600)]">
+            Try broader keywords, or browse professors and programs directly.
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <Link href="/professors" className="btn-primary text-sm">
+              Professors
             </Link>
+            <Link href="/programs" className="btn-secondary text-sm">
+              Programs
+            </Link>
+            <button type="button" className="btn-secondary text-sm" onClick={handleSaveSearch}>
+              Save this search
+            </button>
           </div>
+        </div>
+      )}
 
-          {results.length === 0 ? (
-            <div className="empty-state rounded-lg border border-dashed border-[var(--gray-200)] bg-white px-6 py-12 text-center">
-              <h3 className="text-lg font-semibold text-[var(--navy)]">No stored matches for this query</h3>
-              <p className="mx-auto mt-2 max-w-md text-sm text-[var(--gray-700)]">
-                Try broader research interests, or explore professors and programs directly.
-              </p>
-              <div className="mt-5 flex flex-wrap justify-center gap-2">
-                <Link href="/professors" className="btn-primary">Explore professors</Link>
-                <Link href="/programs" className="btn-secondary">Browse programs</Link>
-              </div>
-            </div>
-          ) : (
-            results.map((item) => {
-              const breakdown = {
-                interestOverlap: item.scoreBreakdown.find((p) => p.key === "interest" || p.label.toLowerCase().includes("interest"))?.score ?? 0,
-                areaOverlap: item.scoreBreakdown.find((p) => p.key === "area" || p.label.toLowerCase().includes("area"))?.score ?? 0,
-                topicOverlap: item.scoreBreakdown.find((p) => p.key === "topic" || p.label.toLowerCase().includes("topic"))?.score ?? 0,
-                majorRelevance: item.scoreBreakdown.find((p) => p.key === "major" || p.label.toLowerCase().includes("major"))?.score ?? 0,
-                degreeRelevance: item.scoreBreakdown.find((p) => p.key === "degree" || p.label.toLowerCase().includes("degree"))?.score ?? 0,
-                publicationOverlap:
-                  item.scoreBreakdown.find((p) => p.key === "publication" || p.label.toLowerCase().includes("publication"))?.score ?? null,
-              };
-
-              return (
-                <article key={item.professor.id} className="card p-5">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <Link
-                        href={`/professors/${item.professor.id}`}
-                        className="text-lg font-semibold text-[var(--navy)] hover:text-[var(--teal)]"
-                      >
-                        {item.professor.name}
-                      </Link>
-                      <p className="mt-0.5 text-sm text-[var(--gray-600)]">
-                        {item.professor.position}
-                        {item.professor.department ? ` · ${item.professor.department}` : ""}
-                      </p>
-                      <p className="mt-0.5 text-sm text-[var(--gray-500)]">
+      {results && results.length > 0 && (
+        <div className="mt-8 grid gap-4">
+          {results.map((item) => {
+            const key = `${item.professor.id}-${item.program?.id || "none"}`;
+            return (
+              <article key={key} className="card p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-[var(--navy)]">{item.professor.name}</h2>
+                    <p className="text-sm text-[var(--gray-600)]">
+                      {item.professor.position || "Faculty"}
+                      {item.professor.department ? ` · ${item.professor.department}` : ""}
+                    </p>
+                    <p className="mt-1 text-sm text-[var(--gray-600)]">
+                      <Link href={`/universities/${item.university.id}`} className="font-medium hover:underline">
                         {item.university.name}
-                        {item.university.city ? ` · ${item.university.city}` : ""} · {item.university.country}
-                      </p>
-                      {item.program && (
-                        <p className="mt-1 text-sm text-[var(--gray-700)]">
-                          {item.program.degree} · {item.program.major}
-                        </p>
-                      )}
-                      {item.professor.areas?.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-1.5">
-                          {item.professor.areas.slice(0, 4).map((area) => (
-                            <Link
-                              key={area}
-                              href={`/professors?area=${encodeURIComponent(area)}`}
-                              className="tag"
-                            >
-                              {area}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <MatchScore score={item.score} compact />
+                      </Link>
+                      {item.university.city ? ` · ${item.university.city}` : ""}
+                      {item.program ? ` · ${item.program.degree} · ${item.program.major}` : ""}
+                    </p>
                   </div>
-
-                  <div className="mt-4 border-t border-[var(--gray-100)] pt-4">
-                    <p className="text-xs font-medium text-[var(--gray-500)]">Why this match?</p>
-                    <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-[var(--gray-700)]">
-                      {item.reasons.slice(0, 4).map((reason) => (
-                        <li key={reason}>{reason}</li>
-                      ))}
-                    </ul>
-                    <button
-                      type="button"
-                      className="mt-2 text-xs font-medium text-[var(--teal-dark)] hover:underline"
-                      onClick={() => setOpen(open === item.professor.id ? null : item.professor.id)}
-                    >
-                      {open === item.professor.id ? "Hide score details" : "See how this score was calculated"}
+                  <MatchScore score={item.score} label={item.label} />
+                </div>
+                <ul className="mt-3 space-y-1 text-sm text-[var(--gray-700)]">
+                  {item.reasons.slice(0, 4).map((reason) => (
+                    <li key={reason}>{reason}</li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-xs text-[var(--gray-500)]">{item.verificationStatus}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link href={`/professors/${item.professor.id}`} className="btn-secondary text-sm">
+                    View profile
+                  </Link>
+                  <SaveToTrackerButton professorId={item.professor.id} />
+                  <button type="button" className="btn-ghost text-sm" onClick={() => setOpen(open === key ? null : key)}>
+                    Feedback
+                  </button>
+                </div>
+                {open === key && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button type="button" className="btn-secondary text-xs" onClick={() => feedback(item, "up")}>
+                      Helpful
                     </button>
-                    {open === item.professor.id && (
-                      <div className="menu-panel mt-3">
-                        <MatchScore score={item.score} breakdown={breakdown} reasons={item.reasons} />
-                        {item.matchedPublicationTitles.length > 0 && (
-                          <ul className="mt-3 space-y-1 text-xs text-[var(--gray-600)]">
-                            {item.matchedPublicationTitles.map((title) => (
-                              <li key={title}>Stored publication: {title}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    )}
+                    {REASONS.map((reason) => (
+                      <button
+                        key={reason}
+                        type="button"
+                        className="btn-ghost text-xs"
+                        onClick={() => feedback(item, "down", reason)}
+                      >
+                        {reason}
+                      </button>
+                    ))}
                   </div>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Link href={`/professors/${item.professor.id}`} className="btn-secondary text-xs">
-                      View profile
-                    </Link>
-                    <Link href={`/universities/${item.university.id}`} className="btn-secondary text-xs">
-                      View university
-                    </Link>
-                    <SaveToTrackerButton professorId={item.professor.id} />
-                    <button type="button" className="btn-ghost text-xs" onClick={() => feedback(item, "up")}>
-                      Good match
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-ghost text-xs"
-                      onClick={() => feedback(item, "down", REASONS[0])}
-                    >
-                      Not relevant
-                    </button>
-                  </div>
-                  <p className="mt-2 text-xs text-[var(--gray-500)]">{item.verificationStatus}</p>
-                </article>
-              );
-            })
-          )}
+                )}
+              </article>
+            );
+          })}
         </div>
       )}
     </div>
