@@ -7,6 +7,27 @@ import { scoreProgram, scoreScholarship, type FitProfile } from "@/lib/eligibili
 const PROGRAM_CAP = 400;
 const SCHOLARSHIP_CAP = 400;
 
+/** Prefer a spread of universities so anonymous visitors see real variety, not one batch. */
+function diversifyByUniversity<T extends { university: string }>(rows: T[], limit: number): T[] {
+  const picked: T[] = [];
+  const seenUni = new Set<string>();
+  // First pass: one per university
+  for (const row of rows) {
+    if (picked.length >= limit) break;
+    const key = row.university.toLowerCase();
+    if (seenUni.has(key)) continue;
+    seenUni.add(key);
+    picked.push(row);
+  }
+  // Second pass: fill remaining slots
+  for (const row of rows) {
+    if (picked.length >= limit) break;
+    if (picked.includes(row)) continue;
+    picked.push(row);
+  }
+  return picked;
+}
+
 export async function GET() {
   await ensureSchema();
   const session = await getServerSession(authOptions);
@@ -29,46 +50,47 @@ export async function GET() {
     prisma.scholarship.count(),
     prisma.program.findMany({
       include: { university: { select: { id: true, name: true, city: true } } },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ university: { name: "asc" } }, { major: "asc" }],
       take: PROGRAM_CAP,
     }),
     prisma.scholarship.findMany({
       include: { university: { select: { name: true } } },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ type: "asc" }, { name: "asc" }],
       take: SCHOLARSHIP_CAP,
     }),
   ]);
 
-  const rankedPrograms = programs
-    .map((program) => {
-      const fit = ready
-        ? scoreProgram(profile, {
-            degree: program.degree,
-            major: program.major,
-            universityName: program.university.name,
-            deadline: program.deadline,
-            gpaRequirement: program.gpaRequirement,
-            englishReq: program.englishReq,
-          })
-        : null;
-      return {
-        id: program.id,
-        universityId: program.university.id,
-        university: program.university.name,
-        city: program.university.city,
-        degree: program.degree,
-        major: program.major,
-        deadline: program.deadline,
-        funding: "UNKNOWN",
-        score: fit?.score ?? null,
-        reasons: fit?.reasons ?? [],
-      };
-    })
-    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-    .slice(0, 8);
+  const mappedPrograms = programs.map((program) => {
+    const fit = ready
+      ? scoreProgram(profile, {
+          degree: program.degree,
+          major: program.major,
+          universityName: program.university.name,
+          deadline: program.deadline,
+          gpaRequirement: program.gpaRequirement,
+          englishReq: program.englishReq,
+        })
+      : null;
+    return {
+      id: program.id,
+      universityId: program.university.id,
+      university: program.university.name,
+      city: program.university.city,
+      degree: program.degree,
+      major: program.major,
+      deadline: program.deadline,
+      funding: "UNKNOWN" as const,
+      score: fit?.score ?? null,
+      reasons: fit?.reasons ?? [],
+    };
+  });
+
+  const rankedPrograms = ready
+    ? mappedPrograms.sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).slice(0, 8)
+    : diversifyByUniversity(mappedPrograms, 8);
 
   const seen = new Set<string>();
-  const rankedScholarships = scholarships
+  const mappedScholarships = scholarships
     .filter((row) => {
       const key = `${row.universityId ?? "none"}:${row.type ?? row.name}`;
       if (seen.has(key)) return false;
@@ -95,9 +117,11 @@ export async function GET() {
         score: fit?.score ?? null,
         reasons: fit?.reasons ?? [],
       };
-    })
-    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-    .slice(0, 8);
+    });
+
+  const rankedScholarships = ready
+    ? mappedScholarships.sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).slice(0, 8)
+    : diversifyByUniversity(mappedScholarships, 8);
 
   const sampled = programTotal > programs.length || scholarshipTotal > scholarships.length;
 
@@ -106,7 +130,7 @@ export async function GET() {
     profileReady: ready,
     sampled,
     sampleNote: sampled
-      ? "Ranking uses the most recently updated stored records, up to 400 programs and 400 scholarships. It is not a score of the entire catalog."
+      ? "Listing uses stored records (up to 400 programs and 400 scholarships). It is not a score of every award in China."
       : null,
     programs: rankedPrograms,
     scholarships: rankedScholarships,
