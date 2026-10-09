@@ -16,13 +16,17 @@ const primary = [
 const moreLinks = [
   { href: "/compare", label: "Compare" },
   { href: "/apply", label: "Apply for Me" },
+  { href: "/alerts", label: "Deadlines" },
+  { href: "/searches", label: "Saved searches" },
   { href: "/notices", label: "Notices" },
   { href: "/assistant", label: "Assistant" },
+  { href: "/support", label: "Support" },
 ];
 
 const privateMore = [
   { href: "/shortlist", label: "Shortlist" },
   { href: "/tracker", label: "Applications" },
+  { href: "/onboarding", label: "Get started" },
 ];
 
 /** Same labels as desktop primary — keeps branding and navigation unified. */
@@ -172,6 +176,13 @@ export default function Navbar() {
                     <p className="text-xs text-[var(--gray-500)]">{pro ? "ProFinder Pro" : "Free plan"}</p>
                   </div>
                   <Link
+                    href="/onboarding"
+                    role="menuitem"
+                    className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
+                  >
+                    Get started
+                  </Link>
+                  <Link
                     href="/profile"
                     role="menuitem"
                     className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
@@ -179,11 +190,18 @@ export default function Navbar() {
                     Profile
                   </Link>
                   <Link
-                    href="/shortlist"
+                    href="/searches"
                     role="menuitem"
                     className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
                   >
-                    My Shortlist
+                    Saved searches
+                  </Link>
+                  <Link
+                    href="/alerts"
+                    role="menuitem"
+                    className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
+                  >
+                    Deadlines
                   </Link>
                   <Link
                     href="/tracker"
@@ -198,6 +216,13 @@ export default function Navbar() {
                     className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
                   >
                     Billing & Subscription
+                  </Link>
+                  <Link
+                    href="/support"
+                    role="menuitem"
+                    className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
+                  >
+                    Support
                   </Link>
                   <div className="my-1 border-t border-[var(--gray-200)]" />
                   <button
@@ -252,16 +277,15 @@ export default function Navbar() {
         <div className="menu-panel border-t border-[var(--gray-200)] bg-white px-4 py-3 lg:hidden">
           <div className="grid gap-1">
             {more.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]"
-              >
+              <Link key={item.href} href={item.href} className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">
                 {item.label}
               </Link>
             ))}
             <Link href="/pricing" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">
               Pricing
+            </Link>
+            <Link href="/onboarding" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">
+              Get started
             </Link>
             {session ? (
               <>
