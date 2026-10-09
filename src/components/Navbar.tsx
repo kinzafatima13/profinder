@@ -25,12 +25,13 @@ const privateMore = [
   { href: "/tracker", label: "Applications" },
 ];
 
+/** Same labels as desktop primary — keeps branding and navigation unified. */
 const mobilePublic = [
   { href: "/", label: "Home" },
   { href: "/universities", label: "Universities" },
   { href: "/programs", label: "Programs" },
   { href: "/professors", label: "Professors" },
-  { href: "/find", label: "Match" },
+  { href: "/find", label: "Find My Match" },
   { href: "/scholarship", label: "Funding" },
 ];
 
@@ -101,7 +102,12 @@ export default function Navbar() {
 
         <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">
           {primary.map((item) => (
-            <Link key={item.href} href={item.href} className={itemClass(isActive(pathname, item.href))} aria-current={isActive(pathname, item.href) ? "page" : undefined}>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={itemClass(isActive(pathname, item.href))}
+              aria-current={isActive(pathname, item.href) ? "page" : undefined}
+            >
               {item.label}
             </Link>
           ))}
@@ -116,9 +122,17 @@ export default function Navbar() {
               More
             </button>
             {moreOpen && (
-              <div role="menu" className="menu-panel absolute left-0 z-50 mt-1 w-48 rounded-md border border-[var(--gray-200)] bg-white p-1">
+              <div
+                role="menu"
+                className="menu-panel absolute left-0 z-50 mt-1 w-48 rounded-md border border-[var(--gray-200)] bg-white p-1"
+              >
                 {more.map((item) => (
-                  <Link key={item.href} href={item.href} role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    role="menuitem"
+                    className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
+                  >
                     {item.label}
                   </Link>
                 ))}
@@ -128,11 +142,14 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href={pro ? "/billing" : "/pricing"} className="rounded-md px-2.5 py-2 text-sm font-medium text-[var(--navy)] hover:bg-[var(--gray-100)]">
+          <Link
+            href={pro ? "/billing" : "/pricing"}
+            className="rounded-md px-2.5 py-2 text-sm font-medium text-[var(--navy)] hover:bg-[var(--gray-100)]"
+          >
             {pro ? "Pro" : "Go Pro"}
           </Link>
           {status === "loading" ? (
-            <span className="text-xs text-[var(--gray-500)]">...</span>
+            <span className="text-xs text-[var(--gray-500)]">…</span>
           ) : session ? (
             <div className="relative" ref={accountRef}>
               <button
@@ -146,17 +163,49 @@ export default function Navbar() {
                 {initial}
               </button>
               {accountOpen && (
-                <div role="menu" className="menu-panel absolute right-0 z-50 mt-1 w-56 rounded-md border border-[var(--gray-200)] bg-white p-1">
+                <div
+                  role="menu"
+                  className="menu-panel absolute right-0 z-50 mt-1 w-56 rounded-md border border-[var(--gray-200)] bg-white p-1"
+                >
                   <div className="px-3 py-2">
                     <p className="truncate text-sm font-medium text-[var(--navy)]">{name}</p>
                     <p className="text-xs text-[var(--gray-500)]">{pro ? "ProFinder Pro" : "Free plan"}</p>
                   </div>
-                  <Link href="/profile" role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">Profile</Link>
-                  <Link href="/shortlist" role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">My Shortlist</Link>
-                  <Link href="/tracker" role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">Applications</Link>
-                  <Link href="/billing" role="menuitem" className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]">Billing & Subscription</Link>
+                  <Link
+                    href="/profile"
+                    role="menuitem"
+                    className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    href="/shortlist"
+                    role="menuitem"
+                    className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
+                  >
+                    My Shortlist
+                  </Link>
+                  <Link
+                    href="/tracker"
+                    role="menuitem"
+                    className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
+                  >
+                    Applications
+                  </Link>
+                  <Link
+                    href="/billing"
+                    role="menuitem"
+                    className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
+                  >
+                    Billing & Subscription
+                  </Link>
                   <div className="my-1 border-t border-[var(--gray-200)]" />
-                  <button type="button" role="menuitem" className="block w-full rounded-md px-3 py-2 text-left text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]" onClick={() => signOut({ callbackUrl: "/" })}>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="block w-full rounded-md px-3 py-2 text-left text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                  >
                     Sign out
                   </button>
                 </div>
@@ -164,8 +213,12 @@ export default function Navbar() {
             </div>
           ) : (
             <>
-              <Link href="/login" className="btn-ghost text-sm">Log in</Link>
-              <Link href="/signup" className="btn-primary hidden sm:inline-flex">Sign up</Link>
+              <Link href="/login" className="btn-ghost text-sm">
+                Log in
+              </Link>
+              <Link href="/signup" className="btn-primary hidden sm:inline-flex">
+                Sign up
+              </Link>
             </>
           )}
           <button
@@ -180,9 +233,17 @@ export default function Navbar() {
         </div>
       </div>
 
-      <nav className="flex gap-1 overflow-x-auto border-t border-[var(--gray-200)] px-4 py-2 lg:hidden" aria-label="Mobile">
+      <nav
+        className="flex gap-1 overflow-x-auto border-t border-[var(--gray-200)] px-4 py-2 lg:hidden"
+        aria-label="Mobile"
+      >
         {mobilePrimary.map((item) => (
-          <Link key={item.href} href={item.href} className={itemClass(isActive(pathname, item.href))} aria-current={isActive(pathname, item.href) ? "page" : undefined}>
+          <Link
+            key={item.href}
+            href={item.href}
+            className={itemClass(isActive(pathname, item.href))}
+            aria-current={isActive(pathname, item.href) ? "page" : undefined}
+          >
             {item.label}
           </Link>
         ))}
@@ -191,17 +252,37 @@ export default function Navbar() {
         <div className="menu-panel border-t border-[var(--gray-200)] bg-white px-4 py-3 lg:hidden">
           <div className="grid gap-1">
             {more.map((item) => (
-              <Link key={item.href} href={item.href} className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">{item.label}</Link>
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]"
+              >
+                {item.label}
+              </Link>
             ))}
-            <Link href="/pricing" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">Pricing</Link>
+            <Link href="/pricing" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">
+              Pricing
+            </Link>
             {session ? (
               <>
-                <Link href="/profile" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">Profile</Link>
-                <Link href="/billing" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">Billing & Subscription</Link>
-                <button type="button" className="rounded-md px-2 py-2 text-left text-sm text-[var(--gray-700)]" onClick={() => signOut({ callbackUrl: "/" })}>Sign out</button>
+                <Link href="/profile" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">
+                  Profile
+                </Link>
+                <Link href="/billing" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">
+                  Billing & Subscription
+                </Link>
+                <button
+                  type="button"
+                  className="rounded-md px-2 py-2 text-left text-sm text-[var(--gray-700)]"
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                >
+                  Sign out
+                </button>
               </>
             ) : (
-              <Link href="/login" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">Log in</Link>
+              <Link href="/login" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">
+                Log in
+              </Link>
             )}
           </div>
         </div>
