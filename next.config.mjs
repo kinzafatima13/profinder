@@ -14,6 +14,17 @@ const nextConfig = {
       "/**/*": ["./prisma/dev.db"],
     },
   },
+  async redirects() {
+    return [
+      // Retired as standalone nav destinations; pages still exist for direct links / bookmarks.
+      // Send users toward the consolidated workspace or discovery surfaces.
+      { source: "/alerts", destination: "/tracker", permanent: false },
+      { source: "/notices", destination: "/tracker", permanent: false },
+      { source: "/searches", destination: "/find", permanent: false },
+      // Get started stays available after signup; permanent nav entry removed.
+      // No redirect for /onboarding so post-registration flow still works.
+    ];
+  },
   async headers() {
     return [
       {

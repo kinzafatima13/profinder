@@ -13,20 +13,12 @@ const primary = [
   { href: "/scholarship", label: "Funding" },
 ];
 
+/** Secondary features only — no standalone Applications / Shortlist / Deadlines / Notices / Get started. */
 const moreLinks = [
   { href: "/compare", label: "Compare" },
   { href: "/apply", label: "Apply for Me" },
-  { href: "/alerts", label: "Deadlines" },
-  { href: "/searches", label: "Saved searches" },
-  { href: "/notices", label: "Notices" },
   { href: "/assistant", label: "Assistant" },
   { href: "/support", label: "Support" },
-];
-
-const privateMore = [
-  { href: "/shortlist", label: "Shortlist" },
-  { href: "/tracker", label: "Applications" },
-  { href: "/onboarding", label: "Get started" },
 ];
 
 /** Same labels as desktop primary — keeps branding and navigation unified. */
@@ -61,10 +53,8 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
-  const more = session ? [...privateMore, ...moreLinks] : moreLinks;
-  const mobilePrimary = session
-    ? [...mobilePublic, { href: "/shortlist", label: "Shortlist" }, { href: "/tracker", label: "Applications" }]
-    : mobilePublic;
+  const more = moreLinks;
+  const mobilePrimary = mobilePublic;
   const moreActive = more.some((item) => isActive(pathname, item.href));
 
   useEffect(() => {
@@ -176,13 +166,6 @@ export default function Navbar() {
                     <p className="text-xs text-[var(--gray-500)]">{pro ? "ProFinder Pro" : "Free plan"}</p>
                   </div>
                   <Link
-                    href="/onboarding"
-                    role="menuitem"
-                    className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
-                  >
-                    Get started
-                  </Link>
-                  <Link
                     href="/profile"
                     role="menuitem"
                     className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
@@ -190,25 +173,18 @@ export default function Navbar() {
                     Profile
                   </Link>
                   <Link
-                    href="/searches"
-                    role="menuitem"
-                    className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
-                  >
-                    Saved searches
-                  </Link>
-                  <Link
-                    href="/alerts"
-                    role="menuitem"
-                    className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
-                  >
-                    Deadlines
-                  </Link>
-                  <Link
                     href="/tracker"
                     role="menuitem"
                     className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
                   >
-                    Applications
+                    My workspace
+                  </Link>
+                  <Link
+                    href="/shortlist"
+                    role="menuitem"
+                    className="block rounded-md px-3 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)]"
+                  >
+                    Shortlist
                   </Link>
                   <Link
                     href="/billing"
@@ -284,13 +260,16 @@ export default function Navbar() {
             <Link href="/pricing" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">
               Pricing
             </Link>
-            <Link href="/onboarding" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">
-              Get started
-            </Link>
             {session ? (
               <>
                 <Link href="/profile" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">
                   Profile
+                </Link>
+                <Link href="/tracker" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">
+                  My workspace
+                </Link>
+                <Link href="/shortlist" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">
+                  Shortlist
                 </Link>
                 <Link href="/billing" className="rounded-md px-2 py-2 text-sm text-[var(--gray-700)]">
                   Billing & Subscription
