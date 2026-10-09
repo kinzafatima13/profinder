@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { ensureSchema, prisma } from "@/lib/prisma";
 import UniversityCard from "@/components/UniversityCard";
+import PageHeader from "@/components/PageHeader";
 import { SITE } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: { absolute: "Chinese Universities | ProFinder" },
+  title: { absolute: "Universities | ProFinder" },
   description: "Chinese universities with stored programs and professor records. Open a university to see what is actually on file.",
   alternates: { canonical: `${SITE}/universities` },
 };
@@ -28,19 +29,30 @@ export default async function UniversitiesPage() {
   });
 
   return (
-    <div className="page-container py-10">
-      <div className="mb-8">
-        <h1 className="section-title">Universities</h1>
-        <p className="mt-1 text-gray-600">China · multidisciplinary graduate-study discovery</p>
-      </div>
+    <div className="page-container py-8">
+      <PageHeader
+        title="Universities"
+        description="China · multidisciplinary graduate-study discovery"
+      />
       {universities.length === 0 ? (
-        <div className="empty-state rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
-          <p className="text-gray-500">No universities yet.</p>
+        <div className="empty-state mt-8 rounded-lg border border-dashed border-[var(--gray-200)] bg-white px-6 py-12 text-center">
+          <p className="text-sm text-[var(--gray-500)]">No universities yet.</p>
         </div>
       ) : (
-        <div className="reveal-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="reveal-grid mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {universities.map((u) => (
-            <UniversityCard key={u.id} id={u.id} name={u.name} nameZh={u.nameZh} city={u.city} province={u.province} description={u.description} agencyNumber={u.agencyNumber} professorCount={u._count.professors} programCount={u._count.programs} />
+            <UniversityCard
+              key={u.id}
+              id={u.id}
+              name={u.name}
+              nameZh={u.nameZh}
+              city={u.city}
+              province={u.province}
+              description={u.description}
+              agencyNumber={u.agencyNumber}
+              professorCount={u._count.professors}
+              programCount={u._count.programs}
+            />
           ))}
         </div>
       )}
