@@ -220,7 +220,7 @@ export default async function ProfessorsPage({
       >
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="section-title">Find your research match</h1>
+            <h1 className="section-title">Professors</h1>
             <p className="mt-1 text-sm text-[var(--gray-700)]">
               {total.toLocaleString()} professor{total === 1 ? "" : "s"} found
               {total > 0 ? ` · showing ${start}–${end}` : ""}
