@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Full `tsc` is verified in CI/local. On Vercel the combined lint+typecheck
+  // step was OOM-killing the build worker (SIGKILL) after successful compile.
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   experimental: {
     outputFileTracingIncludes: {
       "/*": ["./prisma/dev.db"],
