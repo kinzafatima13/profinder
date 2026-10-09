@@ -217,7 +217,7 @@ export default function FindProfessorsPage() {
                       {item.program ? ` · ${item.program.degree} · ${item.program.major}` : ""}
                     </p>
                   </div>
-                  <MatchScore score={item.score} label={item.label} />
+                  <MatchScore score={item.score} reasons={item.reasons} />
                 </div>
                 <ul className="mt-3 space-y-1 text-sm text-[var(--gray-700)]">
                   {item.reasons.slice(0, 4).map((reason) => (
