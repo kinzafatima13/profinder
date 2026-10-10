@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureSchema, prisma } from "@/lib/prisma";
 import { discoveryTokens, professorQueryWhere } from "@/lib/discovery";
 
+// Prevent Next.js from attempting to statically prerender this route during `next build`.
+// The handler performs database queries and raw DDL that require a live DATABASE_URL;
+// prerendering causes build failures when the production connection is not reachable at build time.
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 function normalize(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
