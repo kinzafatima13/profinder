@@ -18,7 +18,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (request.documents.length < 1) return NextResponse.json({ error: "Upload at least one document first." }, { status: 400 });
   if (request.paymentStatus === "paid") return NextResponse.json({ request: publicRequest(request) });
   if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json({ error: "Checkout is not configured. The package fee is not charged until Stripe is available." }, { status: 503 });
+    return NextResponse.json({
+      error: "Checkout is not configured. The package fee is not charged until Stripe is available.",
+    }, { status: 503 });
   }
 
   const origin = process.env.NEXTAUTH_URL || "https://www.profindernow.com";
@@ -39,6 +41,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     cancel_url: `${origin}/apply?request=${request.id}&checkout=cancelled`,
     metadata: { studentId: student.id, applyRequestId: request.id, service: "apply_for_me" },
   });
+
+  if (request.status === "draft") {
+    await prisma.applyRequest.update({ where: { id: request.id }, data: { status: "awaiting_payment" } });
+  }
+
   return NextResponse.json({ url: checkout.url });
 }
 
@@ -49,25 +56,47 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!student) return NextResponse.json({ error: "Account not found" }, { status: 404 });
   const body = await req.json().catch(() => ({}));
   const sessionId = typeof body.sessionId === "string" ? body.sessionId : "";
-  if (!sessionId || !process.env.STRIPE_SECRET_KEY) return NextResponse.json({ error: "No paid checkout to confirm." }, { status: 400 });
+  if (!sessionId || !process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json({ error: "No paid checkout to confirm." }, { status: 400 });
+  }
   const request = await prisma.applyRequest.findFirst({ where: { id: params.id, studentId: student.id } });
   if (!request) return NextResponse.json({ error: "Request not found" }, { status: 404 });
+  if (request.paymentStatus === "paid") {
+    return NextResponse.json({ request: publicRequest(request) });
+  }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   const checkout = await stripe.checkout.sessions.retrieve(sessionId);
-  if (checkout.metadata?.applyRequestId !== request.id || checkout.payment_status !== "paid") {
+  if (checkout.metadata?.applyRequestId !== request.id) {
     return NextResponse.json({ error: "Payment is not confirmed for this request." }, { status: 402 });
   }
+  if (checkout.metadata?.service !== "apply_for_me") {
+    return NextResponse.json({ error: "Payment is not confirmed for this request." }, { status: 402 });
+  }
+  if (checkout.payment_status !== "paid") {
+    return NextResponse.json({
+      error: checkout.payment_status === "unpaid"
+        ? "Payment is still pending or was cancelled."
+        : `Payment status is ${checkout.payment_status}.`,
+    }, { status: 402 });
+  }
+  if (typeof checkout.amount_total === "number" && checkout.amount_total !== request.feeCents) {
+    return NextResponse.json({ error: "Paid amount does not match the package fee." }, { status: 402 });
+  }
+
   const updated = await prisma.applyRequest.update({
     where: { id: request.id },
     data: {
       paymentStatus: "paid",
       paymentRef: checkout.id,
-      paymentAt: request.paymentStatus === "paid" ? undefined : new Date(),
+      paymentAt: new Date(),
       status: request.status === "needs_action" ? "needs_action" : "preparing",
     },
   });
-  await prisma.applyRequestItem.updateMany({ where: { requestId: request.id, status: "selected" }, data: { status: "preparing" } });
-  if (request.paymentStatus !== "paid") await logApplyActivity(request.id, "payment_received", student.id);
+  await prisma.applyRequestItem.updateMany({
+    where: { requestId: request.id, status: "selected" },
+    data: { status: "preparing" },
+  });
+  await logApplyActivity(request.id, "payment_received", student.id, { via: "checkout_confirm", sessionId: checkout.id });
   return NextResponse.json({ request: publicRequest(updated) });
 }
