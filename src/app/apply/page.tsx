@@ -36,13 +36,25 @@ export default function ApplyPage() {
     const params = new URLSearchParams(window.location.search);
     const requestId = params.get("request");
     const sessionId = params.get("session_id");
+    const checkout = params.get("checkout");
     if (requestId) setActive(requestId);
+    if (checkout === "cancelled") {
+      setMessage("Checkout was cancelled. Your documents are still saved; you can pay when ready.");
+    }
     if (requestId && sessionId) {
+      setMessage("Confirming payment…");
       fetch(`/api/apply/${requestId}/checkout`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId }),
-      }).then(() => load());
+      })
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (res.ok) setMessage("Payment confirmed. We will prepare your applications next.");
+          else setMessage(data.error || "Payment could not be confirmed yet. If you were charged, refresh in a minute.");
+          await load();
+        })
+        .catch(() => setMessage("Payment confirmation failed. Refresh this page in a moment."));
     }
   }, [status]);
 
@@ -105,12 +117,75 @@ export default function ApplyPage() {
   }
 
   async function upload(requestId: string, form: FormData) {
+    const file = form.get("file");
+    if (!(file instanceof File) || file.size < 1) {
+      setMessage("Choose a file in the upload form before submitting.");
+      return;
+    }
     setBusy(true);
-    setMessage("");
+    setMessage("Uploading…");
     const res = await fetch(`/api/apply/${requestId}/documents`, { method: "POST", body: form });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     setBusy(false);
-    setMessage(res.ok ? "Document saved for this request." : data.error || "Upload failed.");
+    if (!res.ok) {
+      setMessage(data.error || "Upload failed.");
+      return;
+    }
+    setMessage(`Saved: ${data.document?.kind || "document"} — ${data.document?.name || file.name}`);
+    if (data.document?.id) {
+      setRequests((current) => current.map((row) => row.id === requestId
+        ? { ...row, documents: [...row.documents, { id: data.document.id, kind: data.document.kind, name: data.document.name, size: data.document.size }] }
+        : row));
+    }
+    await load();
+  }
+
+  async function uploadMultiple(requestId: string, kind: string, files: FileList | null) {
+    if (!files || files.length === 0) {
+      setMessage("Choose one or more files first.");
+      return;
+    }
+    setBusy(true);
+    const errors: string[] = [];
+    let saved = 0;
+    for (const file of Array.from(files)) {
+      const form = new FormData();
+      form.set("kind", kind);
+      form.set("file", file);
+      const res = await fetch(`/api/apply/${requestId}/documents`, { method: "POST", body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        errors.push(`${file.name}: ${data.error || "failed"}`);
+        continue;
+      }
+      saved += 1;
+      if (data.document?.id) {
+        setRequests((current) => current.map((row) => row.id === requestId
+          ? { ...row, documents: [...row.documents, { id: data.document.id, kind: data.document.kind, name: data.document.name, size: data.document.size }] }
+          : row));
+      }
+    }
+    setBusy(false);
+    setMessage(errors.length
+      ? `Saved ${saved}. Errors: ${errors.join("; ")}`
+      : `Saved ${saved} document${saved === 1 ? "" : "s"} for this request.`);
+    await load();
+  }
+
+  async function removeDocument(requestId: string, documentId: string) {
+    setBusy(true);
+    setMessage("Removing document…");
+    const res = await fetch(`/api/apply/${requestId}/documents?documentId=${encodeURIComponent(documentId)}`, { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) {
+      setMessage(data.error || "Could not remove document.");
+      return;
+    }
+    setRequests((current) => current.map((row) => row.id === requestId
+      ? { ...row, documents: row.documents.filter((doc) => doc.id !== documentId) }
+      : row));
+    setMessage("Document removed. You can upload a replacement before paying.");
     await load();
   }
 
@@ -208,19 +283,53 @@ export default function ApplyPage() {
                     </li>
                   ))}
                 </ul>
-                <ul className="text-xs text-gray-600">{current.documents.map((doc) => <li key={doc.id}>{doc.kind}: {doc.name}</li>)}</ul>
+                <div>
+                  <p className="text-xs font-medium text-[var(--navy)]">Documents on this request</p>
+                  {current.documents.length === 0
+                    ? <p className="mt-1 text-xs text-gray-500">No documents saved yet. Upload at least one (CV, transcript, passport, or other) before paying.</p>
+                    : <ul className="mt-1 space-y-1 text-xs text-gray-600">{current.documents.map((doc) => (
+                      <li key={doc.id} className="flex flex-wrap items-center gap-2">
+                        <span>{doc.kind}: {doc.name} ({Math.round(doc.size / 1024)} KB)</span>
+                        {(current.paymentStatus !== "paid" || current.status === "needs_action") && (
+                          <button type="button" className="text-[var(--violet)] underline" disabled={busy} onClick={() => removeDocument(current.id, doc.id)}>
+                            Remove
+                          </button>
+                        )}
+                      </li>
+                    ))}</ul>}
+                </div>
                 <form className="flex flex-wrap gap-2" onSubmit={(event) => { event.preventDefault(); upload(current.id, new FormData(event.currentTarget)); }}>
-                  <select name="kind" className="input max-w-[10rem]">
+                  <select name="kind" className="input max-w-[10rem]" defaultValue="cv">
                     <option value="passport">Passport</option>
                     <option value="transcript">Transcript</option>
-                    <option value="cv">CV</option>
+                    <option value="cv">CV / Resume</option>
                     <option value="statement">Statement</option>
                     <option value="other">Other</option>
                   </select>
-                  <input name="file" type="file" className="text-xs" required />
-                  <button className="btn-secondary text-xs" type="submit" disabled={busy}>Upload once</button>
+                  <input name="file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx" className="text-xs" />
+                  <button className="btn-secondary text-xs" type="submit" disabled={busy}>Upload document</button>
                 </form>
-                <button type="button" className="btn-primary" disabled={busy || current.paymentStatus === "paid"} onClick={() => pay(current.id)}>Pay ${(current.feeCents / 100).toFixed(0)}</button>
+                <form className="flex flex-wrap gap-2" onSubmit={(event) => {
+                  event.preventDefault();
+                  const form = event.currentTarget;
+                  const kind = (form.elements.namedItem("kind") as HTMLSelectElement)?.value || "other";
+                  const input = form.elements.namedItem("files") as HTMLInputElement;
+                  uploadMultiple(current.id, kind, input.files);
+                  form.reset();
+                }}>
+                  <select name="kind" className="input max-w-[10rem]" defaultValue="other">
+                    <option value="passport">Passport</option>
+                    <option value="transcript">Transcript</option>
+                    <option value="cv">CV / Resume</option>
+                    <option value="statement">Statement</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <input name="files" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx" className="text-xs" />
+                  <button className="btn-secondary text-xs" type="submit" disabled={busy}>Upload selected</button>
+                </form>
+                <button type="button" className="btn-primary" disabled={busy || current.paymentStatus === "paid" || current.documents.length < 1} onClick={() => pay(current.id)}>
+                  {current.documents.length < 1 ? "Upload a document to pay" : `Pay $${(current.feeCents / 100).toFixed(0)}`}
+                </button>
               </div>
             )}
             {message && <p className="mt-3 text-sm text-[var(--gray-700)]">{message}</p>}
