@@ -95,9 +95,49 @@ export async function applyStripeEvent(event: StripeEvent, client: StripeClient)
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const studentId = String(session.metadata && (session.metadata as { studentId?: string }).studentId || session.client_reference_id || "");
+    const meta = (session.metadata || {}) as { studentId?: string; applyRequestId?: string; service?: string };
+    const studentId = String(meta.studentId || session.client_reference_id || "");
     const subscriptionId = typeof session.subscription === "string" ? session.subscription : "";
     const customerId = typeof session.customer === "string" ? session.customer : null;
+    const paymentStatus = String(session.payment_status || "");
+
+    // One-time Apply for Me package payment (not a subscription).
+    if (meta.service === "apply_for_me" && meta.applyRequestId && paymentStatus === "paid") {
+      const request = await prisma.applyRequest.findUnique({ where: { id: meta.applyRequestId } });
+      if (request && request.studentId === (meta.studentId || request.studentId)) {
+        const amountTotal = typeof session.amount_total === "number" ? session.amount_total : null;
+        const amountOk = amountTotal === null || amountTotal === request.feeCents;
+        if (amountOk && request.paymentStatus !== "paid") {
+          await prisma.applyRequest.update({
+            where: { id: request.id },
+            data: {
+              paymentStatus: "paid",
+              paymentRef: String(session.id || ""),
+              paymentAt: new Date(),
+              status: request.status === "needs_action" ? "needs_action" : "preparing",
+            },
+          });
+          await prisma.applyRequestItem.updateMany({
+            where: { requestId: request.id, status: "selected" },
+            data: { status: "preparing" },
+          });
+          await prisma.applyActivity.create({
+            data: {
+              requestId: request.id,
+              actorId: request.studentId,
+              action: "payment_received",
+              meta: JSON.stringify({ via: "webhook", sessionId: String(session.id || "") }).slice(0, 1000),
+            },
+          });
+        } else if (request.paymentStatus === "paid" && !request.paymentRef && session.id) {
+          await prisma.applyRequest.update({
+            where: { id: request.id },
+            data: { paymentRef: String(session.id) },
+          });
+        }
+      }
+    }
+
     if (studentId && subscriptionId) {
       const subscription = await client.subscriptions.retrieve(subscriptionId);
       await syncSubscription({ studentId, customerId, subscription });
