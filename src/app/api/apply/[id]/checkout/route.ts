@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import Stripe from "stripe";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logApplyActivity, publicRequest } from "@/lib/apply-admin";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   });
   if (!request) return NextResponse.json({ error: "Request not found" }, { status: 404 });
   if (request.documents.length < 1) return NextResponse.json({ error: "Upload at least one document first." }, { status: 400 });
-  if (request.paymentStatus === "paid") return NextResponse.json({ request });
+  if (request.paymentStatus === "paid") return NextResponse.json({ request: publicRequest(request) });
   if (!process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ error: "Checkout is not configured. The package fee is not charged until Stripe is available." }, { status: 503 });
   }
@@ -59,8 +60,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
   const updated = await prisma.applyRequest.update({
     where: { id: request.id },
-    data: { paymentStatus: "paid", paymentRef: checkout.id, status: request.status === "needs_action" ? "needs_action" : "preparing" },
+    data: {
+      paymentStatus: "paid",
+      paymentRef: checkout.id,
+      paymentAt: request.paymentStatus === "paid" ? undefined : new Date(),
+      status: request.status === "needs_action" ? "needs_action" : "preparing",
+    },
   });
   await prisma.applyRequestItem.updateMany({ where: { requestId: request.id, status: "selected" }, data: { status: "preparing" } });
-  return NextResponse.json({ request: updated });
+  if (request.paymentStatus !== "paid") await logApplyActivity(request.id, "payment_received", student.id);
+  return NextResponse.json({ request: publicRequest(updated) });
 }

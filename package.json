@@ -15,12 +15,13 @@
     "db:studio": "prisma studio",
     "seed:taxonomy": "tsx prisma/seed-taxonomy.ts",
     "import:universities": "tsx scripts/import-pipeline.ts",
-    "test": "tsx --test src/lib/matching.test.ts src/lib/matching/engine.test.ts src/lib/billing/access.test.ts",
+    "test": "tsx --test src/lib/matching.test.ts src/lib/matching/engine.test.ts src/lib/billing/access.test.ts src/lib/apply-admin.test.ts",
     "import:official": "tsx scripts/import-official-programs.ts",
     "audit:professors": "tsx scripts/audit-professor-duplicates.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "@vercel/blob": "^2.8.1",
     "bcryptjs": "^2.4.3",
     "mammoth": "^1.8.0",
     "next": "14.2.35",

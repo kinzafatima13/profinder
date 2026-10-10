@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { APPLY_PACKAGES, quoteApply } from "@/lib/apply-packages";
+import { logApplyActivity, publicRequest } from "@/lib/apply-admin";
 
 async function studentFromSession() {
   const session = await getServerSession(authOptions);
@@ -21,7 +22,7 @@ export async function GET() {
       documents: { select: { id: true, kind: true, name: true, size: true, createdAt: true } },
     },
   });
-  return NextResponse.json({ requests, packages: APPLY_PACKAGES });
+  return NextResponse.json({ requests: requests.map((request) => publicRequest(request)), packages: APPLY_PACKAGES });
 }
 
 export async function POST(req: NextRequest) {
@@ -54,7 +55,8 @@ export async function POST(req: NextRequest) {
       },
       include: { items: { include: { university: { select: { id: true, name: true, city: true, country: true } } } } },
     });
-    return NextResponse.json({ request: created });
+    await logApplyActivity(created.id, "request_created", student.id, { package: quote.packageId });
+    return NextResponse.json({ request: publicRequest(created) });
   } catch {
     return NextResponse.json({ error: "The request could not be saved. Academic records were not changed." }, { status: 500 });
   }

@@ -585,13 +585,16 @@ model ApplyRequest {
   package          String   @default("pair")
   paymentStatus    String   @default("unpaid")
   paymentRef       String?
+  paymentAt        DateTime?
   studentNote      String?
+  founderNote      String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   student          Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
   items            ApplyRequestItem[]
   documents        ApplyDocument[]
+  activities       ApplyActivity[]
 
   @@index([studentId])
 }
@@ -619,7 +622,22 @@ model ApplyDocument {
   kind       String
   name       String
   storedName String
+  storageProvider String @default("local")
+  objectKey  String?
   size       Int
+  createdAt  DateTime @default(now())
+
+  request    ApplyRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+model ApplyActivity {
+  id         String   @id @default(cuid())
+  requestId  String
+  actorId    String?
+  action     String
+  meta       String?
   createdAt  DateTime @default(now())
 
   request    ApplyRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
