@@ -74,3 +74,25 @@ export async function readApplyFile(provider: string, objectKey: string | null, 
   const bytes = await readFile(filePath);
   return { stream: new ReadableStream({ start(controller) { controller.enqueue(bytes); controller.close(); } }), contentType: contentTypeFor(key) };
 }
+
+export async function deleteApplyFile(provider: string, objectKey: string | null, storedName: string) {
+  if (!isSafeObjectKey(provider, objectKey, storedName)) return false;
+  if (provider === "blob") {
+    if (!process.env.BLOB_READ_WRITE_TOKEN || !objectKey) return false;
+    const { del } = await import("@vercel/blob");
+    await del(objectKey, { token: process.env.BLOB_READ_WRITE_TOKEN });
+    return true;
+  }
+  if (provider !== "local" || process.env.VERCEL) return false;
+  const key = path.basename(objectKey || storedName);
+  const root = path.join(process.cwd(), "data", "apply-uploads");
+  const filePath = path.join(root, key);
+  if (path.dirname(filePath) !== root) return false;
+  const { unlink } = await import("fs/promises");
+  try {
+    await unlink(filePath);
+  } catch {
+    /* already gone */
+  }
+  return true;
+}
