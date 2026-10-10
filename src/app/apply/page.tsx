@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 
 type University = { id: string; name: string; city: string | null; country?: string | null };
 type Item = { id: string; status: string; preparationNote: string | null; university: University };
-type Doc = { id: string; kind: true extends true ? string : never; kind: string; name: string; size: number };
+type Doc = { id: string; kind: string; name: string; size: number };
 type RequestRow = { id: string; status: string; paymentStatus: string; feeCents: number; items: Item[]; documents: Doc[] };
 
 const STEPS = ["Choose", "Upload", "Pay", "Prepare", "Review", "Approve", "Submit", "Track"];
