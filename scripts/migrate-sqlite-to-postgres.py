@@ -3,6 +3,7 @@
 
 Preserves primary keys. Never drops, truncates, or overwrites existing rows.
 Conflicts are reported, not silently swallowed.
+Converts SQLite integer timestamps to Python datetime for PostgreSQL timestamptz columns.
 
 Required:
   DATABASE_URL          postgres connection string (recovery branch only)
@@ -11,13 +12,11 @@ Required:
 
 Optional:
   DRY_RUN=1             report only, no writes
-
-Refuses known production hosts and any host that is not the verified recovery host
-unless ALLOW_HOST_OVERRIDE=1 is set (never use on production).
 """
 import os
 import sqlite3
 import sys
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 CONFIRM = os.environ.get("CONFIRM_MIGRATE")
@@ -52,6 +51,32 @@ TABLES = [
     "BillingEvent", "Publication", "ProfessorSource", "ProfessorResearchArea",
     "ProfessorTopic",
 ]
+
+# Columns that are timestamptz in PostgreSQL / DateTime in Prisma
+TIMESTAMP_COLS = {
+    "createdAt", "updatedAt", "verifiedAt", "lastCheckedAt", "lastVerifiedAt",
+    "lastSyncedAt", "resetTokenExp", "currentPeriodStart", "currentPeriodEnd",
+    "fetchedAt", "checkedAt", "detectedAt", "reviewedAt", "studentApprovedAt",
+    "matchCheckedAt",
+}
+
+def to_datetime(val):
+    if val is None:
+        return None
+    if isinstance(val, (int, float)):
+        # Prisma SQLite stores milliseconds; also handle seconds
+        if val > 1e12:  # milliseconds
+            return datetime.fromtimestamp(val / 1000.0, tz=timezone.utc)
+        elif val > 1e9:  # seconds
+            return datetime.fromtimestamp(val, tz=timezone.utc)
+        else:
+            return None
+    if isinstance(val, str):
+        try:
+            return datetime.fromisoformat(val.replace("Z", "+00:00"))
+        except Exception:
+            return None
+    return val
 
 src = sqlite3.connect(f"file:{SQLITE_PATH}?mode=ro", uri=True)
 src.row_factory = sqlite3.Row
@@ -96,10 +121,8 @@ try:
 
             pk_cols = get_pk_columns(cur, table)
             if not pk_cols:
-                print(f"{table}\tWARNING: no primary key detected")
                 pk_cols = [cols[0]] if cols else []
 
-            # Bulk fetch existing PKs
             if pk_cols:
                 pk_list = ", ".join(f'"{c}"' for c in pk_cols)
                 cur.execute(f'SELECT {pk_list} FROM "{table}"')
@@ -111,7 +134,12 @@ try:
             conflicts = 0
             to_insert = []
             for row in rows:
-                values = [row[c] for c in cols]
+                values = []
+                for c in cols:
+                    v = row[c]
+                    if c in TIMESTAMP_COLS:
+                        v = to_datetime(v)
+                    values.append(v)
                 if pk_cols:
                     key = tuple(row[c] for c in pk_cols) if len(pk_cols) > 1 else row[pk_cols[0]]
                     if key in existing:
@@ -130,7 +158,7 @@ try:
                 cur.execute(f'SELECT COUNT(*) FROM "{table}"')
                 after = cur.fetchone()[0]
             else:
-                after = f"(dry-run, would be {len(rows) - conflicts + len(existing)})"
+                after = f"(dry-run)"
 
             report.append((table, len(rows), after, inserted, conflicts))
             print(f"{table}\tsource={len(rows)}\texisting={len(existing)}\tproposed_inserts={inserted}\tconflicts={conflicts}")
