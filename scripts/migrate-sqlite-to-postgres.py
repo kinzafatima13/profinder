@@ -18,6 +18,7 @@ unless ALLOW_HOST_OVERRIDE=1 is set (never use on production).
 import os
 import sqlite3
 import sys
+from urllib.parse import urlparse
 
 CONFIRM = os.environ.get("CONFIRM_MIGRATE")
 DRY_RUN = os.environ.get("DRY_RUN") == "1"
@@ -34,7 +35,6 @@ if not DATABASE_URL.startswith("postgres"):
 if DATABASE_URL.startswith("file:"):
     sys.exit("Refusing file: target.")
 
-from urllib.parse import urlparse
 host = urlparse(DATABASE_URL).hostname or ""
 if any(f in host.lower() for f in FORBIDDEN_HOST_FRAGMENTS):
     sys.exit("Refusing host that looks like production. Value not printed.")
@@ -64,6 +64,16 @@ dst = psycopg.connect(DATABASE_URL)
 dst.autocommit = False
 report = []
 
+def get_pk_columns(cur, table):
+    cur.execute("""
+        SELECT a.attname
+        FROM pg_index i
+        JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+        WHERE i.indrelid = %s::regclass AND i.indisprimary
+        ORDER BY array_position(i.indkey, a.attnum)
+    """, (f'"{table}"',))
+    return [r[0] for r in cur.fetchall()]
+
 try:
     with dst.cursor() as cur:
         for table in TABLES:
@@ -74,7 +84,6 @@ try:
                 print(f"{table}\tSKIPPED (source missing: {e})")
                 continue
 
-            # Destination table existence
             cur.execute("""
                 SELECT EXISTS (
                     SELECT 1 FROM information_schema.tables
@@ -85,54 +94,46 @@ try:
                 print(f"{table}\tSKIPPED (destination table missing)")
                 continue
 
+            pk_cols = get_pk_columns(cur, table)
+            if not pk_cols:
+                print(f"{table}\tWARNING: no primary key detected")
+                pk_cols = [cols[0]] if cols else []
+
+            # Bulk fetch existing PKs
+            if pk_cols:
+                pk_list = ", ".join(f'"{c}"' for c in pk_cols)
+                cur.execute(f'SELECT {pk_list} FROM "{table}"')
+                existing = {tuple(r) if len(pk_cols) > 1 else r[0] for r in cur.fetchall()}
+            else:
+                existing = set()
+
             inserted = 0
             conflicts = 0
-            # Dry-run optimization: fetch destination primary keys once per table,
-            # instead of making one network round-trip for every source row.
-            pk_info = sorted(
-                (info for info in src.execute(f'PRAGMA table_info("{table}")') if info[5]),
-                key=lambda info: info[5],
-            )
-            pk = pk_info[0][1] if pk_info else None
-            existing_ids = None
-            if DRY_RUN and pk and pk in cols:
-                cur.execute(f'SELECT "{pk}" FROM "{table}"')
-                existing_ids = {record[0] for record in cur.fetchall()}
-
-            if DRY_RUN and existing_ids is None:
-                # Composite/no-PK tables need a dedicated identity strategy;
-                # never pretend all source rows are new or query one-by-one.
-                print(f"{table}\\tUNKNOWN (composite/missing primary key; identity check skipped)")
-                report.append((table, len(rows), "(dry-run)", "UNKNOWN", "UNKNOWN"))
-                continue
-
+            to_insert = []
             for row in rows:
                 values = [row[c] for c in cols]
+                if pk_cols:
+                    key = tuple(row[c] for c in pk_cols) if len(pk_cols) > 1 else row[pk_cols[0]]
+                    if key in existing:
+                        conflicts += 1
+                        continue
+                to_insert.append(values)
+                inserted += 1
+
+            if not DRY_RUN and to_insert:
                 placeholders = ", ".join(["%s"] * len(cols))
                 collist = ", ".join(f'"{c}"' for c in cols)
-                if DRY_RUN:
-                    if row[pk] in existing_ids:
-                        conflicts += 1
-                    else:
-                        inserted += 1
-                    continue
-
-                sql = f'''
-                    INSERT INTO "{table}" ({collist}) VALUES ({placeholders})
-                    ON CONFLICT DO NOTHING
-                '''
-                cur.execute(sql, values)
-                if cur.rowcount == 1:
-                    inserted += 1
-                else:
-                    conflicts += 1
+                sql = f'INSERT INTO "{table}" ({collist}) VALUES ({placeholders}) ON CONFLICT DO NOTHING'
+                cur.executemany(sql, to_insert)
 
             if not DRY_RUN:
                 cur.execute(f'SELECT COUNT(*) FROM "{table}"')
                 after = cur.fetchone()[0]
             else:
-                after = "(dry-run)"
+                after = f"(dry-run, would be {len(rows) - conflicts + len(existing)})"
+
             report.append((table, len(rows), after, inserted, conflicts))
+            print(f"{table}\tsource={len(rows)}\texisting={len(existing)}\tproposed_inserts={inserted}\tconflicts={conflicts}")
 
     if DRY_RUN:
         dst.rollback()
@@ -140,11 +141,13 @@ try:
     else:
         dst.commit()
         print("Committed.")
-except Exception:
+except Exception as e:
     dst.rollback()
+    print(f"ERROR: {e}")
     raise
 finally:
-    print("table\tsource\tdest_after\tinserted\tconflicts")
+    print("\n=== SUMMARY ===")
+    print("table\tsource\tdest_after\tproposed_inserts\tconflicts")
     for table, before, after, inserted, conflicts in report:
         print(f"{table}\t{before}\t{after}\t{inserted}\t{conflicts}")
     src.close()
