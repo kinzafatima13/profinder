@@ -87,21 +87,32 @@ try:
 
             inserted = 0
             conflicts = 0
+            # Dry-run optimization: fetch destination primary keys once per table,
+            # instead of making one network round-trip for every source row.
+            pk_info = sorted(
+                (info for info in src.execute(f'PRAGMA table_info("{table}")') if info[5]),
+                key=lambda info: info[5],
+            )
+            pk = pk_info[0][1] if pk_info else None
+            existing_ids = None
+            if DRY_RUN and pk and pk in cols:
+                cur.execute(f'SELECT "{pk}" FROM "{table}"')
+                existing_ids = {record[0] for record in cur.fetchall()}
+
             for row in rows:
                 values = [row[c] for c in cols]
                 placeholders = ", ".join(["%s"] * len(cols))
                 collist = ", ".join(f'"{c}"' for c in cols)
                 if DRY_RUN:
-                    # Count existing by primary key when possible
-                    pk = cols[0] if cols else None
-                    if pk:
-                        cur.execute(f'SELECT 1 FROM "{table}" WHERE "{pk}" = %s LIMIT 1', (values[0],))
-                        if cur.fetchone():
+                    if existing_ids is not None:
+                        if row[pk] in existing_ids:
                             conflicts += 1
                         else:
                             inserted += 1
                     else:
-                        inserted += 1
+                        # No reliable single-column primary key: don't make
+                        # a misleading identity guess in dry-run mode.
+                        print(f"{table}\\tUNKNOWN (no single-column primary key for fast identity check)")
                     continue
 
                 sql = f'''
