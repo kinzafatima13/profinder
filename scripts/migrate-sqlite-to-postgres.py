@@ -2,16 +2,7 @@
 """Idempotent SQLite → PostgreSQL recovery for ProFinderNow.
 
 Preserves primary keys. Never drops, truncates, or overwrites existing rows.
-Conflicts are reported, not silently swallowed.
-Converts SQLite integer timestamps to Python datetime for PostgreSQL timestamptz columns.
-
-Required:
-  DATABASE_URL          postgres connection string (recovery branch only)
-  CONFIRM_MIGRATE=preserve-ids   for actual writes
-  SQLITE_PATH           default prisma/dev.db
-
-Optional:
-  DRY_RUN=1             report only, no writes
+Converts SQLite integer timestamps and booleans to proper Python types.
 """
 import os
 import sqlite3
@@ -52,7 +43,6 @@ TABLES = [
     "ProfessorTopic",
 ]
 
-# Columns that are timestamptz in PostgreSQL / DateTime in Prisma
 TIMESTAMP_COLS = {
     "createdAt", "updatedAt", "verifiedAt", "lastCheckedAt", "lastVerifiedAt",
     "lastSyncedAt", "resetTokenExp", "currentPeriodStart", "currentPeriodEnd",
@@ -60,14 +50,17 @@ TIMESTAMP_COLS = {
     "matchCheckedAt",
 }
 
+BOOLEAN_COLS = {
+    "profileIsPersonal", "cancelAtPeriodEnd",
+}
+
 def to_datetime(val):
     if val is None:
         return None
     if isinstance(val, (int, float)):
-        # Prisma SQLite stores milliseconds; also handle seconds
-        if val > 1e12:  # milliseconds
+        if val > 1e12:
             return datetime.fromtimestamp(val / 1000.0, tz=timezone.utc)
-        elif val > 1e9:  # seconds
+        elif val > 1e9:
             return datetime.fromtimestamp(val, tz=timezone.utc)
         else:
             return None
@@ -77,6 +70,15 @@ def to_datetime(val):
         except Exception:
             return None
     return val
+
+def to_bool(val):
+    if val is None:
+        return None
+    if isinstance(val, (int, float)):
+        return bool(val)
+    if isinstance(val, str):
+        return val.lower() in ("1", "true", "t", "yes")
+    return bool(val)
 
 src = sqlite3.connect(f"file:{SQLITE_PATH}?mode=ro", uri=True)
 src.row_factory = sqlite3.Row
@@ -139,6 +141,8 @@ try:
                     v = row[c]
                     if c in TIMESTAMP_COLS:
                         v = to_datetime(v)
+                    elif c in BOOLEAN_COLS:
+                        v = to_bool(v)
                     values.append(v)
                 if pk_cols:
                     key = tuple(row[c] for c in pk_cols) if len(pk_cols) > 1 else row[pk_cols[0]]
@@ -158,7 +162,7 @@ try:
                 cur.execute(f'SELECT COUNT(*) FROM "{table}"')
                 after = cur.fetchone()[0]
             else:
-                after = f"(dry-run)"
+                after = "(dry-run)"
 
             report.append((table, len(rows), after, inserted, conflicts))
             print(f"{table}\tsource={len(rows)}\texisting={len(existing)}\tproposed_inserts={inserted}\tconflicts={conflicts}")
