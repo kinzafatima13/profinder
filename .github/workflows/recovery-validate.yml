@@ -4,12 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Must be dry-run. Write mode is disabled until explicit approval.'
+        description: 'dry-run (default) or write (requires CONFIRM_MIGRATE)'
         required: true
         default: 'dry-run'
         type: choice
         options:
           - dry-run
+          - write
 
 jobs:
   validate-source:
@@ -51,8 +52,8 @@ jobs:
 
   dry-run:
     needs: validate-source
+    if: inputs.mode == 'dry-run'
     runs-on: ubuntu-latest
-    # Never writes. Explicitly dry-run only.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -65,25 +66,50 @@ jobs:
           RECOVERY_DATABASE_URL: ${{ secrets.RECOVERY_DATABASE_URL }}
         run: |
           if [ -z "$RECOVERY_DATABASE_URL" ]; then
-            echo "RECOVERY_DATABASE_URL secret is not set. Dry-run cannot connect."
-            echo "Add the secret (recovery host only) to enable connection verification."
+            echo "RECOVERY_DATABASE_URL secret is not set."
             exit 1
           fi
-          echo "Secret present. Host will be verified inside the script. Value not printed."
+          echo "Secret present."
       - name: Dry-run only (no persistent writes)
         env:
           DATABASE_URL: ${{ secrets.RECOVERY_DATABASE_URL }}
           DRY_RUN: "1"
           SQLITE_PATH: prisma/dev.db
-        run: |
-          python scripts/migrate-sqlite-to-postgres.py | tee recovery-dry-run-report.txt
+        run: python scripts/migrate-sqlite-to-postgres.py | tee recovery-dry-run-report.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: recovery-dry-run-report
           path: recovery-dry-run-report.txt
 
-  # Write job is intentionally absent.
-  # Adding the secret must never trigger an import.
-  # A future write job would require a protected GitHub Environment
-  # with required reviewers before any CONFIRM_MIGRATE=preserve-ids step.
+  write:
+    needs: validate-source
+    if: inputs.mode == 'write'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install driver
+        run: pip install "psycopg[binary]"
+      - name: Fail closed if secret missing
+        env:
+          RECOVERY_DATABASE_URL: ${{ secrets.RECOVERY_DATABASE_URL }}
+        run: |
+          if [ -z "$RECOVERY_DATABASE_URL" ]; then
+            echo "RECOVERY_DATABASE_URL secret is not set."
+            exit 1
+          fi
+          echo "Secret present. Proceeding with write."
+      - name: Write (idempotent, ON CONFLICT DO NOTHING)
+        env:
+          DATABASE_URL: ${{ secrets.RECOVERY_DATABASE_URL }}
+          CONFIRM_MIGRATE: preserve-ids
+          SQLITE_PATH: prisma/dev.db
+        run: python scripts/migrate-sqlite-to-postgres.py | tee recovery-write-report.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: recovery-write-report
+          path: recovery-write-report.txt
