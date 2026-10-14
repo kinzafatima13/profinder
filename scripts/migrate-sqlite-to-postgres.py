@@ -99,20 +99,22 @@ try:
                 cur.execute(f'SELECT "{pk}" FROM "{table}"')
                 existing_ids = {record[0] for record in cur.fetchall()}
 
+            if DRY_RUN and existing_ids is None:
+                # Composite/no-PK tables need a dedicated identity strategy;
+                # never pretend all source rows are new or query one-by-one.
+                print(f"{table}\\tUNKNOWN (composite/missing primary key; identity check skipped)")
+                report.append((table, len(rows), "(dry-run)", "UNKNOWN", "UNKNOWN"))
+                continue
+
             for row in rows:
                 values = [row[c] for c in cols]
                 placeholders = ", ".join(["%s"] * len(cols))
                 collist = ", ".join(f'"{c}"' for c in cols)
                 if DRY_RUN:
-                    if existing_ids is not None:
-                        if row[pk] in existing_ids:
-                            conflicts += 1
-                        else:
-                            inserted += 1
+                    if row[pk] in existing_ids:
+                        conflicts += 1
                     else:
-                        # No reliable single-column primary key: don't make
-                        # a misleading identity guess in dry-run mode.
-                        print(f"{table}\\tUNKNOWN (no single-column primary key for fast identity check)")
+                        inserted += 1
                     continue
 
                 sql = f'''
