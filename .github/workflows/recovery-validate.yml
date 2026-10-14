@@ -1,0 +1,35 @@
+name: Recovery SQLite Validation
+
+on:
+  push:
+    paths:
+      - 'scripts/migrate-sqlite-to-postgres.py'
+      - 'scripts/test-recovery-safety.py'
+      - 'prisma/dev.db'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run recovery safety unit tests
+        run: python scripts/test-recovery-safety.py
+      - name: Validate committed SQLite source counts (read-only)
+        run: |
+          python - << 'PY'
+          import sqlite3, os
+          path = "prisma/dev.db"
+          if not os.path.exists(path):
+              print("prisma/dev.db not present in this checkout")
+              exit(1)
+          c = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+          tables = ["University","Program","Professor","Publication","Scholarship","ResearchArea"]
+          for t in tables:
+              n = c.execute(f'SELECT COUNT(*) FROM "{t}"').fetchone()[0]
+              print(f"{t}: {n}")
+          print("integrity:", c.execute("PRAGMA integrity_check").fetchone()[0])
+          PY
