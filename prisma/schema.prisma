@@ -614,15 +614,28 @@ model ApplyRequestItem {
 }
 
 model ApplyDocument {
-  id         String   @id @default(cuid())
-  requestId  String
-  kind       String
-  name       String
-  storedName String
-  size       Int
-  createdAt  DateTime @default(now())
+  id              String   @id @default(cuid())
+  requestId       String
+  kind            String
+  name            String
+  storedName      String
+  size            Int
+  storageProvider String   @default("local")
+  objectKey       String?
+  createdAt       DateTime @default(now())
 
   request    ApplyRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+model ApplyActivity {
+  id        String   @id @default(cuid())
+  requestId String
+  actorId   String?
+  action    String
+  meta      String?
+  createdAt DateTime @default(now())
 
   @@index([requestId])
 }
