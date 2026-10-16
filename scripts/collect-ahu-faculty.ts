@@ -61,7 +61,7 @@ function absoluteUrl(href: string, base: string): string | null {
   if (!raw || /^(?:#|javascript:|mailto:|tel:|data:)/i.test(raw)) return null;
   try {
     const url = new URL(raw, base);
-    if (!isOfficialAhuHost(url.hostname) || url.protocol !== "https:") return null;
+    if (!isOfficialAhuHost(url.hostname) || !["https:", "http:"].includes(url.protocol)) return null;
     url.hash = "";
     if (!/\.(?:htm|html|shtml|jsp|php)$/i.test(url.pathname) && !url.pathname.endsWith("/")) return null;
     return url.toString();
@@ -151,7 +151,7 @@ async function main() {
         continue;
       }
       const finalUrl = new URL(response.url || pageUrl);
-      if (!isOfficialAhuHost(finalUrl.hostname)) {
+      if (!isOfficialAhuHost(finalUrl.hostname) || !["https:", "http:"].includes(finalUrl.protocol)) {
         requestFailures++;
         console.warn(`[skip] Redirected outside official AHU hosts: ${finalUrl.toString()}`);
         continue;
