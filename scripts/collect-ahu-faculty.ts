@@ -87,17 +87,23 @@ function extractAnchors(html: string, pageUrl: string): Array<{ label: string; u
   return anchors;
 }
 
+const NAVIGATION_LABEL = /^(首页|网站首页|学校概况|学校简介|学校标识|现任领导|历史沿革|大事记|基本信息|校园风光|机构设置|访问旧版|返回旧版|旧版入口|党政管理部门|直属单位|校办产业|教学与科研单位|新闻|通知公告|联系我们|English|Home|About|网站地图|搜索)$/i;
+const INSTITUTION_LABEL = /学院|学部|教学部|研究院|研究中心|科研中心|实验室|中心|Institute|School|College|Faculty|Department/i;
+
 function isDirectoryLike(text: string, url: string): boolean {
-  return /school|department|faculty|staff|teacher|professor|people|team|research|college|师资|教师|学院|系所/i.test(
-    `${text} ${url}`,
+  return /school|department|faculty|staff|teacher|professor|people|team|research|college|师资|教师|学院|系所|学部|研究院|研究中心|实验室|教学部/i.test(
+    \`function () { [native code] } \${url}\`,
   );
 }
 
 function isProfileLike(text: string, url: string): boolean {
   const path = new URL(url).pathname;
-  return /faculty|teacher|professor|people|staff|person|profile|tutor|mentor|导师|教师|师资/i.test(
-    `${text} ${path}`,
-  ) || (/\.htm(?:l)?$/i.test(path) && text.length >= 3 && text.length <= 60 && !isDirectoryLike(text, url));
+  if (!text || NAVIGATION_LABEL.test(text.trim()) || INSTITUTION_LABEL.test(text)) return false;
+  if (/faculty|teacher|professor|people|staff|person|profile|tutor|mentor|导师|教师|师资/i.test(\`function () { [native code] } \${path}\`)) return true;
+  // Some official staff profiles use generic numeric .htm URLs; only keep short
+  // labels that plausibly represent a person's name, not generic site navigation.
+  return /\.htm(?:l)?$/i.test(path) && text.length >= 2 && text.length <= 20 &&
+    !/首页|概况|简介|标识|领导|历史|大事记|信息|风光|机构|部门|单位|学院|学部|研究院|研究中心|实验室|中心|新闻|公告|招生|就业|学生|教师队伍|师资队伍|English|Home|About/i.test(text);
 }
 
 function extractEmails(html: string): string[] {
