@@ -92,14 +92,14 @@ const INSTITUTION_LABEL = /学院|学部|教学部|研究院|研究中心|科研
 
 function isDirectoryLike(text: string, url: string): boolean {
   return /school|department|faculty|staff|teacher|professor|people|team|research|college|师资|教师|学院|系所|学部|研究院|研究中心|实验室|教学部/i.test(
-    \`function () { [native code] } \${url}\`,
+    \`function () { [native code] } ${url}\`,
   );
 }
 
 function isProfileLike(text: string, url: string): boolean {
   const path = new URL(url).pathname;
   if (!text || NAVIGATION_LABEL.test(text.trim()) || INSTITUTION_LABEL.test(text)) return false;
-  if (/faculty|teacher|professor|people|staff|person|profile|tutor|mentor|导师|教师|师资/i.test(\`function () { [native code] } \${path}\`)) return true;
+  if (/faculty|teacher|professor|people|staff|person|profile|tutor|mentor|导师|教师|师资/i.test(\`function () { [native code] } ${path}\`)) return true;
   // Some official staff profiles use generic numeric .htm URLs; only keep short
   // labels that plausibly represent a person's name, not generic site navigation.
   return /\.htm(?:l)?$/i.test(path) && text.length >= 2 && text.length <= 20 &&
