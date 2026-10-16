@@ -13,7 +13,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
 const START_URL = "https://www.ahu.edu.cn/_t992/183/list.htm";
-const ALLOWED_HOSTS = new Set(["www.ahu.edu.cn", "ahu.edu.cn", "en.ahu.edu.cn"]);
+function isOfficialAhuHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/\\.$/, "");
+  return host === "ahu.edu.cn" || host.endsWith(".ahu.edu.cn");
+}
 const DEFAULT_MAX_PAGES = 150;
 const REQUEST_DELAY_MS = 1000;
 
@@ -58,7 +61,7 @@ function absoluteUrl(href: string, base: string): string | null {
   if (!raw || /^(?:#|javascript:|mailto:|tel:|data:)/i.test(raw)) return null;
   try {
     const url = new URL(raw, base);
-    if (!ALLOWED_HOSTS.has(url.hostname.toLowerCase()) || url.protocol !== "https:") return null;
+    if (!isOfficialAhuHost(url.hostname) || url.protocol !== "https:") return null;
     url.hash = "";
     if (!/\.(?:htm|html|shtml|jsp|php)$/i.test(url.pathname) && !url.pathname.endsWith("/")) return null;
     return url.toString();
@@ -112,7 +115,7 @@ async function main() {
   const maxPages = Math.max(1, Math.min(1000, Number(arg("max-pages", String(DEFAULT_MAX_PAGES))) || DEFAULT_MAX_PAGES));
   const outPath = resolve(process.cwd(), arg("out", "data/ahu-faculty-candidates.csv"));
   const startUrl = new URL(arg("start-url", START_URL));
-  if (!ALLOWED_HOSTS.has(startUrl.hostname.toLowerCase()) || startUrl.protocol !== "https:") {
+  if (!isOfficialAhuHost(startUrl.hostname) || startUrl.protocol !== "https:") {
     throw new Error(`Refusing non-official AHU URL: ${startUrl.toString()}`);
   }
 
@@ -142,7 +145,7 @@ async function main() {
         continue;
       }
       const finalUrl = new URL(response.url || pageUrl);
-      if (!ALLOWED_HOSTS.has(finalUrl.hostname.toLowerCase())) {
+      if (!isOfficialAhuHost(finalUrl.hostname)) {
         requestFailures++;
         console.warn(`[skip] Redirected outside official AHU hosts: ${finalUrl.toString()}`);
         continue;
