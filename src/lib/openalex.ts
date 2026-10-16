@@ -107,6 +107,51 @@ export async function authorsAtInstitution(institutionId: string, perPage = 40, 
   }));
 }
 
+export type NormalizedOpenAlexAuthor = {
+  openAlexId: string;
+  name: string;
+  orcid: string | null;
+  worksCount: number | null;
+  topics: { id: string | null; name: string }[];
+  affiliation: string | null;
+  countryCode: string | null;
+  sourceUrl: string;
+  verificationStatus: "UNVERIFIED";
+  dataSource: "OpenAlex";
+  dataStatus: "unverified";
+};
+
+export async function searchAuthors(query: string, countryCode?: string, perPage = 10): Promise<NormalizedOpenAlexAuthor[]> {
+  if (!query || query.trim().length < 2) return [];
+  const filterParts = [];
+  if (countryCode) filterParts.push(`last_known_institutions.country_code:${countryCode.toUpperCase()}`);
+  const filter = filterParts.length ? `&filter=${encodeURIComponent(filterParts.join(","))}` : "";
+  const data = await getJson<{ results: OpenAlexAuthor[] }>(
+    `/authors?search=${encodeURIComponent(query.trim())}&per-page=${Math.min(perPage, 25)}${filter}&select=id,display_name,orcid,works_count,last_known_institutions,topics,ids`
+  );
+  if (!data?.results) return [];
+
+  return data.results.map((author) => {
+    const inst = author.last_known_institutions?.[0];
+    return {
+      openAlexId: openAlexShortId(author.id)!,
+      name: author.display_name,
+      orcid: cleanOrcid(author.orcid || author.ids?.orcid),
+      worksCount: author.works_count ?? null,
+      topics: (author.topics || []).slice(0, 8).map((t) => ({
+        id: openAlexShortId(t.id),
+        name: t.display_name,
+      })),
+      affiliation: inst?.display_name ?? null,
+      countryCode: inst?.country_code ?? null,
+      sourceUrl: author.id,
+      verificationStatus: "UNVERIFIED" as const,
+      dataSource: "OpenAlex" as const,
+      dataStatus: "unverified" as const,
+    };
+  });
+}
+
 export function abstractFromInverted(index: OpenAlexWork["abstract_inverted_index"]): string | null {
   if (!index) return null;
   const pairs: [number, string][] = [];
