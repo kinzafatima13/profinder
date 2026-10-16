@@ -1,7 +1,7 @@
 /**
  * Anhui University (AHU) official faculty discovery — READ-ONLY.
  *
- * This script crawls only the official AHU English site, discovers department/faculty
+ * This script crawls only official AHU websites, discovers department/faculty
  * pages, and writes a CSV review file. It does not connect to Prisma/Neon and never
  * changes the database. Extraction is heuristic: review the CSV before importing.
  *
@@ -12,11 +12,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
-const START_URL =
-  "https://en.ahu.edu.cn/enlsx/wchoolswandwwepartments/list.htm";
-const ALLOWED_HOST = "en.ahu.edu.cn";
+const START_URL = "https://www.ahu.edu.cn/_t992/183/list.htm";
+const ALLOWED_HOSTS = new Set(["www.ahu.edu.cn", "ahu.edu.cn", "en.ahu.edu.cn"]);
 const DEFAULT_MAX_PAGES = 150;
-const REQUEST_DELAY_MS = 700;
+const REQUEST_DELAY_MS = 1000;
 
 type PageRecord = {
   pageUrl: string;
@@ -59,7 +58,7 @@ function absoluteUrl(href: string, base: string): string | null {
   if (!raw || /^(?:#|javascript:|mailto:|tel:|data:)/i.test(raw)) return null;
   try {
     const url = new URL(raw, base);
-    if (url.hostname !== ALLOWED_HOST || url.protocol !== "https:") return null;
+    if (!ALLOWED_HOSTS.has(url.hostname.toLowerCase()) || url.protocol !== "https:") return null;
     url.hash = "";
     if (!/\.(?:htm|html|shtml|jsp|php)$/i.test(url.pathname) && !url.pathname.endsWith("/")) return null;
     return url.toString();
@@ -113,7 +112,7 @@ async function main() {
   const maxPages = Math.max(1, Math.min(1000, Number(arg("max-pages", String(DEFAULT_MAX_PAGES))) || DEFAULT_MAX_PAGES));
   const outPath = resolve(process.cwd(), arg("out", "data/ahu-faculty-candidates.csv"));
   const startUrl = new URL(arg("start-url", START_URL));
-  if (startUrl.hostname !== ALLOWED_HOST || startUrl.protocol !== "https:") {
+  if (!ALLOWED_HOSTS.has(startUrl.hostname.toLowerCase()) || startUrl.protocol !== "https:") {
     throw new Error(`Refusing non-official AHU URL: ${startUrl.toString()}`);
   }
 
@@ -130,12 +129,22 @@ async function main() {
 
     try {
       const response = await fetch(pageUrl, {
-        headers: { "user-agent": "ProFinderNow academic directory research contact: public-data collection" },
-        signal: AbortSignal.timeout(15000),
+        headers: {
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36",
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8",
+        },
+        signal: AbortSignal.timeout(20000),
       });
       if (!response.ok) {
         requestFailures++;
         console.warn(`[skip] HTTP ${response.status}: ${pageUrl}`);
+        continue;
+      }
+      const finalUrl = new URL(response.url || pageUrl);
+      if (!ALLOWED_HOSTS.has(finalUrl.hostname.toLowerCase())) {
+        requestFailures++;
+        console.warn(`[skip] Redirected outside official AHU hosts: ${finalUrl.toString()}`);
         continue;
       }
       const contentType = response.headers.get("content-type") ?? "";
