@@ -198,3 +198,21 @@ export function computeResearchMatch(
     matchedKeywords,
   };
 }
+
+/**
+ * Safe adapter for partial OpenAlex author data.
+ * Only maps fields that exist; never invents missing student or professor data.
+ */
+export function openAlexToProfessorProfile(author: {
+  topics?: string[] | null;
+  affiliation?: string | null;
+  name?: string | null;
+}): ProfessorProfile {
+  const topics = author.topics?.filter(Boolean) ?? [];
+  return {
+    researchInterests: topics.length ? topics.join(", ") : null,
+    topics: topics.length ? topics : null,
+    department: author.affiliation ?? null,
+    // publications, researchAreas, position left undefined — not available from live author search
+  };
+}

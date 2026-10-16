@@ -144,3 +144,63 @@ export async function recentWorks(authorId: string, count = 5) {
     };
   });
 }
+
+const VALID_COUNTRY = /^[A-Z]{2}$/;
+
+export type LiveAuthorResult = {
+  openAlexId: string;
+  name: string;
+  orcid: string | null;
+  affiliation: string | null;
+  countryCode: string | null;
+  topics: string[];
+  profileUrl: string;
+  worksCount: number | null;
+};
+
+/**
+ * Live search for authors. Defaults to China (CN) when no country is given.
+ * Supports name search, free-text interest search, and optional institution filter.
+ * Country codes are validated; invalid codes are ignored.
+ */
+export async function searchAuthorsLive(
+  query: string,
+  options: { countryCode?: string; institutionId?: string; perPage?: number } = {}
+): Promise<LiveAuthorResult[]> {
+  const q = query.trim();
+  if (q.length < 2) return [];
+
+  const country = options.countryCode && VALID_COUNTRY.test(options.countryCode.toUpperCase())
+    ? options.countryCode.toUpperCase()
+    : "CN";
+
+  const filters: string[] = [`last_known_institutions.country_code:${country}`];
+  if (options.institutionId) {
+    const short = openAlexShortId(options.institutionId);
+    if (short) filters.push(`last_known_institutions.id:${short}`);
+  }
+
+  const params = new URLSearchParams({
+    search: q,
+    filter: filters.join(","),
+    "per-page": String(Math.min(options.perPage ?? 10, 25)),
+    sort: "cited_by_count:desc",
+  });
+
+  const data = await getJson<{ results: OpenAlexAuthor[] }>(`/authors?${params.toString()}`);
+  if (!data?.results) return [];
+
+  return data.results.map((author) => {
+    const inst = author.last_known_institutions?.[0];
+    return {
+      openAlexId: openAlexShortId(author.id) || author.id,
+      name: author.display_name,
+      orcid: cleanOrcid(author.orcid || author.ids?.orcid),
+      affiliation: inst?.display_name ?? null,
+      countryCode: inst?.country_code ?? null,
+      topics: (author.topics || []).slice(0, 8).map((t) => t.display_name).filter(Boolean),
+      profileUrl: author.id,
+      worksCount: author.works_count ?? null,
+    };
+  });
+}

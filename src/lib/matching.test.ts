@@ -48,3 +48,36 @@ test("email uses supplied profile and refuses missing fields", () => {
   assert.match(ready.body, /network security/);
   assert.doesNotMatch(ready.body, /I have read your paper/);
 });
+
+import { openAlexToProfessorProfile } from "./matching";
+
+test("openAlex adapter maps only available fields and invents nothing", () => {
+  const profile = openAlexToProfessorProfile({
+    topics: ["machine learning", "computer vision"],
+    affiliation: "Tsinghua University",
+  });
+  assert.equal(profile.researchInterests, "machine learning, computer vision");
+  assert.deepEqual(profile.topics, ["machine learning", "computer vision"]);
+  assert.equal(profile.department, "Tsinghua University");
+  assert.equal(profile.publications, undefined);
+  assert.equal(profile.researchAreas, undefined);
+
+  const empty = openAlexToProfessorProfile({});
+  assert.equal(empty.researchInterests, null);
+  assert.equal(empty.topics, null);
+  assert.equal(empty.department, null);
+});
+
+test("partial OpenAlex profile still produces a match without inventing data", () => {
+  const professor = openAlexToProfessorProfile({
+    topics: ["network security", "intrusion detection"],
+    affiliation: "UESTC",
+  });
+  const result = computeResearchMatch(
+    { researchInterests: "cybersecurity network security", major: "Computer Science", degree: "Master" },
+    professor
+  );
+  assert.ok(result.score >= 0);
+  assert.equal(result.incomplete, false);
+  assert.ok(result.matchedKeywords.length >= 0);
+});
