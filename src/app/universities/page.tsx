@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ensureSchema, prisma } from "@/lib/prisma";
-import UniversityCard from "@/components/UniversityCard";
+import UniversityDiscovery from "@/components/UniversityDiscovery";
 import PageHeader from "@/components/PageHeader";
 import { SITE } from "@/lib/seo";
 
@@ -64,26 +64,23 @@ export default async function UniversitiesPage() {
         <pre className="mt-4 overflow-auto rounded bg-red-50 p-3 text-xs text-red-800">{errorMsg}</pre>
       )}
       {universities.length === 0 ? (
-        <div className="empty-state mt-8 rounded-lg border border-dashed border-[var(--gray-200)] bg-white px-6 py-12 text-center">
-          <p className="text-sm text-[var(--gray-500)]">No universities yet.</p>
+        <div className="empty-state mt-8 rounded-2xl border border-dashed border-[var(--gray-200)] bg-white px-6 py-12 text-center">
+          <p className="text-sm text-[var(--gray-500)]">No universities are available in the directory yet.</p>
         </div>
       ) : (
-        <div className="reveal-grid mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {universities.map((u) => (
-            <UniversityCard
-              key={u.id}
-              id={u.id}
-              name={u.name}
-              nameZh={u.nameZh}
-              city={u.city}
-              province={u.province}
-              description={u.description}
-              agencyNumber={u.agencyNumber}
-              professorCount={u._count?.professors ?? 0}
-              programCount={u._count?.programs ?? 0}
-            />
-          ))}
-        </div>
+        <UniversityDiscovery
+          universities={universities.map((u) => ({
+            id: u.id,
+            name: u.name,
+            nameZh: u.nameZh,
+            city: u.city,
+            province: u.province,
+            description: u.description,
+            agencyNumber: u.agencyNumber,
+            professorCount: u._count?.professors ?? 0,
+            programCount: u._count?.programs ?? 0,
+          }))}
+        />
       )}
     </div>
   );
