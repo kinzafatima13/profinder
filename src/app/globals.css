@@ -587,3 +587,76 @@ body {
     background: #fcfbff;
   }
 }
+
+
+@keyframes pf-card-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes pf-orbit-breathe {
+  0%, 100% { opacity: 0.48; scale: 1; }
+  50% { opacity: 0.9; scale: 1.025; }
+}
+
+@keyframes pf-morph {
+  0% { border-radius: 44% 56% 58% 42% / 46% 42% 58% 54%; transform: rotate(-3deg) scale(0.98); }
+  100% { border-radius: 55% 45% 42% 58% / 55% 55% 45% 45%; transform: rotate(3deg) scale(1.02); }
+}
+
+@keyframes pf-sparkle {
+  0%, 100% { opacity: 0.45; transform: scale(0.9) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.12) rotate(12deg); }
+}
+
+@media (max-width: 1023px) {
+  .hero-showcase-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.85fr);
+    gap: 2rem;
+  }
+
+  .hero-visual { min-height: 370px; }
+  .hero-visual-core { padding: 1.5rem; }
+  .hero-float-card-top { right: -3%; }
+  .hero-float-card-bottom { left: -3%; }
+}
+
+@media (max-width: 767px) {
+  .hero-showcase { padding-top: 3rem; padding-bottom: 2rem; }
+  .hero-showcase-grid { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .hero-copy { max-width: 42rem; margin-inline: auto; }
+  .hero-visual { min-height: 330px; width: min(100%, 520px); margin-inline: auto; }
+  .hero-visual-core { width: min(78%, 340px); }
+  .hero-float-card-top { top: 7%; right: 0; }
+  .hero-float-card-bottom { bottom: 5%; left: 0; }
+  .hero-stats-grid { gap: 0.55rem; }
+}
+
+@media (max-width: 480px) {
+  .hero-visual { min-height: 300px; }
+  .hero-visual-core { width: 76%; padding: 1.25rem; }
+  .hero-float-card { gap: 0.5rem; padding: 0.65rem; }
+  .hero-float-card strong { font-size: 0.72rem; }
+  .hero-float-card small { font-size: 0.62rem; }
+  .hero-float-icon { width: 1.9rem; height: 1.9rem; }
+  .hero-float-card-top { right: -0.25rem; }
+  .hero-float-card-bottom { left: -0.25rem; }
+  .hero-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-stat-card { padding: 0.9rem 0.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-visual-glow,
+  .hero-orbit,
+  .hero-visual-core,
+  .hero-float-card,
+  .hero-spark,
+  .hero-status-dot {
+    animation: none !important;
+  }
+
+  .hero-stat-card:hover,
+  .hero-primary-cta:hover span {
+    transform: none;
+  }
+}
