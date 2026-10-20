@@ -80,40 +80,80 @@ export default async function HomePage() {
   return (
     <div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "WebSite", name: "ProFinder", url: SITE, potentialAction: { "@type": "SearchAction", target: `${SITE}/professors?q={search_term_string}`, "query-input": "required name=search_term_string" } }) }} />
-      <section className="hero-atmosphere border-b border-[var(--gray-200)] pt-14 pb-10">
-        <div className="page-container text-center">
-          <p className="rise rise-1 text-xs font-medium uppercase tracking-[0.16em] text-[var(--violet)]">✦ ProFinder</p>
-          <h1 className="rise rise-2 mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--navy)] sm:text-4xl">Find the <span className="gradient-text">research path</span> that's yours.</h1>
-          <p className="rise rise-3 mx-auto mt-3 max-w-2xl text-sm text-[var(--gray-700)]">Explore programs, universities, and professors based on what you actually want to study.</p>
-          <div className="rise rise-4 mx-auto mt-6 max-w-2xl text-left"><AcademicSearchBox /></div>
-          <p className="rise rise-5 mx-auto mt-3 max-w-2xl text-xs text-[var(--gray-500)]">
-            Examples from stored records:{" "}
-            <Link className="underline" href="/professors?q=machine%20learning">machine learning</Link>
-            {" · "}
-            <Link className="underline" href="/professors?q=cancer%20genomics">cancer genomics</Link>
-            {" · "}
-            <Link className="underline" href="/professors?q=renewable%20energy">renewable energy</Link>
-            {" · "}
-            <Link className="underline" href="/professors?q=agriculture">agriculture</Link>
-          </p>
-          <div className="rise rise-6 mt-4 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/professors" className="btn-primary">Explore professors</Link>
-            <Link href="/find" className="btn-secondary">Find My Match</Link>
-            <Link href="/programs" className="btn-secondary">Browse programs</Link>
+      <section className="hero-atmosphere hero-showcase border-b border-[var(--gray-200)]">
+        <div className="page-container hero-showcase-grid">
+          <div className="hero-copy">
+            <p className="rise rise-1 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/80 px-3 py-1.5 text-xs font-semibold tracking-wide text-violet-800 shadow-sm">
+              <span className="hero-status-dot" aria-hidden="true" /> YOUR NEXT ACADEMIC CHAPTER
+            </p>
+            <h1 className="rise rise-2 mt-5 max-w-2xl text-4xl font-semibold leading-[1.08] tracking-tight text-[var(--navy)] sm:text-5xl lg:text-6xl">
+              Your research future starts with <span className="gradient-text">the right match.</span>
+            </h1>
+            <p className="rise rise-3 mt-5 max-w-xl text-base leading-7 text-[var(--gray-700)] sm:text-lg">
+              Discover universities, programs, scholarships, and potential research supervisors around the work you want to do.
+            </p>
+            <div className="rise rise-4 mt-7 max-w-2xl text-left"><AcademicSearchBox /></div>
+            <p className="rise rise-5 mt-3 text-xs leading-5 text-[var(--gray-500)]">
+              Try a research topic:{" "}
+              <Link className="font-medium text-violet-700 underline decoration-violet-300 underline-offset-4 hover:text-violet-900" href="/professors?q=machine%20learning">machine learning</Link>
+              {" · "}
+              <Link className="font-medium text-violet-700 underline decoration-violet-300 underline-offset-4 hover:text-violet-900" href="/professors?q=cancer%20genomics">cancer genomics</Link>
+              {" · "}
+              <Link className="font-medium text-violet-700 underline decoration-violet-300 underline-offset-4 hover:text-violet-900" href="/professors?q=renewable%20energy">renewable energy</Link>
+            </p>
+            <div className="rise rise-6 mt-6 flex flex-wrap gap-3">
+              <Link href="/find" className="btn-primary hero-primary-cta">Find My Match <span aria-hidden="true">↗</span></Link>
+              <Link href="/professors" className="btn-secondary">Explore supervisors</Link>
+            </div>
+            <p className="mt-4 max-w-xl text-xs leading-5 text-[var(--gray-500)]">
+              Match scores are informational recommendations based on stored data, not admission predictions. Unverified records are labeled.
+            </p>
           </div>
-          <p className="mx-auto mt-3 max-w-xl text-xs text-[var(--muted)]">Match scores are informational recommendations from stored overlap, not admission predictions. Unverified records are labeled.</p>
-          {(uniCount > 0 || profCount > 0) && (
-            <>
-            <p className="mt-10 text-xs font-medium uppercase tracking-[0.14em] text-[var(--gray-500)]">What is actually stored</p>
-            <dl className="reveal-grid mx-auto mt-4 grid max-w-3xl grid-cols-2 sm:grid-cols-4">
+
+          <div className="hero-visual rise rise-4" aria-label="Illustration of a student exploring research opportunities">
+            <div className="hero-visual-glow" aria-hidden="true" />
+            <div className="hero-orbit hero-orbit-one" aria-hidden="true" />
+            <div className="hero-orbit hero-orbit-two" aria-hidden="true" />
+            <div className="hero-visual-core">
+              <div className="hero-core-icon" aria-hidden="true">✦</div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Your research journey</p>
+              <p className="mt-2 text-xl font-semibold tracking-tight text-[var(--navy)]">Ideas into opportunities</p>
+              <p className="mt-2 text-sm leading-6 text-[var(--gray-600)]">Connect your interests with places to study and people doing the work.</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <span className="hero-topic-pill">Research fit</span>
+                <span className="hero-topic-pill">Programs</span>
+                <span className="hero-topic-pill">Funding</span>
+              </div>
+            </div>
+            <div className="hero-float-card hero-float-card-top">
+              <span className="hero-float-icon hero-icon-purple" aria-hidden="true">⌕</span>
+              <span><strong>Explore</strong><small>Research areas</small></span>
+              <span className="hero-card-arrow" aria-hidden="true">↗</span>
+            </div>
+            <div className="hero-float-card hero-float-card-bottom">
+              <span className="hero-float-icon hero-icon-mint" aria-hidden="true">✓</span>
+              <span><strong>Compare options</strong><small>Keep your shortlist organized</small></span>
+            </div>
+            <div className="hero-spark hero-spark-one" aria-hidden="true">✳</div>
+            <div className="hero-spark hero-spark-two" aria-hidden="true">✦</div>
+          </div>
+        </div>
+        {(uniCount > 0 || profCount > 0) && (
+          <div className="page-container hero-stats-wrap">
+            <div className="hero-stats-intro">
+              <span className="hero-status-dot" aria-hidden="true" />
+              <span>What’s currently in the database</span>
+            </div>
+            <dl className="hero-stats-grid">
               {[[uniCount, "Universities"], [profCount, "Supervisors"], [verifiedCount, "Verified profiles"], [emailCount, "Public emails"]].map(([value, label]) => (
-                <div key={String(label)} className="px-3 py-2"><dd className="text-3xl font-semibold text-[var(--navy)]">{value}</dd><dt className="mt-1 text-xs text-[var(--muted)]">{label}</dt></div>
+                <div key={String(label)} className="hero-stat-card">
+                  <dd>{value}</dd><dt>{label}</dt>
+                </div>
               ))}
             </dl>
-            <p className="mt-2 text-xs text-[var(--muted)]">{areaCount} research areas are stored. A count is not the same as official verification.</p>
-            </>
-          )}
-        </div>
+            <p className="mt-3 text-center text-xs text-[var(--gray-500)]">{areaCount} research areas are stored. A count is not the same as official verification.</p>
+          </div>
+        )}
       </section>
       {student && (
         <section className="page-container py-8">
