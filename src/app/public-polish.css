@@ -1,0 +1,130 @@
+/* ProFinderNow shared public-page polish. Keep this layer presentational only. */
+:root {
+  --pf-brand: #5546d7;
+  --pf-brand-deep: #4338ca;
+  --pf-lilac: #a78bfa;
+  --pf-line: #e8e4f6;
+  --pf-surface: rgba(255, 255, 255, .88);
+  --pf-shadow-soft: 0 8px 24px rgba(49, 46, 129, .055);
+  --pf-shadow-hover: 0 16px 36px rgba(79, 70, 229, .12);
+}
+
+html { scroll-behavior: smooth; }
+::selection { color: #312e81; background: #ddd6fe; }
+
+main { min-width: 0; }
+main .page-container { animation: pf-page-enter .36s ease-out both; }
+main h1, main h2, main h3 { text-wrap: pretty; }
+main a { text-underline-offset: 3px; }
+main a:not(.btn-primary):not(.btn-secondary):not(.btn-ghost):focus-visible {
+  outline: 2px solid var(--pf-lilac);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+main .section-title {
+  letter-spacing: -.035em;
+  line-height: 1.2;
+}
+main .page-container > h1,
+main .page-container > div > h1 {
+  letter-spacing: -.04em;
+}
+
+main .card,
+main [class~="rounded-lg"][class~="border"][class~="bg-white"] {
+  transition: border-color .2s ease, box-shadow .22s ease, transform .22s ease;
+}
+main .card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--pf-shadow-hover);
+}
+main .reveal-grid > *,
+main .reveal-list > * {
+  animation: pf-page-enter .38s ease both;
+}
+main .reveal-grid > *:focus-within {
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(167,139,250,.13);
+}
+
+main .input,
+main input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+main select,
+main textarea {
+  min-height: 2.7rem;
+  border-radius: .75rem;
+  border-color: var(--pf-line);
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+main .input:hover,
+main input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):hover,
+main select:hover,
+main textarea:hover { border-color: #c4b5fd; }
+main .input:focus,
+main input:focus,
+main select:focus,
+main textarea:focus {
+  border-color: #8b7cf6;
+  box-shadow: 0 0 0 4px rgba(139,124,246,.15);
+  outline: none;
+}
+
+main .btn-primary,
+main .btn-secondary,
+main .btn-ghost {
+  min-height: 2.55rem;
+  border-radius: .75rem;
+  transition: transform .16s ease, box-shadow .18s ease, background-color .18s ease, border-color .18s ease;
+}
+main .btn-primary:hover,
+main .btn-secondary:hover { transform: translateY(-1px); }
+main .btn-primary:active,
+main .btn-secondary:active,
+main .btn-ghost:active { transform: translateY(0) scale(.985); }
+
+main table { border-collapse: separate; border-spacing: 0; }
+main table thead th {
+  background: #faf9ff;
+  font-weight: 650;
+  letter-spacing: .055em;
+}
+main table tbody tr { transition: background-color .16s ease; }
+main table tbody tr:hover { background-color: #faf9ff; }
+main table td, main table th { vertical-align: top; }
+
+main .empty-state {
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(250,248,255,.96));
+}
+main .chip, main .tag, main .badge { transition: border-color .16s ease, background-color .16s ease, color .16s ease; }
+main .chip:hover, main .tag:hover { background-color: #ede9fe; }
+
+main nav[aria-label] a { transition: color .16s ease, background-color .16s ease; }
+main nav[aria-label] a:hover { color: var(--pf-brand-deep); }
+
+footer { background: linear-gradient(180deg, rgba(252,251,255,0), rgba(247,243,255,.55)); }
+footer a { transition: color .16s ease; }
+footer a:hover { color: var(--pf-brand-deep); }
+
+@keyframes pf-page-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  main .page-container { padding-top: 1.25rem; }
+  main .reveal-grid { gap: .85rem; }
+  main .btn-primary, main .btn-secondary { min-height: 2.75rem; }
+  main table { font-size: .8125rem; }
+  main table th, main table td { padding: .7rem .75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  main .page-container,
+  main .reveal-grid > *,
+  main .reveal-list > * { animation: none !important; }
+  main .card, main a, main button, main input, main select, main textarea,
+  footer a { transition: none !important; }
+}
