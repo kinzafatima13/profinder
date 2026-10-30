@@ -1,6 +1,14 @@
 name: AHU Faculty Discovery (Manual Dry Run)
 
 on:
+  push:
+    branches:
+      - feat/ahu-all-departments-dry-run
+    paths:
+      - ".github/workflows/ahu-faculty-dry-run.yml"
+      - "scripts/collect-ahu-faculty.ts"
+      - "package.json"
+      - "package-lock.json"
   workflow_dispatch:
     inputs:
       max_pages:
@@ -36,7 +44,7 @@ jobs:
 
       - name: Validate page limit
         env:
-          MAX_PAGES: ${{ inputs.max_pages }}
+          MAX_PAGES: ${{ inputs.max_pages || '10' }}
         run: |
           if ! [[ "$MAX_PAGES" =~ ^[0-9]+$ ]] || (( MAX_PAGES < 1 || MAX_PAGES > 50 )); then
             echo "max_pages must be an integer from 1 to 50."
@@ -45,7 +53,7 @@ jobs:
 
       - name: Run read-only AHU collector
         env:
-          MAX_PAGES: ${{ inputs.max_pages }}
+          MAX_PAGES: ${{ inputs.max_pages || '10' }}
         run: |
           mkdir -p artifacts
           OUTPUT="artifacts/ahu-faculty-candidates-${GITHUB_RUN_ID}.csv"
