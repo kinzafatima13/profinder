@@ -1,0 +1,61 @@
+name: AHU Faculty Discovery (Manual Dry Run)
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_pages:
+        description: "Maximum official AHU pages to visit"
+        required: true
+        default: "10"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ahu-faculty-dry-run
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    name: Read-only AHU discovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out selected branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Validate page limit
+        env:
+          MAX_PAGES: ${{ inputs.max_pages }}
+        run: |
+          if ! [[ "$MAX_PAGES" =~ ^[0-9]+$ ]] || (( MAX_PAGES < 1 || MAX_PAGES > 50 )); then
+            echo "max_pages must be an integer from 1 to 50."
+            exit 1
+          fi
+
+      - name: Run read-only AHU collector
+        env:
+          MAX_PAGES: ${{ inputs.max_pages }}
+        run: |
+          mkdir -p artifacts
+          OUTPUT="artifacts/ahu-faculty-candidates-${GITHUB_RUN_ID}.csv"
+          npx tsx scripts/collect-ahu-faculty.ts --max-pages="$MAX_PAGES" --out="$OUTPUT"
+
+      - name: Upload review CSV
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ahu-faculty-candidates-${{ github.run_id }}
+          path: artifacts/*.csv
+          if-no-files-found: warn
+          retention-days: 7
