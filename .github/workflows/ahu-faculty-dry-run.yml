@@ -1,0 +1,119 @@
+name: AHU Faculty Discovery (Manual Dry Run)
+
+on:
+  push:
+    branches:
+      - feat/ahu-all-departments-dry-run
+    paths:
+      - ".github/workflows/ahu-faculty-dry-run.yml"
+      - "scripts/collect-ahu-faculty.ts"
+      - "package.json"
+      - "package-lock.json"
+  workflow_dispatch:
+    inputs:
+      max_pages:
+        description: "Maximum official AHU pages to visit"
+        required: true
+        default: "10"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ahu-faculty-dry-run
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    name: Read-only AHU discovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out selected branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Diagnose access to official AHU websites
+        shell: bash
+        run: |
+          set +e
+          for host in www.ahu.edu.cn cs.ahu.edu.cn; do
+            echo "::group::DNS lookup: $host"
+            getent ahosts "$host"
+            echo "DNS_EXIT=$?"
+            echo "::endgroup::"
+
+            echo "::group::HTTPS headers: $host"
+            curl --head --location --silent --show-error --max-time 20 "https://$host/"
+            echo "CURL_EXIT=$?"
+            echo "::endgroup::"
+
+            echo "::group::Node HTTPS fetch: $host"
+            AHU_HOST="$host" node --input-type=module -e '
+              const url = "https://" + process.env.AHU_HOST + "/";
+              try {
+                const response = await fetch(url, { signal: AbortSignal.timeout(20000) });
+                console.log("HTTP_STATUS=" + response.status);
+                console.log("FINAL_URL=" + response.url);
+              } catch (error) {
+                console.log("NODE_FETCH_ERROR=" + (error?.cause?.code || error?.code || error?.message || String(error)));
+                process.exitCode = 0;
+              }
+            '
+            echo "::endgroup::"
+          done
+
+          echo "::group::Exact AHU faculty directory URL with IPv4-first Node DNS"
+          node --dns-result-order=ipv4first --input-type=module -e '
+            const url = "https://www.ahu.edu.cn/_t992/183/list.htm";
+            try {
+              const response = await fetch(url, { signal: AbortSignal.timeout(20000) });
+              console.log("IPV4_FIRST_HTTP_STATUS=" + response.status);
+              console.log("IPV4_FIRST_FINAL_URL=" + response.url);
+              console.log("IPV4_FIRST_CONTENT_TYPE=" + response.headers.get("content-type"));
+            } catch (error) {
+              console.log("IPV4_FIRST_NODE_FETCH_ERROR=" + (error?.cause?.code || error?.code || error?.message || String(error)));
+            }
+          '
+          echo "::endgroup::"
+
+          echo "::group::Exact AHU faculty directory URL via curl"
+          curl --head --location --silent --show-error --max-time 20 "https://www.ahu.edu.cn/_t992/183/list.htm"
+          echo "DIRECTORY_CURL_EXIT=$?"
+          echo "::endgroup::"
+          exit 0
+
+      - name: Validate page limit
+        env:
+          MAX_PAGES: ${{ inputs.max_pages || '10' }}
+        run: |
+          if ! [[ "$MAX_PAGES" =~ ^[0-9]+$ ]] || (( MAX_PAGES < 1 || MAX_PAGES > 50 )); then
+            echo "max_pages must be an integer from 1 to 50."
+            exit 1
+          fi
+
+      - name: Run read-only AHU collector
+        env:
+          MAX_PAGES: ${{ inputs.max_pages || '10' }}
+        run: |
+          mkdir -p artifacts
+          OUTPUT="artifacts/ahu-faculty-candidates-${GITHUB_RUN_ID}.csv"
+          npx tsx scripts/collect-ahu-faculty.ts --max-pages="$MAX_PAGES" --out="$OUTPUT"
+
+      - name: Upload review CSV
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ahu-faculty-candidates-${{ github.run_id }}
+          path: artifacts/*.csv
+          if-no-files-found: warn
+          retention-days: 7

@@ -20,7 +20,8 @@
     "audit:professors": "tsx scripts/audit-professor-duplicates.ts",
     "recover:preflight": "tsx scripts/recover-sqlite-to-postgres.ts --preflight",
     "recover:dry-run": "tsx scripts/recover-sqlite-to-postgres.ts --dry-run",
-    "recover:validate-sqlite": "tsx scripts/validate-sqlite-recovery.ts"
+    "recover:validate-sqlite": "tsx scripts/validate-sqlite-recovery.ts",
+    "collect:ahu:dry-run": "tsx scripts/collect-ahu-faculty.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
