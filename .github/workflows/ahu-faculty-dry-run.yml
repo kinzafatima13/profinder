@@ -42,6 +42,42 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Diagnose access to official AHU websites
+        shell: bash
+        run: |
+          set +e
+          for host in www.ahu.edu.cn cs.ahu.edu.cn; do
+            echo "::group::DNS lookup: $host"
+            getent ahosts "$host"
+            echo "DNS_EXIT=$?"
+            echo "::endgroup::"
+
+            echo "::group::HTTPS headers: $host"
+            curl --head --location --silent --show-error --max-time 20 "https://$host/" 
+            echo "CURL_EXIT=$?"
+            echo "::endgroup::"
+
+            echo "::group::Node HTTPS fetch: $host"
+            AHU_HOST="$host" node --input-type=module -e '
+              const url = "https://" + process.env.AHU_HOST + "/";
+              try {
+                const response = await fetch(url, { signal: AbortSignal.timeout(20000) });
+                console.log("HTTP_STATUS=" + response.status);
+                console.log("FINAL_URL=" + response.url);
+              } catch (error) {
+                console.log("NODE_FETCH_ERROR=" + (error?.cause?.code || error?.code || error?.message || String(error)));
+                process.exitCode = 0;
+              }
+            '
+            echo "::endgroup::"
+          done
+
+          echo "::group::Exact AHU faculty directory URL"
+          curl --head --location --silent --show-error --max-time 20 "https://www.ahu.edu.cn/_t992/183/list.htm"
+          echo "DIRECTORY_CURL_EXIT=$?"
+          echo "::endgroup::"
+          exit 0
+
       - name: Validate page limit
         env:
           MAX_PAGES: ${{ inputs.max_pages || '10' }}
