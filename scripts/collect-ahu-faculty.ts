@@ -144,7 +144,7 @@ async function fetchOfficialHtml(pageUrl: string): Promise<{ status: number; con
     maxBuffer: 8 * 1024 * 1024,
   });
 
-  const marker = "\\n__AHU_META__:";
+  const marker = "\n__AHU_META__:";
   const markerIndex = stdout.lastIndexOf(marker);
   if (markerIndex < 0) throw new Error("curl did not return HTTP response metadata");
   const html = stdout.slice(0, markerIndex);
