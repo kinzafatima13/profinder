@@ -102,12 +102,23 @@ function isDirectoryLike(text: string, url: string): boolean {
 
 function isProfileLike(text: string, url: string): boolean {
   const path = new URL(url).pathname;
-  if (!text || NAVIGATION_LABEL.test(text.trim()) || INSTITUTION_LABEL.test(text)) return false;
-  if (/faculty|teacher|professor|people|staff|person|profile|tutor|mentor|导师|教师|师资/i.test(text + " " + path)) return true;
-  // Some official staff profiles use generic numeric .htm URLs; only keep short
-  // labels that plausibly represent a person's name, not generic site navigation.
-  return /\.htm(?:l)?$/i.test(path) && text.length >= 2 && text.length <= 20 &&
-    !/首页|概况|简介|标识|领导|历史|大事记|信息|风光|机构|部门|单位|学院|学部|研究院|研究中心|实验室|中心|新闻|公告|招生|就业|学生|教师队伍|师资队伍|English|Home|About/i.test(text);
+  const label = text.trim();
+  if (!label || NAVIGATION_LABEL.test(label) || INSTITUTION_LABEL.test(label)) return false;
+
+  // Reject list pages, pagination, and dated university news/article URLs.
+  if (/\\/list\\d*\\.s?html?$/i.test(path) ||
+      /\\/\\d{4}\\/\\d{4}\\/c\\d+a\\d+\\/page\\.htm$/i.test(path)) return false;
+
+  // Explicit person/faculty wording is acceptable, but generic numeric .htm
+  // links are only accepted when their visible label resembles a person's name.
+  if (/faculty|teacher|professor|people|staff|person|profile|tutor|mentor|导师|教师|师资/i.test(label + " " + path)) return true;
+
+  const nonPerson = /首页|概况|简介|标识|领导|历史|大事记|信息|风光|机构|部门|单位|学院|学部|研究院|研究中心|实验室|中心|新闻|公告|招生|就业|学生|教师队伍|师资队伍|校园|党建|教育|实验|通知|活动|走访|慰问|English|Home|About|下一页|尾页/i;
+  if (nonPerson.test(label)) return false;
+
+  const chineseName = /^[\\u4e00-\\u9fff]{2,4}$/;
+  const latinName = /^[A-Z][a-z]+(?:[- ][A-Z][a-z]+){1,2}$/;
+  return /\\.htm(?:l)?$/i.test(path) && (chineseName.test(label) || latinName.test(label));
 }
 
 function extractEmails(html: string): string[] {
@@ -133,7 +144,7 @@ async function fetchOfficialHtml(pageUrl: string): Promise<{ status: number; con
     "--max-time", "20",
     "--connect-timeout", "10",
     "--max-redirs", "0",
-    "--proto", "=https",
+    "--proto", "=http,https",
     "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36",
     "--header", "accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "--header", "accept-language: en-US,en;q=0.9,zh-CN;q=0.8",
