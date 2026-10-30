@@ -106,8 +106,8 @@ function isProfileLike(text: string, url: string): boolean {
   if (!label || NAVIGATION_LABEL.test(label) || INSTITUTION_LABEL.test(label)) return false;
 
   // Reject list pages, pagination, and dated university news/article URLs.
-  if (/\\/list\\d*\\.s?html?$/i.test(path) ||
-      /\\/\\d{4}\\/\\d{4}\\/c\\d+a\\d+\\/page\\.htm$/i.test(path)) return false;
+  if (/\/list\d*\.s?html?$/i.test(path) ||
+      /\/\d{4}\/\d{4}\/c\d+a\d+\/page\.htm$/i.test(path)) return false;
 
   // Explicit person/faculty wording is acceptable, but generic numeric .htm
   // links are only accepted when their visible label resembles a person's name.
@@ -116,9 +116,9 @@ function isProfileLike(text: string, url: string): boolean {
   const nonPerson = /首页|概况|简介|标识|领导|历史|大事记|信息|风光|机构|部门|单位|学院|学部|研究院|研究中心|实验室|中心|新闻|公告|招生|就业|学生|教师队伍|师资队伍|校园|党建|教育|实验|通知|活动|走访|慰问|English|Home|About|下一页|尾页/i;
   if (nonPerson.test(label)) return false;
 
-  const chineseName = /^[\\u4e00-\\u9fff]{2,4}$/;
+  const chineseName = /^[\u4e00-\u9fff]{2,4}$/;
   const latinName = /^[A-Z][a-z]+(?:[- ][A-Z][a-z]+){1,2}$/;
-  return /\\.htm(?:l)?$/i.test(path) && (chineseName.test(label) || latinName.test(label));
+  return /\.htm(?:l)?$/i.test(path) && (chineseName.test(label) || latinName.test(label));
 }
 
 function extractEmails(html: string): string[] {
