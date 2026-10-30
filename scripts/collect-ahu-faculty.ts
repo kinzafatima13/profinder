@@ -144,10 +144,13 @@ async function main() {
           "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8",
         },
         signal: AbortSignal.timeout(20000),
+        // Refuse redirects rather than requesting an untrusted destination first.
+        redirect: "error",
       });
       if (!response.ok) {
         requestFailures++;
         console.warn(`[skip] HTTP ${response.status}: ${pageUrl}`);
+        await new Promise((resolveDelay) => setTimeout(resolveDelay, REQUEST_DELAY_MS));
         continue;
       }
       const finalUrl = new URL(response.url || pageUrl);
@@ -157,7 +160,10 @@ async function main() {
         continue;
       }
       const contentType = response.headers.get("content-type") ?? "";
-      if (!contentType.includes("text/html")) continue;
+      if (!contentType.includes("text/html")) {
+        await new Promise((resolveDelay) => setTimeout(resolveDelay, REQUEST_DELAY_MS));
+        continue;
+      }
       const html = await response.text();
       const pageTitle = titleOf(html);
       const anchors = extractAnchors(html, pageUrl);
@@ -168,6 +174,11 @@ async function main() {
       const profileAnchors = anchors.filter((a) => isProfileLike(a.label, a.url));
       if (profileAnchors.length) {
         for (const candidate of profileAnchors) {
+          // Queue candidate profile pages so their official pages can contribute contact details.
+          if (!queued.has(candidate.url) && !visited.has(candidate.url)) {
+            queued.add(candidate.url);
+            queue.push(candidate.url);
+          }
           records.push({
             pageUrl,
             pageTitle,
@@ -215,7 +226,8 @@ async function main() {
   const lines = [header, ...records.map((record) => header.map((key) => String(record[key as keyof PageRecord] ?? "")))]
     .map((row) => row.map(csvEscape).join(","));
   await mkdir(dirname(outPath), { recursive: true });
-  await writeFile(outPath, lines.join("\r\n") + "\r\n", "utf8");
+  // "wx" fails safely if the destination already exists; never overwrite a CSV.
+  await writeFile(outPath, lines.join("\r\n") + "\r\n", { encoding: "utf8", flag: "wx" });
 
   console.log(JSON.stringify({
     mode: "READ_ONLY_DRY_RUN",
