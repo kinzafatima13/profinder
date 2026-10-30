@@ -53,7 +53,7 @@ jobs:
             echo "::endgroup::"
 
             echo "::group::HTTPS headers: $host"
-            curl --head --location --silent --show-error --max-time 20 "https://$host/" 
+            curl --head --location --silent --show-error --max-time 20 "https://$host/"
             echo "CURL_EXIT=$?"
             echo "::endgroup::"
 
@@ -72,7 +72,21 @@ jobs:
             echo "::endgroup::"
           done
 
-          echo "::group::Exact AHU faculty directory URL"
+          echo "::group::Exact AHU faculty directory URL with IPv4-first Node DNS"
+          node --dns-result-order=ipv4first --input-type=module -e '
+            const url = "https://www.ahu.edu.cn/_t992/183/list.htm";
+            try {
+              const response = await fetch(url, { signal: AbortSignal.timeout(20000) });
+              console.log("IPV4_FIRST_HTTP_STATUS=" + response.status);
+              console.log("IPV4_FIRST_FINAL_URL=" + response.url);
+              console.log("IPV4_FIRST_CONTENT_TYPE=" + response.headers.get("content-type"));
+            } catch (error) {
+              console.log("IPV4_FIRST_NODE_FETCH_ERROR=" + (error?.cause?.code || error?.code || error?.message || String(error)));
+            }
+          '
+          echo "::endgroup::"
+
+          echo "::group::Exact AHU faculty directory URL via curl"
           curl --head --location --silent --show-error --max-time 20 "https://www.ahu.edu.cn/_t992/183/list.htm"
           echo "DIRECTORY_CURL_EXIT=$?"
           echo "::endgroup::"
