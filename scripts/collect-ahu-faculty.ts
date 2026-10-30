@@ -10,7 +10,11 @@
  *   npx tsx scripts/collect-ahu-faculty.ts --max-pages=250 --out=data/ahu-faculty-candidates.csv
  */
 import { mkdir, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { dirname, resolve } from "node:path";
+
+const execFileAsync = promisify(execFile);
 
 const START_URL = "https://www.ahu.edu.cn/_t992/183/list.htm";
 function isOfficialAhuHost(hostname: string): boolean {
@@ -117,6 +121,41 @@ function csvEscape(value: string): string {
   return '"' + value.replace(/"/g, '""') + '"';
 }
 
+/**
+ * Retrieve an official AHU page using the runner's working curl transport.
+ * Redirects are deliberately not followed: a 3xx response is rejected so the
+ * crawler never requests a destination that has not passed the AHU-host check.
+ */
+async function fetchOfficialHtml(pageUrl: string): Promise<{ status: number; contentType: string; html: string }> {
+  const { stdout } = await execFileAsync("curl", [
+    "--silent",
+    "--show-error",
+    "--max-time", "20",
+    "--connect-timeout", "10",
+    "--max-redirs", "0",
+    "--proto", "=https",
+    "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36",
+    "--header", "accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "--header", "accept-language: en-US,en;q=0.9,zh-CN;q=0.8",
+    "--write-out", "\\n__AHU_META__:%{http_code}|%{content_type}",
+    pageUrl,
+  ], {
+    encoding: "utf8",
+    maxBuffer: 8 * 1024 * 1024,
+  });
+
+  const marker = "\\n__AHU_META__:";
+  const markerIndex = stdout.lastIndexOf(marker);
+  if (markerIndex < 0) throw new Error("curl did not return HTTP response metadata");
+  const html = stdout.slice(0, markerIndex);
+  const [statusText, contentType = ""] = stdout.slice(markerIndex + marker.length).trim().split("|", 2);
+  const status = Number(statusText);
+  if (!Number.isInteger(status) || status < 100 || status > 599) {
+    throw new Error("curl returned an invalid HTTP status");
+  }
+  return { status, contentType, html };
+}
+
 async function main() {
   const maxPages = Math.max(1, Math.min(1000, Number(arg("max-pages", String(DEFAULT_MAX_PAGES))) || DEFAULT_MAX_PAGES));
   const outPath = resolve(process.cwd(), arg("out", "data/ahu-faculty-candidates.csv"));
@@ -137,34 +176,19 @@ async function main() {
     visited.add(pageUrl);
 
     try {
-      const response = await fetch(pageUrl, {
-        headers: {
-          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36",
-          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8",
-        },
-        signal: AbortSignal.timeout(20000),
-        // Refuse redirects rather than requesting an untrusted destination first.
-        redirect: "error",
-      });
-      if (!response.ok) {
+      const response = await fetchOfficialHtml(pageUrl);
+      if (response.status < 200 || response.status >= 300) {
         requestFailures++;
         console.warn(`[skip] HTTP ${response.status}: ${pageUrl}`);
         await new Promise((resolveDelay) => setTimeout(resolveDelay, REQUEST_DELAY_MS));
         continue;
       }
-      const finalUrl = new URL(response.url || pageUrl);
-      if (!isOfficialAhuHost(finalUrl.hostname) || !["https:", "http:"].includes(finalUrl.protocol)) {
-        requestFailures++;
-        console.warn(`[skip] Redirected outside official AHU hosts: ${finalUrl.toString()}`);
-        continue;
-      }
-      const contentType = response.headers.get("content-type") ?? "";
-      if (!contentType.includes("text/html")) {
+      if (!response.contentType.toLowerCase().includes("text/html")) {
+        console.warn(`[skip] Non-HTML response (${response.contentType || "unknown"}): ${pageUrl}`);
         await new Promise((resolveDelay) => setTimeout(resolveDelay, REQUEST_DELAY_MS));
         continue;
       }
-      const html = await response.text();
+      const html = response.html;
       const pageTitle = titleOf(html);
       const anchors = extractAnchors(html, pageUrl);
       const emails = extractEmails(html);
