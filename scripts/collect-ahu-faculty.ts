@@ -147,7 +147,12 @@ async function fetchOfficialHtml(pageUrl: string): Promise<{ status: number; con
     "--proto", "=http,https",
     "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36",
     "--header", "accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "--header", "accept-language: en-US,en;q=0.9,zh-CN;q=0.8",
+    "--header", "accept-language: zh-CN,zh;q=0.9,en;q=0.8",
+    "--header", "referer: https://www.ahu.edu.cn/_t992/183/list.htm",
+    "--header", "sec-fetch-dest: document",
+    "--header", "sec-fetch-mode: navigate",
+    "--header", "sec-fetch-site: same-site",
+    "--header", "upgrade-insecure-requests: 1",
     "--write-out", "\\n__AHU_META__:%{http_code}|%{content_type}",
     pageUrl,
   ], {
