@@ -15,11 +15,11 @@ The protected database loader is deliberately not implemented. A bundle is a rev
 ## Implemented
 
 - YAML registry with stable university keys and official HTTPS sources.
-- Reusable CSS-card, HTML table, article/list, and Schema.org JSON-LD extraction adapters, selected through one shared adapter dispatcher.
+- Reusable CSS-card, HTML table, article/list, Schema.org JSON-LD, and PDF text extraction adapters, selected through one shared adapter dispatcher.
 - Filterable HTTPS same-origin link discovery from HTML pages and sitemap XML (`urlset` and `sitemapindex`); discovery is bounded and does not automatically crawl or fetch discovered URLs.
 - Canonical fields for universities, programs, professors, and scholarships.
 - Field-level evidence: source URL, collection timestamp, extractor, and excerpt.
-- Polite fetch: transparent User-Agent, robots.txt checks, per-host throttling, 30-day cache, bounded retries, safe redirects.
+- Polite fetch: transparent User-Agent, robots.txt checks, per-host throttling, 30-day cache, bounded retries, safe redirects, and size-limited binary PDF caching.
 - Validation warnings for missing required fields and high-risk facts requiring human review.
 - Deterministic candidate fingerprints, exact deduplication, and atomic JSONL snapshots.
 - Review CSV export with blank decision/reviewer fields.
@@ -78,5 +78,5 @@ These results validate selected extractor behaviors, not a complete three-univer
 - Do not add login-gated or personal data sources, or bypass anti-bot controls.
 - Missing data stays missing. Tuition, fees, deadlines, eligibility, scholarship coverage, and dates require human review.
 - The release bundle is not a database import. Staging tables, schema mapping, conflict policy, additive-only loader, protected approval gate, rollback plan, and production import audit are future work.
-- PDF parsing, JavaScript-rendered pages, automatic sitemap recursion/crawling, identity resolution, and cross-source entity matching are not implemented. Sitemap XML locations can be extracted for reviewed discovery only; the pipeline does not fetch them automatically.
+- PDF text extraction is implemented with page labels and bounded page/character/byte limits. Scanned image-only PDFs still require OCR, which is not implemented. Extracted text is review material; facts such as deadlines, eligibility, tuition, and scholarship coverage are not automatically inferred. JavaScript-rendered pages, automatic sitemap recursion/crawling, identity resolution, and cross-source entity matching remain unimplemented. Sitemap XML locations can be extracted for reviewed discovery only; the pipeline does not fetch them automatically.
 - Do not enable a source until an official saved fixture and tested adapter exist.
