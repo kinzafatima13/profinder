@@ -1,7 +1,7 @@
 import json
 import tempfile
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 import urllib.error
 from pathlib import Path
 
@@ -10,6 +10,7 @@ from profinder_pipeline.extract import (
     extract_article_list_candidates,
     extract_candidates,
     extract_jsonld_candidates,
+    extract_pdf_candidates,
     extract_table_candidates,
     extract_with_adapter,
 )
@@ -142,6 +143,96 @@ class PipelineTests(unittest.TestCase):
         }
         links = discover_links(source, include_patterns=[r"programs"])
         self.assertEqual(links, ["https://university.example/graduate/programs"])
+
+
+    def test_pdf_adapter_extracts_text_as_review_only_document(self):
+        class FakePage:
+            def extract_text(self):
+                return "Scholarship covers tuition. Deadline: 1 January."
+
+        class FakeReader:
+            is_encrypted = False
+            pages = [FakePage(), FakePage()]
+
+        source = {
+            "pdf_bytes": b"%PDF-fake",
+            "final_url": "https://university.example/scholarship.pdf",
+            "collected_at": "2026-11-02T00:00:00+00:00",
+        }
+        with patch("pypdf.PdfReader", return_value=FakeReader()):
+            candidates = extract_pdf_candidates("u1", source, "scholarship", "2027 Scholarship Guide")
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(candidates[0].values["name"], "2027 Scholarship Guide")
+        self.assertIn("[Page 1]", candidates[0].values["description"])
+        self.assertIn("pdf_text_extraction_review_required", candidates[0].warnings)
+        self.assertEqual(candidates[0].evidence["description"].source_url, source["final_url"])
+        self.assertNotIn("deadline", candidates[0].values)
+        self.assertNotIn("coverage", candidates[0].values)
+
+    def test_pdf_adapter_rejects_encrypted_and_oversized_documents(self):
+        class EncryptedReader:
+            is_encrypted = True
+            pages = []
+
+        source = {
+            "pdf_bytes": b"%PDF-fake",
+            "final_url": "https://university.example/secure.pdf",
+            "collected_at": "2026-11-02T00:00:00+00:00",
+        }
+        with patch("pypdf.PdfReader", return_value=EncryptedReader()):
+            with self.assertRaises(ValueError):
+                extract_pdf_candidates("u1", source, "scholarship", "Guide")
+
+        class LargeReader:
+            is_encrypted = False
+            pages = [object(), object()]
+        with patch("pypdf.PdfReader", return_value=LargeReader()):
+            with self.assertRaises(ValueError):
+                extract_pdf_candidates("u1", source, "scholarship", "Guide", max_pages=1)
+
+    def test_pdf_adapter_dispatch_requires_explicit_document_name(self):
+        source = {
+            "pdf_bytes": b"%PDF-fake",
+            "final_url": "https://university.example/guide.pdf",
+            "collected_at": "2026-11-02T00:00:00+00:00",
+        }
+        with self.assertRaises(ValueError):
+            extract_with_adapter("u1", source, "scholarship", {"type": "pdf"})
+
+
+    def test_fetch_pdf_enforces_robots_signature_size_and_binary_cache(self):
+        class Response:
+            code = 200
+            headers = {"Content-Type": "application/pdf"}
+            def __init__(self, body):
+                self.body = body
+                self.closed = False
+            def read(self, size=-1):
+                return self.body[:size]
+            def close(self):
+                self.closed = True
+
+        with tempfile.TemporaryDirectory() as directory:
+            fetcher = PoliteFetcher(directory, min_host_interval=0, sleep=lambda _: None)
+            class Robots:
+                def can_fetch(self, agent, url):
+                    return True
+            fetcher._robots_for = lambda base: Robots()
+            response = Response(b"%PDF-1.4 test")
+            fetcher._request = lambda url, headers: response
+            result = fetcher.fetch_pdf("https://university.example/guide.pdf")
+            self.assertTrue(result["pdf_bytes"].startswith(b"%PDF-"))
+            self.assertTrue(response.closed)
+            cached = fetcher.fetch_pdf("https://university.example/guide.pdf")
+            self.assertEqual(cached["pdf_bytes"], result["pdf_bytes"])
+
+            fetcher._request = lambda url, headers: Response(b"not a pdf")
+            with self.assertRaises(FetchError):
+                fetcher.fetch_pdf("https://university.example/not-pdf.pdf", cache_days=0)
+
+            fetcher._request = lambda url, headers: Response(b"%PDF-1.4 too large")
+            with self.assertRaises(FetchError):
+                fetcher.fetch_pdf("https://university.example/large.pdf", max_bytes=8)
 
     def test_normalization_maps_common_source_labels(self):
         values, warnings = normalize_values(
