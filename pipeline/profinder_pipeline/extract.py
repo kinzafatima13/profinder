@@ -196,3 +196,142 @@ def extract_article_list_candidates(
                 )
         candidates.append(Candidate(entity_type, university_key, values, evidence))
     return candidates
+
+
+def _jsonld_objects(value: Any) -> list[dict[str, Any]]:
+    """Flatten common Schema.org JSON-LD containers without guessing relationships."""
+    found: list[dict[str, Any]] = []
+    if isinstance(value, list):
+        for item in value:
+            found.extend(_jsonld_objects(item))
+    elif isinstance(value, dict):
+        if value.get("@graph") is not None:
+            found.extend(_jsonld_objects(value["@graph"]))
+        elif isinstance(value.get("itemListElement"), list):
+            for item in value["itemListElement"]:
+                found.extend(_jsonld_objects(item.get("item", item) if isinstance(item, dict) else item))
+        else:
+            found.append(value)
+    return found
+
+
+def _jsonld_path(record: dict[str, Any], path: str) -> Any:
+    current: Any = record
+    for part in path.split("."):
+        if isinstance(current, dict):
+            current = current.get(part)
+        elif isinstance(current, list) and part.isdigit() and int(part) < len(current):
+            current = current[int(part)]
+        else:
+            return None
+    if isinstance(current, dict):
+        return current.get("name") or current.get("@id") or ""
+    if isinstance(current, list):
+        return "; ".join(str(item.get("name", item)) if isinstance(item, dict) else str(item) for item in current)
+    return current
+
+
+def extract_jsonld_candidates(
+    university_key: str,
+    source: dict[str, str],
+    entity_type: str,
+    field_map: dict[str, str] | None = None,
+) -> list[Candidate]:
+    """Extract Schema.org JSON-LD using explicit paths or conservative common fields."""
+    import json
+
+    soup = BeautifulSoup(source["body"], "html.parser")
+    candidates: list[Candidate] = []
+    defaults = {
+        "name": "name", "description": "description", "official_url": "url",
+        "email": "email", "title": "jobTitle", "department": "department.name",
+        "language": "inLanguage", "duration": "timeRequired",
+        "degree_level": "educationalLevel",
+    }
+    mapping = field_map or defaults
+    for script_index, script in enumerate(soup.select('script[type="application/ld+json"]')):
+        try:
+            payload = json.loads(script.string or script.get_text())
+        except (ValueError, TypeError):
+            continue
+        for record_index, record in enumerate(_jsonld_objects(payload)):
+            values: dict[str, str] = {}
+            evidence: dict[str, Evidence] = {}
+            for field_name, path in mapping.items():
+                value = _jsonld_path(record, path)
+                if value is None:
+                    continue
+                text_value = " ".join(str(value).split())
+                if not text_value:
+                    continue
+                if field_name.endswith("_url") or field_name in {"profile_url", "official_url", "source_url"}:
+                    text_value = urljoin(source["final_url"], text_value)
+                values[field_name] = text_value
+                evidence[field_name] = _evidence(
+                    source, f"jsonld:script:{script_index}:record:{record_index}:path:{path}", text_value
+                )
+            if values:
+                candidates.append(Candidate(entity_type, university_key, values, evidence))
+    return candidates
+
+
+def discover_links(
+    source: dict[str, str],
+    include_patterns: list[str] | None = None,
+    exclude_patterns: list[str] | None = None,
+    same_origin_only: bool = True,
+) -> list[str]:
+    """Discover candidate source links; never fetch them automatically."""
+    from urllib.parse import urlparse
+
+    origin = urlparse(source["final_url"])
+    include = [re.compile(pattern, re.IGNORECASE) for pattern in (include_patterns or [])]
+    exclude = [re.compile(pattern, re.IGNORECASE) for pattern in (exclude_patterns or [])]
+    soup = BeautifulSoup(source["body"], "html.parser")
+    results: list[str] = []
+    for anchor in soup.select("a[href]"):
+        href = str(anchor.get("href", "")).strip()
+        if not href or href.startswith(("#", "mailto:", "javascript:", "tel:")):
+            continue
+        target = urljoin(source["final_url"], href)
+        parsed = urlparse(target)
+        if parsed.scheme != "https" or not parsed.hostname:
+            continue
+        if same_origin_only and (parsed.hostname or "").lower() != (origin.hostname or "").lower():
+            continue
+        if include and not any(pattern.search(target) for pattern in include):
+            continue
+        if any(pattern.search(target) for pattern in exclude):
+            continue
+        if target not in results:
+            results.append(target)
+    return results
+
+
+def extract_with_adapter(
+    university_key: str,
+    source: dict[str, str],
+    entity_type: str,
+    adapter: dict[str, Any],
+) -> list[Candidate]:
+    """Dispatch a reviewed source configuration to a shared extraction adapter."""
+    adapter_type = str(adapter.get("type", "css")).strip().lower()
+    if adapter_type == "css":
+        if not adapter.get("record_selector") or not isinstance(adapter.get("field_selectors"), dict):
+            raise ValueError("CSS adapter requires record_selector and field_selectors.")
+        return extract_candidates(university_key, source, entity_type, adapter["record_selector"], adapter["field_selectors"])
+    if adapter_type == "table":
+        return extract_table_candidates(
+            university_key, source, entity_type,
+            str(adapter.get("table_selector", "table")),
+            int(adapter.get("header_row", 0)), adapter.get("column_map"),
+        )
+    if adapter_type == "article_list":
+        return extract_article_list_candidates(
+            university_key, source, entity_type,
+            str(adapter.get("item_selector", "article li")),
+            adapter.get("title_selector"), adapter.get("context_selector"),
+        )
+    if adapter_type == "jsonld":
+        return extract_jsonld_candidates(university_key, source, entity_type, adapter.get("field_map"))
+    raise ValueError(f"Unsupported adapter type: {adapter_type}")
