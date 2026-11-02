@@ -15,7 +15,6 @@ def main() -> None:
     parser.add_argument("--registry", default="config/universities.yml")
     parser.add_argument("--university", required=True, help="Stable university key from the registry")
     parser.add_argument("--output", default="pipeline/output/candidates.jsonl")
-    parser.add_argument("--offline", action="store_true", help="Do not fetch; use cached source responses only")
     args = parser.parse_args()
 
     registry = load_registry(args.registry)
@@ -29,15 +28,18 @@ def main() -> None:
 
     with output.open("a", encoding="utf-8") as stream:
         for source in university.get("sources", []):
-            if not source.get("selectors"):
-                print(f"SKIP {source['url']}: no reviewed selectors configured")
-                continue
-            if args.offline:
-                print(f"OFFLINE mode: no network fetch performed for {source['url']}")
+            required = ("url", "entity_type", "record_selector", "field_selectors")
+            missing = [key for key in required if not source.get(key)]
+            if missing:
+                print(f"SKIP {source.get('url', '(no URL)')}: missing adapter settings {missing}")
                 continue
             page = fetcher.fetch(source["url"])
             candidates = extract_candidates(
-                args.university, page, source.get("entity_type", "program"), source["selectors"]
+                args.university,
+                page,
+                source["entity_type"],
+                source["record_selector"],
+                source["field_selectors"],
             )
             for candidate in candidates:
                 candidate = validate_candidate(candidate)
