@@ -341,5 +341,40 @@ class PipelineTests(unittest.TestCase):
             )
 
 
+    def test_sitemap_discovery_supports_namespaces_filters_and_index_files(self):
+        from profinder_pipeline.extract import discover_sitemap_urls
+
+        sitemap = """<?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+          <url><loc>https://university.example/programs/ai</loc></url>
+          <url><loc>https://university.example/faculty</loc></url>
+          <url><loc>http://university.example/insecure</loc></url>
+          <url><loc>https://other.example/programs</loc></url>
+          <url><loc>https://university.example/programs/ai</loc></url>
+        </urlset>"""
+        urls = discover_sitemap_urls(sitemap, "https://university.example/sitemap.xml",
+                                     include_patterns=[r"/programs/"])
+        self.assertEqual(urls, ["https://university.example/programs/ai"])
+
+        index = """<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+          <sitemap><loc>https://university.example/sitemap-programs.xml</loc></sitemap>
+          <sitemap><loc>https://external.example/sitemap.xml</loc></sitemap>
+        </sitemapindex>"""
+        self.assertEqual(discover_sitemap_urls(index, "https://university.example/sitemap_index.xml"),
+                         ["https://university.example/sitemap-programs.xml"])
+
+    def test_sitemap_discovery_rejects_invalid_xml_and_bounds_results(self):
+        from profinder_pipeline.extract import discover_sitemap_urls
+
+        with self.assertRaises(ValueError):
+            discover_sitemap_urls("<not-closed>", "https://university.example/sitemap.xml")
+        xml = """<urlset>
+          <url><loc>https://university.example/1</loc></url>
+          <url><loc>https://university.example/2</loc></url>
+        </urlset>"""
+        self.assertEqual(discover_sitemap_urls(xml, "https://university.example/sitemap.xml", max_urls=1),
+                         ["https://university.example/1"])
+
+
 if __name__ == "__main__":
     unittest.main()
