@@ -1,0 +1,48 @@
+{
+  "captured_at_utc": "2026-11-02",
+  "user_agent": "ProFinderNowAcademicResearchBot/0.1",
+  "robots_txt": "404 Not Found on checked hosts; no disallow directives supplied.",
+  "fixtures": [
+    {
+      "university": "Shanghai Maritime University",
+      "url": "https://en.shmtu.edu.cn/2026/1023/c6283a333085/page.htm",
+      "file": "shmtu.html",
+      "status": "captured_sanitized_dom_fragment",
+      "http_status": 200,
+      "content_type": "text/html",
+      "bytes": 938,
+      "sha256": "50e63693c70a683f9e982ee84ce8969cbc7ae38533178d14098d631819b67947",
+      "observed_structure": "Representative rows from bilingual master's catalog with title/header, rowspans and spacer rows."
+    },
+    {
+      "university": "Yangtze University",
+      "url": "https://english.yangtzeu.edu.cn/info/1022/1101.htm",
+      "file": "yangtze_scholarship.html",
+      "status": "captured_sanitized_dom_fragment",
+      "http_status": 200,
+      "content_type": "text/html",
+      "bytes": 468,
+      "sha256": "b7372c1b2c1c012bf8a6910ef2b1b6c33dcfa82ccc8db2b29c54d51838df99fd",
+      "observed_structure": "Scholarship title plus embedded PDF viewer reference; detailed scholarship text is a PDF, not rendered text in HTML."
+    },
+    {
+      "university": "Chengdu University of Technology",
+      "url": "https://www.cdut.edu.cn/en/info/1028/1932.htm",
+      "alternate_official_url": "https://cie.cdut.edu.cn/info/1059/1741.htm",
+      "file": null,
+      "status": "blocked_by_origin",
+      "http_status": 412,
+      "observed_structure": "Both official CDUT hosts returned HTTP 412 to direct fetches, including browser-like headers and homepage-cookie attempt; no HTML fixture or live extraction."
+    },
+    {
+      "university": "Yangtze University",
+      "url": "https://english.yangtzeu.edu.cn/__local/2/CF/C5/E2273866BC27B03F241A8A5BDFA_562AF240_1769837.pdf",
+      "file": null,
+      "status": "pdf_downloaded_not_parsed",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "bytes": 24549431,
+      "observed_structure": "24 MB postgraduate catalog PDF downloaded for format check; PDF extraction not implemented and binary intentionally not committed."
+    }
+  ]
+}
