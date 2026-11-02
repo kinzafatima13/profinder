@@ -163,6 +163,73 @@ def extract_document_urls(source: dict[str, str]) -> list[str]:
             found.append(url)
     return found
 
+
+
+def extract_pdf_candidates(
+    university_key: str,
+    source: dict[str, Any],
+    entity_type: str,
+    document_name: str,
+    max_pages: int = 200,
+    max_chars: int = 50000,
+) -> list[Candidate]:
+    """Extract text from a bounded PDF as a review-only document candidate.
+
+    The configured document_name is explicit source configuration, not inferred
+    scholarship metadata. No deadline, eligibility, coverage, or fee is guessed.
+    """
+    from io import BytesIO
+    from pypdf import PdfReader
+
+    if not document_name or not document_name.strip():
+        raise ValueError("PDF adapter requires a non-empty document_name.")
+    if max_pages < 1 or max_chars < 1:
+        raise ValueError("PDF max_pages and max_chars must be positive.")
+    try:
+        reader = PdfReader(BytesIO(source["pdf_bytes"]))
+    except Exception as exc:
+        raise ValueError(f"Could not parse PDF document: {exc}") from exc
+    if reader.is_encrypted:
+        raise ValueError("Encrypted PDFs are not supported; do not attempt password guessing.")
+    if len(reader.pages) > max_pages:
+        raise ValueError(f"PDF has {len(reader.pages)} pages; configured limit is {max_pages}.")
+
+    page_texts: list[str] = []
+    warnings: list[str] = []
+    remaining = max_chars
+    for page_number, page in enumerate(reader.pages, start=1):
+        try:
+            text = page.extract_text() or ""
+        except Exception as exc:
+            warnings.append(f"pdf_page_text_error:{page_number}:{type(exc).__name__}")
+            continue
+        text = " ".join(text.split())
+        if not text:
+            warnings.append(f"pdf_page_has_no_extractable_text:{page_number}")
+            continue
+        if remaining <= 0:
+            warnings.append("pdf_text_truncated:max_chars")
+            break
+        page_text = text[:remaining]
+        page_texts.append(f"[Page {page_number}] {page_text}")
+        remaining -= len(page_text)
+        if len(page_text) < len(text):
+            warnings.append("pdf_text_truncated:max_chars")
+            break
+
+    if not page_texts:
+        warnings.append("pdf_no_text_extracted_ocr_may_be_required")
+    description = "\\n\\n".join(page_texts)
+    final_url = source["final_url"]
+    collected_at = source["collected_at"]
+    values = {"name": document_name.strip(), "description": description} if description else {"name": document_name.strip()}
+    evidence = {
+        "name": Evidence(final_url, collected_at, "pdf:configured-document-name", document_name.strip()),
+    }
+    if description:
+        evidence["description"] = Evidence(final_url, collected_at, "pdf:pypdf-page-text", description[:300])
+    return [Candidate(entity_type, university_key, values, evidence, warnings)]
+
 def extract_article_list_candidates(
     university_key: str,
     source: dict[str, str],
@@ -334,6 +401,12 @@ def extract_with_adapter(
         )
     if adapter_type == "jsonld":
         return extract_jsonld_candidates(university_key, source, entity_type, adapter.get("field_map"))
+    if adapter_type == "pdf":
+        return extract_pdf_candidates(
+            university_key, source, entity_type,
+            str(adapter.get("document_name", "")),
+            int(adapter.get("max_pages", 200)), int(adapter.get("max_chars", 50000)),
+        )
     raise ValueError(f"Unsupported adapter type: {adapter_type}")
 
 
