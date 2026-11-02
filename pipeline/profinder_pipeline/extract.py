@@ -152,6 +152,17 @@ def extract_table_candidates(
     return candidates
 
 
+
+def extract_document_urls(source: dict[str, str]) -> list[str]:
+    """Discover PDF document URLs referenced by links or embedded page scripts."""
+    pattern = re.compile(r"""["']([^"'<>\\s]+\\.pdf(?:\\?[^"'<>\\s]*)?)["']""", re.IGNORECASE)
+    found: list[str] = []
+    for match in pattern.finditer(source["body"]):
+        url = urljoin(source["final_url"], match.group(1))
+        if url not in found:
+            found.append(url)
+    return found
+
 def extract_article_list_candidates(
     university_key: str,
     source: dict[str, str],
