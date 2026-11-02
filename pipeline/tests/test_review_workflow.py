@@ -80,6 +80,23 @@ class ReviewWorkflowTests(unittest.TestCase):
         with self.assertRaises(ReviewError):
             export_review_csv(self.snapshot, self.csv_path)
 
+    def test_review_csv_cannot_change_source_evidence(self):
+        export_review_csv(self.snapshot, self.csv_path)
+        with self.csv_path.open(encoding="utf-8", newline="") as stream:
+            rows = list(csv.DictReader(stream))
+        rows[0]["decision"] = "approved"
+        rows[0]["reviewer"] = "reviewer@example.org"
+        rows[0]["evidence_json"] = "{}"
+        rows[1]["decision"] = "rejected"
+        rows[1]["reviewer"] = "reviewer@example.org"
+        with self.csv_path.open("w", encoding="utf-8", newline="") as stream:
+            writer = csv.DictWriter(stream, fieldnames=rows[0].keys())
+            writer.writeheader()
+            writer.writerows(rows)
+        with self.assertRaises(ReviewError):
+            build_release_bundle(self.snapshot, self.csv_path, self.bundle)
+        self.assertFalse(self.bundle.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
