@@ -14,7 +14,7 @@ from .validate import validate_candidate
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Collect university data into review-only candidate files.")
-    parser.add_argument("--registry", default="config/universities.yml")
+    parser.add_argument("--registry", default="pipeline/config/universities.yml")
     parser.add_argument("--university", required=True, help="Stable university key from the registry")
     parser.add_argument("--output", default="pipeline/output/candidates.jsonl")
     args = parser.parse_args()
