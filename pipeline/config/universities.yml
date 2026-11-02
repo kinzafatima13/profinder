@@ -1,0 +1,3 @@
+# Add only verified university entries. Do not fabricate source URLs or selectors.
+# Each source must be an official university page and have reviewed selectors.
+universities: []
