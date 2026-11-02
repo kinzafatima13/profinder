@@ -8,9 +8,9 @@ from typing import Any
 # labels/selectors into these names; downstream validation/review stays generic.
 CANONICAL_FIELDS: dict[str, tuple[str, ...]] = {
     "university": ("name", "country", "city", "official_url", "source_url"),
-    "program": ("name", "degree_level", "field", "language", "duration", "tuition", "application_fee", "deadline", "start_date", "official_url", "source_url"),
-    "professor": ("name", "title", "department", "research_interests", "email", "profile_url", "orcid", "source_url"),
-    "scholarship": ("name", "provider", "degree_level", "coverage", "eligibility", "deadline", "official_url", "source_url"),
+    "program": ("name", "degree_level", "field", "language", "duration", "tuition", "application_fee", "deadline", "start_date", "description", "official_url", "source_url"),
+    "professor": ("name", "title", "department", "research_interests", "email", "profile_url", "orcid", "description", "source_url"),
+    "scholarship": ("name", "provider", "degree_level", "coverage", "eligibility", "deadline", "description", "official_url", "source_url"),
 }
 
 ALIASES = {
@@ -20,7 +20,7 @@ ALIASES = {
     "application_deadline": "deadline", "closing_date": "deadline",
     "application_cost": "application_fee", "fee": "application_fee",
     "annual_tuition": "tuition", "tuition_fee": "tuition",
-    "official_website": "official_url", "website": "official_url",
+    "official_website": "official_url", "website": "official_url",\n    "major": "name", "program": "name", "programme": "name",\n    "study_period": "duration", "academic_duration": "duration",\n    "language_of_instruction": "language", "language_used_in_teaching": "language",\n    "college": "department", "school": "department", "faculty": "department",\n    "description": "description", "program_description": "description",
     "profile": "profile_url", "faculty_profile": "profile_url",
     "research_area": "research_interests", "research_interest": "research_interests",
 }
