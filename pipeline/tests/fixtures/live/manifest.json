@@ -10,8 +10,6 @@
       "status": "captured_sanitized_dom_fragment",
       "http_status": 200,
       "content_type": "text/html",
-      "bytes": 938,
-      "sha256": "50e63693c70a683f9e982ee84ce8969cbc7ae38533178d14098d631819b67947",
       "observed_structure": "Representative rows from bilingual master's catalog with title/header, rowspans and spacer rows."
     },
     {
@@ -21,8 +19,6 @@
       "status": "captured_sanitized_dom_fragment",
       "http_status": 200,
       "content_type": "text/html",
-      "bytes": 468,
-      "sha256": "b7372c1b2c1c012bf8a6910ef2b1b6c33dcfa82ccc8db2b29c54d51838df99fd",
       "observed_structure": "Scholarship title plus embedded PDF viewer reference; detailed scholarship text is a PDF, not rendered text in HTML."
     },
     {
@@ -41,7 +37,6 @@
       "status": "pdf_downloaded_not_parsed",
       "http_status": 200,
       "content_type": "application/pdf",
-      "bytes": 24549431,
       "observed_structure": "24 MB postgraduate catalog PDF downloaded for format check; PDF extraction not implemented and binary intentionally not committed."
     }
   ]
