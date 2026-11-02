@@ -164,7 +164,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(len(candidates), 1)
         self.assertEqual(candidates[0].values["name"], "2027 Scholarship Guide")
         self.assertIn("[Page 1]", candidates[0].values["description"])
-        self.assertIn("\\n\\n", candidates[0].values["description"])
+        self.assertIn("\n\n", candidates[0].values["description"])
         self.assertIn("pdf_text_extraction_review_required", candidates[0].warnings)
         self.assertEqual(candidates[0].evidence["description"].source_url, source["final_url"])
         self.assertNotIn("deadline", candidates[0].values)
