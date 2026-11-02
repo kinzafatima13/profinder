@@ -20,7 +20,12 @@ ALIASES = {
     "application_deadline": "deadline", "closing_date": "deadline",
     "application_cost": "application_fee", "fee": "application_fee",
     "annual_tuition": "tuition", "tuition_fee": "tuition",
-    "official_website": "official_url", "website": "official_url",\n    "major": "name", "program": "name", "programme": "name",\n    "study_period": "duration", "academic_duration": "duration",\n    "language_of_instruction": "language", "language_used_in_teaching": "language",\n    "college": "department", "school": "department", "faculty": "department",\n    "description": "description", "program_description": "description",
+    "official_website": "official_url", "website": "official_url",
+    "major": "name", "program": "name", "programme": "name",
+    "study_period": "duration", "academic_duration": "duration",
+    "language_of_instruction": "language", "language_used_in_teaching": "language",
+    "college": "department", "school": "department", "faculty": "department",
+    "description": "description", "program_description": "description",
     "profile": "profile_url", "faculty_profile": "profile_url",
     "research_area": "research_interests", "research_interest": "research_interests",
 }
