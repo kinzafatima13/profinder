@@ -197,3 +197,73 @@ class PoliteFetcher:
             cache_file.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
             return result
         raise FetchError(f"Too many redirects while fetching {url}")
+
+
+    def fetch_pdf(
+        self,
+        url: str,
+        cache_days: int = 30,
+        max_bytes: int = 20_000_000,
+    ) -> dict:
+        """Fetch a bounded PDF using the same robots, redirect, retry and throttle rules."""
+        self._origin(url)
+        if max_bytes < 5:
+            raise FetchError("PDF size limit must be at least 5 bytes.")
+        key = hashlib.sha256(url.encode("utf-8")).hexdigest()
+        cache_file = self.cache_dir / f"{key}.pdf"
+        metadata_file = self.cache_dir / f"{key}.pdf.json"
+        if cache_file.exists() and metadata_file.exists():
+            metadata = json.loads(metadata_file.read_text(encoding="utf-8"))
+            age = time.time() - float(metadata.get("fetched_epoch", 0))
+            if age < cache_days * 86400:
+                cached_bytes = cache_file.read_bytes()
+                if cached_bytes.startswith(b"%PDF-"):
+                    return {**metadata, "pdf_bytes": cached_bytes}
+
+        current = url
+        headers = {
+            "User-Agent": self.user_agent,
+            "Accept": "application/pdf,application/octet-stream;q=0.9,*/*;q=0.5",
+        }
+        for redirect_count in range(self.max_redirects + 1):
+            base = self._origin(current)
+            robots = self._robots_for(base)
+            if not robots.can_fetch(self.user_agent, current):
+                raise FetchError(f"robots.txt disallows this URL: {current}")
+            response = self._request(current, headers)
+            if response.code in self.REDIRECT_CODES:
+                location = response.headers.get("Location")
+                response.close()
+                if not location:
+                    raise FetchError(f"Redirect from {current} did not include a Location header.")
+                if redirect_count >= self.max_redirects:
+                    raise FetchError(f"Too many redirects while fetching {url}")
+                current = urllib.parse.urljoin(current, location)
+                self._origin(current)
+                continue
+            try:
+                if response.code >= 400:
+                    raise FetchError(f"PDF fetch failed for {current}: HTTP {response.code}")
+                content_type = response.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+                body = response.read(max_bytes + 1)
+                if len(body) > max_bytes:
+                    raise FetchError(f"PDF exceeds the configured {max_bytes}-byte size limit.")
+                if not body.startswith(b"%PDF-"):
+                    raise FetchError(
+                        f"Response from {current} is not a valid PDF signature (Content-Type: {content_type or 'unknown'})."
+                    )
+                if content_type not in {"application/pdf", "application/octet-stream", ""}:
+                    raise FetchError(f"Unexpected PDF Content-Type from {current}: {content_type}")
+                metadata = {
+                    "url": url,
+                    "final_url": current,
+                    "content_type": content_type or "application/pdf",
+                    "collected_at": utc_now(),
+                    "fetched_epoch": str(time.time()),
+                }
+            finally:
+                response.close()
+            cache_file.write_bytes(body)
+            metadata_file.write_text(json.dumps(metadata, ensure_ascii=False), encoding="utf-8")
+            return {**metadata, "pdf_bytes": body}
+        raise FetchError(f"Too many redirects while fetching {url}")
