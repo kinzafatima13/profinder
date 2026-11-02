@@ -15,7 +15,8 @@ The protected database loader is deliberately not implemented. A bundle is a rev
 ## Implemented
 
 - YAML registry with stable university keys and official HTTPS sources.
-- Reusable CSS, HTML table, and article-list extraction adapters.
+- Reusable CSS-card, HTML table, article/list, and Schema.org JSON-LD extraction adapters, selected through one shared adapter dispatcher.
+- Filterable HTTPS same-origin link discovery for identifying candidate source pages; discovery does not automatically crawl or fetch links.
 - Canonical fields for universities, programs, professors, and scholarships.
 - Field-level evidence: source URL, collection timestamp, extractor, and excerpt.
 - Polite fetch: transparent User-Agent, robots.txt checks, per-host throttling, 30-day cache, bounded retries, safe redirects.
@@ -77,5 +78,5 @@ These results validate selected extractor behaviors, not a complete three-univer
 - Do not add login-gated or personal data sources, or bypass anti-bot controls.
 - Missing data stays missing. Tuition, fees, deadlines, eligibility, scholarship coverage, and dates require human review.
 - The release bundle is not a database import. Staging tables, schema mapping, conflict policy, additive-only loader, protected approval gate, rollback plan, and production import audit are future work.
-- PDF parsing, JavaScript-rendered pages, identity resolution, and cross-source entity matching are not implemented.
+- PDF parsing, JavaScript-rendered pages, sitemap crawling, identity resolution, and cross-source entity matching are not implemented.
 - Do not enable a source until an official saved fixture and tested adapter exist.
