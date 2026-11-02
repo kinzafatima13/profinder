@@ -51,3 +51,13 @@ This branch is the safe foundation for the data-pipeline implementation. It is b
 ## First implementation gate
 
 Before adding a loader, document and test the database target for every entry point. At present, the app's Vercel runtime routing and direct `new PrismaClient()` scripts may use different database targets. This must be resolved before any import script is run against a live environment.
+
+### Read-only inventory (implemented)
+
+The first tool is `scripts/audit-academic-data.ts`, exposed as `npm run audit:academic-data`. It reports aggregate counts and source-coverage gaps only. It refuses to run unless you explicitly opt in and confirm the exact SQLite file path; it also refuses to run on Vercel. It makes no create/update/delete calls and does not print personal records or connection credentials.
+
+Run it only against a local copy or a disposable test database that matches the current SQLite Prisma schema:
+
+`npm run audit:academic-data -- --allow-read-only-audit --expected-target=sqlite:/absolute/path/to/repository/prisma/dev.db`
+
+Replace the example path with the exact absolute path to the SQLite file selected by your local `DATABASE_URL`. The script intentionally cannot audit a persistent Neon database from this branch because the current Prisma schema is SQLite. Do not switch the schema or point the app at Neon as part of this inventory step.
