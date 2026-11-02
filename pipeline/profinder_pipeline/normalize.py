@@ -14,7 +14,7 @@ CANONICAL_FIELDS: dict[str, tuple[str, ...]] = {
 }
 
 ALIASES = {
-    "programme": "name", "program_name": "name", "course_name": "name",
+    "programme": "name", "programme_name": "name", "program_name": "name", "course_name": "name",
     "professor_name": "name", "faculty_name": "name", "academic_name": "name",
     "professor_email": "email", "contact_email": "email",
     "application_deadline": "deadline", "closing_date": "deadline",
