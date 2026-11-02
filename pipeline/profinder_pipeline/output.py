@@ -61,7 +61,7 @@ def write_jsonl_atomic(path: str | Path, candidates: list[Candidate]) -> None:
             for candidate in candidates:
                 record = candidate.to_dict()
                 record["candidate_id"] = candidate_fingerprint(candidate)
-                stream.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\\n")
+                stream.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
             stream.flush()
             os.fsync(stream.fileno())
 
