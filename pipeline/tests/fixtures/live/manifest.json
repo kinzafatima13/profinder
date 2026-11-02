@@ -38,6 +38,15 @@
       "http_status": 200,
       "content_type": "application/pdf",
       "observed_structure": "24 MB postgraduate catalog PDF downloaded for format check; PDF extraction not implemented and binary intentionally not committed."
+    },
+    {
+      "university": "Yangtze University",
+      "url": "https://english.yangtzeu.edu.cn/__local/D/E1/A1/0AFC61D4A6CB6487EC5F91E637B_7D2C7DD5_6EE773.pdf",
+      "file": null,
+      "status": "official_pdf_text_indexed_binary_fetch_unavailable",
+      "http_status": null,
+      "content_type": "application/pdf",
+      "observed_structure": "Official Silk Road Scholarship brochure; browser PDF text extraction exposes 10 pages of selectable text. Direct binary download into the development runtime failed, so pypdf has not yet been run against the original binary. This is distinct from the Type A PDF."
     }
   ]
 }
