@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from pathlib import Path
 
-from profinder_pipeline.extract import extract_candidates, extract_table_candidates
+from profinder_pipeline.extract import extract_candidates, extract_document_urls, extract_table_candidates
 from profinder_pipeline.normalize import normalize_values
 from profinder_pipeline.output import deduplicate_candidates
 from profinder_pipeline.validate import validate_candidate
@@ -75,6 +75,10 @@ class LiveUniversityFixtureTests(unittest.TestCase):
         self.assertIn("name", candidate.evidence)
         self.assertEqual(candidate.evidence["name"].source_url, source["final_url"])
         self.assertEqual(candidate.warnings, [])
+        document_urls = extract_document_urls(source)
+        self.assertEqual(len(document_urls), 1)
+        self.assertTrue(document_urls[0].endswith(".pdf"))
+        self.assertTrue(document_urls[0].startswith("https://english.yangtzeu.edu.cn/"))
 
     def test_fixture_manifest_hashes_match_saved_html(self):
         manifest = json.loads((FIXTURES / "manifest.json").read_text(encoding="utf-8"))
