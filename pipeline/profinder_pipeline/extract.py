@@ -155,7 +155,7 @@ def extract_table_candidates(
 
 def extract_document_urls(source: dict[str, str]) -> list[str]:
     """Discover PDF document URLs referenced by links or embedded page scripts."""
-    pattern = re.compile(r"""["']([^"'<>\\s]+\\.pdf(?:\\?[^"'<>\\s]*)?)["']""", re.IGNORECASE)
+    pattern = re.compile(r"""["']([^"'<>\s]+\.pdf(?:\?[^"'<>\s]*)?)["']""", re.IGNORECASE)
     found: list[str] = []
     for match in pattern.finditer(source["body"]):
         url = urljoin(source["final_url"], match.group(1))
