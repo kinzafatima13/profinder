@@ -5,7 +5,7 @@ from unittest.mock import Mock
 import urllib.error
 from pathlib import Path
 
-from profinder_pipeline.extract import extract_candidates
+from profinder_pipeline.extract import (\n    extract_article_list_candidates,\n    extract_candidates,\n    extract_table_candidates,\n)
 from profinder_pipeline.fetch import FetchError, PoliteFetcher
 from profinder_pipeline.models import Candidate, Evidence
 from profinder_pipeline.normalize import normalize_values
@@ -41,7 +41,59 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(candidates[0].values, {"name": "MS Computer Science", "language": "English"})
         self.assertEqual(candidates[0].evidence["name"].source_url, source["final_url"])
 
-    def test_normalization_maps_common_source_labels(self):
+
+    def test_table_extractor_maps_bilingual_catalog_headers(self):
+        source = {
+            "body": """
+            <table><tr><th>College/学院</th><th>Major/专业名称</th>
+            <th>Language used in Teaching/授课语言</th><th>Study Period/学习期间</th></tr>
+            <tr><td>Information Engineering College</td><td>Computer Technology</td>
+            <td>English</td><td>3 years</td></tr></table>
+            """,
+            "final_url": "https://catalog.example.edu/programs",
+            "collected_at": "2026-11-02T00:00:00+00:00",
+        }
+        candidates = extract_table_candidates("sample-u", source, "program")
+        self.assertEqual(len(candidates), 1)
+        values, warnings = normalize_values("program", candidates[0].values)
+        self.assertEqual(values["name"], "Computer Technology")
+        self.assertEqual(values["department"], "Information Engineering College")
+        self.assertEqual(values["language"], "English")
+        self.assertEqual(values["duration"], "3 years")
+        self.assertEqual(warnings, [])
+        self.assertIn("name", candidates[0].evidence)
+        self.assertIn("table:", candidates[0].evidence["name"].extractor)
+
+    def test_table_extractor_supports_explicit_column_map_and_links(self):
+        source = {
+            "body": '<table><tr><th>名称</th><th>详情</th></tr>'
+                    '<tr><td>MSc AI</td><td><a href="../ai">Official page</a></td></tr></table>',
+            "final_url": "https://university.example/admissions/catalog",
+            "collected_at": "2026-11-02T00:00:00+00:00",
+        }
+        candidates = extract_table_candidates(
+            "sample-u", source, "program",
+            column_map={"name": 0, "official_url": 1},
+        )
+        self.assertEqual(candidates[0].values["official_url"],
+                         "https://university.example/ai")
+
+    def test_article_list_extractor_keeps_only_observed_text(self):
+        source = {
+            "body": '<article><ul><li><strong>Computer Science</strong>'
+                    '<p>Research-led postgraduate study</p></li>'
+                    '<li><strong>Software Engineering</strong></li></ul></article>',
+            "final_url": "https://university.example/admissions",
+            "collected_at": "2026-11-02T00:00:00+00:00",
+        }
+        candidates = extract_article_list_candidates(
+            "sample-u", source, "program", "article li", "strong", "p"
+        )
+        self.assertEqual(len(candidates), 2)
+        self.assertEqual(candidates[0].values["name"], "Computer Science")
+        values, warnings = normalize_values("program", candidates[0].values)
+        self.assertEqual(values["description"], "Research-led postgraduate study")
+\n    def test_normalization_maps_common_source_labels(self):
         values, warnings = normalize_values(
             "program",
             {"Programme Name": " MSc AI ", "Application Deadline": "2027-01-15", "Unknown": "x"},
