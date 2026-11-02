@@ -66,7 +66,7 @@ The command refuses incomplete or inconsistent review decisions. The ZIP contain
 ## Current live-source validation (2026-11-02)
 
 - Shanghai Maritime University: official 2027 master's catalog fetched successfully (HTTP 200); 36 raw table candidates, 19 unique after exact deduplication. A representative sanitized DOM fixture is covered by regression tests.
-- Yangtze University: official scholarship announcement fetched successfully (HTTP 200); title and embedded PDF URL discovered. Scholarship body and postgraduate catalog PDF are not parsed.
+- Yangtze University: official 2026–2027 Silk Road Scholarship announcement identified; its official brochure is a 10-page searchable PDF. Browser-side PDF text extraction confirms selectable text and exposes scholarship requirements, but direct binary download into the development runtime failed, so the local pypdf adapter has not yet been verified against this exact binary. The separate Type A bilateral PDF must not be mistaken for the Silk Road Type B brochure.
 - Chengdu University of Technology: official English and international-college hosts returned HTTP 412 to direct fetches. No live fixture or live extraction is claimed.
 
 These results validate selected extractor behaviors, not a complete three-university production adapter set. The executable registry remains empty. Do not invent selectors or infer missing program/scholarship fields.
@@ -78,5 +78,5 @@ These results validate selected extractor behaviors, not a complete three-univer
 - Do not add login-gated or personal data sources, or bypass anti-bot controls.
 - Missing data stays missing. Tuition, fees, deadlines, eligibility, scholarship coverage, and dates require human review.
 - The release bundle is not a database import. Staging tables, schema mapping, conflict policy, additive-only loader, protected approval gate, rollback plan, and production import audit are future work.
-- PDF text extraction is implemented with page labels and bounded page/character/byte limits. Scanned image-only PDFs still require OCR, which is not implemented. Extracted text is review material; facts such as deadlines, eligibility, tuition, and scholarship coverage are not automatically inferred. JavaScript-rendered pages, automatic sitemap recursion/crawling, identity resolution, and cross-source entity matching remain unimplemented. Sitemap XML locations can be extracted for reviewed discovery only; the pipeline does not fetch them automatically.
+- PDF text extraction is implemented with page labels and bounded page/character/byte limits. Extracted pages are separated by actual blank lines. Scanned image-only PDFs still require OCR, which is not implemented. Extracted text is review material; facts such as deadlines, eligibility, tuition, and scholarship coverage are not automatically inferred. JavaScript-rendered pages, automatic sitemap recursion/crawling, identity resolution, and cross-source entity matching remain unimplemented. Sitemap XML locations can be extracted for reviewed discovery only; the pipeline does not fetch them automatically.
 - Do not enable a source until an official saved fixture and tested adapter exist.
