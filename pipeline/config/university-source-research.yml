@@ -1,0 +1,49 @@
+# Verified source inventory for adapter development only.
+# This file is NOT the production collection registry. URLs are official university sources
+# discovered during research; selectors and extraction coverage remain unapproved until
+# raw HTML/PDF fixtures are captured, reviewed, and tested.
+universities:
+  - key: cdut
+    name: Chengdu University of Technology
+    country: China
+    sources:
+      - entity_type: program
+        url: https://www.cdut.edu.cn/en/info/1028/1932.htm
+        source_format: html
+        observed_structure: admissions guide with postgraduate program catalog
+        adapter_status: needs_saved_official_html_fixture_and_selector_review
+        verified_facts:
+          - bilingual postgraduate programs are listed by college, major, teaching language, and duration
+        source_checked: "2026-11-02"
+  - key: yangtze-university
+    name: Yangtze University
+    country: China
+    sources:
+      - entity_type: program
+        url: https://english.yangtzeu.edu.cn/__local/2/CF/C5/E2273866BC27B03F241A8A5BDFA_562AF240_1769837.pdf
+        source_format: pdf
+        observed_structure: postgraduate program table in international admissions guide
+        adapter_status: blocked_until_pdf_extractor_and_fixture_exist
+        verified_facts:
+          - postgraduate programs include academic duration and language of instruction
+        source_checked: "2026-11-02"
+      - entity_type: scholarship
+        url: https://english.yangtzeu.edu.cn/info/1022/1101.htm
+        source_format: html
+        observed_structure: scholarship announcement article
+        adapter_status: needs_saved_official_html_fixture_and_selector_review
+        verified_facts:
+          - official page announces the 2026-2027 CSC Silk Road Scholarship Type B
+        source_checked: "2026-11-02"
+  - key: shanghai-maritime-university
+    name: Shanghai Maritime University
+    country: China
+    sources:
+      - entity_type: program
+        url: https://en.shmtu.edu.cn/2026/1023/c6283a333085/page.htm
+        source_format: html
+        observed_structure: 2027 international master's program catalog table
+        adapter_status: needs_saved_official_html_fixture_and_selector_review
+        verified_facts:
+          - catalog lists college, major, teaching language, degree type, and study period
+        source_checked: "2026-11-02"
