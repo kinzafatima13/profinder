@@ -8,7 +8,7 @@ from typing import Any
 # labels/selectors into these names; downstream validation/review stays generic.
 CANONICAL_FIELDS: dict[str, tuple[str, ...]] = {
     "university": ("name", "country", "city", "official_url", "source_url"),
-    "program": ("name", "degree_level", "field", "language", "duration", "tuition", "application_fee", "deadline", "start_date", "description", "official_url", "source_url"),
+    "program": ("name", "degree_level", "field", "department", "language", "duration", "tuition", "application_fee", "deadline", "start_date", "description", "official_url", "source_url"),
     "professor": ("name", "title", "department", "research_interests", "email", "profile_url", "orcid", "description", "source_url"),
     "scholarship": ("name", "provider", "degree_level", "coverage", "eligibility", "deadline", "description", "official_url", "source_url"),
 }
