@@ -2,54 +2,30 @@
 
 ## Purpose
 
-One reusable pipeline serves every university. University differences live in
-small, reviewed source-adapter configurations; fetching, evidence capture,
-normalization, validation, review output, and (later) loading are shared.
+One reusable pipeline serves every university. University differences live in small, reviewed source-adapter configurations; fetching, evidence capture, normalization, validation, and review output remain shared.
 
-**This implementation is collection-only.** It writes JSONL candidate files
-under `pipeline/output/`. It does not connect to Prisma, SQLite, Neon, or the
-production application database.
+**This implementation is collection + human-review bundle only.** It writes local JSONL snapshots, review CSVs, and checksummed ZIP bundles. It does not connect to Prisma, SQLite, Neon, or the production application database.
 
 ## Shared workflow
 
-`official source registry -> polite fetch/cache -> adapter extraction -> canonical normalization -> validation -> review candidates`
+`official source registry -> polite fetch/cache -> adapter extraction -> canonical normalization -> validation -> JSONL snapshot -> human review CSV -> checksummed approved release bundle`
 
-Planned next stages are identity matching, isolated staging, release bundles,
-human review, dry-run diffs, and a separately protected additive loader. Those
-stages are not enabled by this first implementation.
+The protected database loader is deliberately not implemented. A bundle is a reviewed artifact, not authorization to import it. Database staging and an additive, schema-aware loader require a separately reviewed implementation and explicit production approval.
 
-## What is implemented
+## Implemented
 
-- A YAML university registry with stable university keys and official HTTPS sources.
-- Reusable CSS source adapters: one record selector and field selectors per
-  source page, rather than custom scraping code per university.
-- A common canonical field vocabulary for universities, programs, professors,
-  and scholarships.
+- YAML registry with stable university keys and official HTTPS sources.
+- Reusable CSS, HTML table, and article-list extraction adapters.
+- Canonical fields for universities, programs, professors, and scholarships.
 - Field-level evidence: source URL, collection timestamp, extractor, and excerpt.
-- Polite HTTP fetching: transparent User-Agent, robots.txt checks, per-host
-  minimum 2.5-second interval, 30-day response cache, bounded response size.
-- Validation warnings for missing required fields, missing evidence, and
-  human-review fields such as tuition, fees, deadlines, coverage, and dates.
-- Deterministic candidate fingerprints and within-run duplicate removal.
-- Atomic snapshot output: each successful run replaces the previous JSONL file;
-  failed collection or serialization leaves the last successful snapshot intact.
-- Unit tests for registry validation, extraction/evidence, normalization,
-  human-review flags, deduplication, and repeatable output.
-
-## Add a university
-
-1. Verify its official admissions, program, scholarship, or faculty page.
-2. Add a stable key and source URL to `pipeline/config/universities.yml`.
-3. Configure a record selector for one repeated card/row and field selectors
-   relative to that record.
-4. Map extracted labels to canonical field names using
-   `profinder_pipeline/normalize.py`. Unknown fields are flagged, not silently
-   added to the shared schema.
-5. Add a saved HTML fixture and extraction test for the new source adapter.
-6. Run the pipeline and review candidate evidence before any future staging.
-
-See `pipeline/config/universities.example.yml` for the adapter shape. The
-example domain is illustrative and must not be treated as a real source.
+- Polite fetch: transparent User-Agent, robots.txt checks, per-host throttling, 30-day cache, bounded retries, safe redirects.
+- Validation warnings for missing required fields and high-risk facts requiring human review.
+- Deterministic candidate fingerprints, exact deduplication, and atomic JSONL snapshots.
+- Review CSV export with blank decision/reviewer fields.
+- Review bundle creation only after every candidate has an explicit approved/rejected decision and a non-empty reviewer.
+- Candidate fingerprint verification before review; unknown, duplicate, missing, or invalid decisions fail closed.
+- Checksummed release ZIP containing approved records, review log, and manifest. Rejected records are excluded from the approved payload.
+- Unit tests for collection, extraction, normalization, review validation, tamper detection, and release contents.
 
 ## Setup and test
 
@@ -60,45 +36,46 @@ python -m pip install -r pipeline/requirements.txt
 PYTHONPATH=pipeline python -m unittest discover -s pipeline/tests -v
 ```
 
-To collect from a configured university:
+## Collect candidates
 
 ```bash
 PYTHONPATH=pipeline python -m profinder_pipeline.cli --university <stable-key>
 ```
 
-Output defaults to `pipeline/output/candidates.jsonl`. Each successful run writes
-  a fresh snapshot rather than appending; identical normalized records are
-  deduplicated within the run and receive a stable `candidate_id`. If collection
-  fails or returns no candidates, the previous snapshot is preserved. Cache files live in
-`pipeline/.cache/`; both paths are ignored by Git.
+Output defaults to `pipeline/output/candidates.jsonl`. The registry is intentionally empty until official source URLs and selectors have been verified and tested.
 
-## Safety boundaries
+## Human review
 
-- Only explicit HTTPS source URLs are accepted.
-- The fetcher checks robots.txt and fails closed if it cannot verify access,
-  except when robots.txt returns HTTP 404.
-- Do not add login-gated, personal, or non-public data sources.
-- Do not bypass access controls, rate limits, or anti-bot protections.
-- Missing data stays missing. Do not infer tuition, fees, deadlines, eligibility,
-  scholarship coverage, current employment, or contact details.
-- Aggregator records are not proof of current university affiliation.
-- Every candidate is unverified until reviewed.
-- This pipeline has no database loader and cannot modify live ProFinderNow data.
+Export a review CSV:
 
-## Current university source research (2026-11-02)\n\n`config/university-source-research.yml` records three official source families for adapter work: CDUT's postgraduate admissions guide (HTML), Yangtze University's postgraduate catalog PDF and scholarship announcement (PDF + HTML), and Shanghai Maritime University's 2027 master's catalog (HTML). This is a research manifest, not an executable registry. No live selectors have been approved and no candidate data is asserted from these sources yet. The HTML table extractor is covered by synthetic fixtures, including bilingual headers; it still needs saved, reviewed HTML fixtures from each university before a live adapter can be marked verified. Yangtze University's catalog is PDF, and PDF extraction is not implemented; that source remains explicitly blocked rather than being silently skipped.\n\n## Current limitations
+```bash
+PYTHONPATH=pipeline python -m profinder_pipeline.review_cli export --input pipeline/output/candidates.jsonl --csv pipeline/output/review.csv
+```
 
-- CSS selectors are source-specific and need review; there is no universal
-  selector that can reliably parse every university site.
-- PDF parsing, JavaScript-rendered pages, authenticated portals, identity
-  resolution, duplicate matching, release signing, staging, and loading are not
-  implemented yet.
-- JSON-LD is not yet promoted into canonical fields.
-- The registry currently contains no invented university entries. Add verified
-  official sources and tested adapters in small batches.
+Open the CSV and fill `decision` with exactly `approved` or `rejected` for every row, and fill `reviewer`. Optional notes go in `review_notes`. Do not edit candidate IDs or source evidence.
 
-## Development status
+Build the release bundle:
 
-The pipeline is being developed on `feat/review-first-data-pipeline`. Keep it
-separate from `main` until the unit tests, adapter fixtures, and review flow
-are complete. Do not connect it to the production database as part of routine
-collection.
+```bash
+PYTHONPATH=pipeline python -m profinder_pipeline.review_cli bundle --input pipeline/output/candidates.jsonl --decisions pipeline/output/review.csv --output pipeline/output/release.zip
+```
+
+The command refuses incomplete or inconsistent review decisions. The ZIP contains `manifest.json`, `approved.jsonl`, and `review_log.json`. The manifest includes SHA-256 checksums and explicitly states that no database write occurred and no loader is included.
+
+## Current live-source validation (2026-11-02)
+
+- Shanghai Maritime University: official 2027 master's catalog fetched successfully (HTTP 200); 36 raw table candidates, 19 unique after exact deduplication. A representative sanitized DOM fixture is covered by regression tests.
+- Yangtze University: official scholarship announcement fetched successfully (HTTP 200); title and embedded PDF URL discovered. Scholarship body and postgraduate catalog PDF are not parsed.
+- Chengdu University of Technology: official English and international-college hosts returned HTTP 412 to direct fetches. No live fixture or live extraction is claimed.
+
+These results validate selected extractor behaviors, not a complete three-university production adapter set. The executable registry remains empty. Do not invent selectors or infer missing program/scholarship fields.
+
+## Safety boundaries and remaining work
+
+- Collection and review commands never open an application database.
+- No student, billing, application, subscription, or Apply for Me data is accessed or modified.
+- Do not add login-gated or personal data sources, or bypass anti-bot controls.
+- Missing data stays missing. Tuition, fees, deadlines, eligibility, scholarship coverage, and dates require human review.
+- The release bundle is not a database import. Staging tables, schema mapping, conflict policy, additive-only loader, protected approval gate, rollback plan, and production import audit are future work.
+- PDF parsing, JavaScript-rendered pages, identity resolution, and cross-source entity matching are not implemented.
+- Do not enable a source until an official saved fixture and tested adapter exist.
