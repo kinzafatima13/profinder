@@ -5,7 +5,11 @@ from unittest.mock import Mock
 import urllib.error
 from pathlib import Path
 
-from profinder_pipeline.extract import (\n    extract_article_list_candidates,\n    extract_candidates,\n    extract_table_candidates,\n)
+from profinder_pipeline.extract import (
+    extract_article_list_candidates,
+    extract_candidates,
+    extract_table_candidates,
+)
 from profinder_pipeline.fetch import FetchError, PoliteFetcher
 from profinder_pipeline.models import Candidate, Evidence
 from profinder_pipeline.normalize import normalize_values
@@ -93,7 +97,8 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(candidates[0].values["name"], "Computer Science")
         values, warnings = normalize_values("program", candidates[0].values)
         self.assertEqual(values["description"], "Research-led postgraduate study")
-\n    def test_normalization_maps_common_source_labels(self):
+
+    def test_normalization_maps_common_source_labels(self):
         values, warnings = normalize_values(
             "program",
             {"Programme Name": " MSc AI ", "Application Deadline": "2027-01-15", "Unknown": "x"},
