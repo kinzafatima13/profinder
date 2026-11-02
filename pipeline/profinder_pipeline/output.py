@@ -14,7 +14,7 @@ def candidate_fingerprint(candidate: Candidate) -> str:
     identity = {
         "entity_type": candidate.entity_type,
         "university_key": candidate.university_key,
-        "values": candidate.values,
+        "values": {key: value for key, value in candidate.values.items() if key != "source_url"},
     }
     canonical = json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
