@@ -40,7 +40,7 @@ def main() -> None:
         if not isinstance(adapter, dict):
             raise SystemExit(f"Invalid adapter configuration for {source.get('url')}. No snapshot was written.")
         adapter_type = str(adapter.get("type", "css")).lower()
-        adapter_required = {"css": ("record_selector", "field_selectors"), "table": (), "article_list": (), "jsonld": ()}
+        adapter_required = {"css": ("record_selector", "field_selectors"), "table": (), "article_list": (), "jsonld": (), "pdf": ("document_name",)}
         if adapter_type not in adapter_required:
             raise SystemExit(f"Unsupported adapter type '{adapter_type}' for {source.get('url')}'. No snapshot was written.")
         missing.extend(key for key in adapter_required[adapter_type] if not adapter.get(key))
@@ -50,7 +50,7 @@ def main() -> None:
                 f"missing adapter settings {missing}. No snapshot was written."
             )
 
-        page = fetcher.fetch(source["url"])
+        page = fetcher.fetch_pdf(source["url"], max_bytes=int(adapter.get("max_bytes", 20000000))) if adapter_type == "pdf" else fetcher.fetch(source["url"])
         try:
             extracted = extract_with_adapter(args.university, page, source["entity_type"], adapter)
         except (TypeError, ValueError) as exc:
