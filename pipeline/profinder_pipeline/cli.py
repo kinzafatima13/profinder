@@ -6,7 +6,7 @@ from pathlib import Path
 from .extract import extract_candidates
 from .fetch import PoliteFetcher
 from .models import Candidate
-from .normalize import normalize_values
+from .normalize import canonical_key, normalize_values
 from .output import deduplicate_candidates, write_jsonl_atomic
 from .registry import load_registry
 from .validate import validate_candidate
@@ -50,7 +50,7 @@ def main() -> None:
                 candidate.entity_type,
                 candidate.university_key,
                 values,
-                {key: value for key, value in candidate.evidence.items() if key in values},
+                {canonical_key(key): value for key, value in candidate.evidence.items() if canonical_key(key) in values},
                 candidate.warnings + normalization_warnings,
             )
             candidates.append(validate_candidate(normalized))
