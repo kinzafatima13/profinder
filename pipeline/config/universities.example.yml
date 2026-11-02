@@ -1,0 +1,25 @@
+# Copy entries into config/universities.yml after reviewing the official URLs
+# and selectors. The sample host below is intentionally non-operational.
+universities:
+  - key: example-university
+    name: Example University
+    country: China
+    sources:
+      - url: https://www.example.edu.cn/admissions/graduate/programs
+        entity_type: program
+        record_selector: ".program-card"
+        field_selectors:
+          name: "h2"
+          degree_level: ".degree"
+          language: ".language"
+          deadline: ".deadline"
+          official_url: "a.details::attr(href)"
+      - url: https://www.example.edu.cn/scholarships
+        entity_type: scholarship
+        record_selector: ".scholarship-item"
+        field_selectors:
+          name: "h3"
+          coverage: ".coverage"
+          eligibility: ".eligibility"
+          deadline: ".deadline"
+          official_url: "a::attr(href)"
