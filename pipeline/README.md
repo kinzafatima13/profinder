@@ -1,63 +1,98 @@
-# ProFinderNow Review-First Academic Data Pipeline
+# ProFinderNow universal university data pipeline
 
-## Status
+## Purpose
 
-This branch is the safe foundation for the data-pipeline implementation. It is based on the current `main` branch. The pipeline described here is **not yet implemented**; do not run the existing bulk importer as a substitute.
+One reusable pipeline serves every university. University differences live in
+small, reviewed source-adapter configurations; fetching, evidence capture,
+normalization, validation, review output, and (later) loading are shared.
 
-## Audit findings (2026-11-02)
+**This implementation is collection-only.** It writes JSONL candidate files
+under `pipeline/output/`. It does not connect to Prisma, SQLite, Neon, or the
+production application database.
 
-- `main` currently declares SQLite in `prisma/schema.prisma`.
-- `src/lib/prisma.ts` forces Vercel runtime requests to use a bundled SQLite file copied to `/tmp/profinder.db`, ignoring a configured Neon/PostgreSQL `DATABASE_URL`.
-- `scripts/import-pipeline.ts` calls `ProFinderImporter` directly against a Prisma client. The importer updates existing universities, programs, scholarships, and professors; some incoming null values can replace populated fields.
-- The separate `feat/complete-data-pipeline` branch uses PostgreSQL but is 107 commits behind `main` and has only three commits ahead. Do not merge it wholesale.
-- The uploaded data-pipeline guide calls for a review-first staging process, but its documented `pipeline/` package and `pipeline-run.yml` / `pipeline-load.yml` workflows were not found at those paths on `main` or `feat/complete-data-pipeline`.
+## Shared workflow
 
-## Non-negotiable safety rules
+`official source registry -> polite fetch/cache -> adapter extraction -> canonical normalization -> validation -> review candidates`
 
-1. Collect only attributable data. Store a source URL and collection timestamp for each sourced fact.
-2. Collection and validation must not write to application tables.
-3. Stage candidate records separately and produce a reviewable release bundle before any application-table write.
-4. Never delete existing academic records automatically.
-5. Never overwrite populated fields automatically. Propose conflicting values for human review.
-6. Do not treat OpenAlex or another aggregator as proof of current university employment. It can enrich a person already linked to a sourced university record only when the match is strong.
-7. Dates, application fees, tuition, scholarship deadlines, and scholarship coverage require human review.
-8. Never touch student, application, saved-professor, subscription, billing, usage, or Apply for Me records from the academic-data loader.
-9. Keep production loads disabled unless the target is explicitly confirmed, the release is approved, checksums pass, and a dry-run diff has been reviewed.
-10. Never print database credentials or full connection URLs in logs.
+Planned next stages are identity matching, isolated staging, release bundles,
+human review, dry-run diffs, and a separately protected additive loader. Those
+stages are not enabled by this first implementation.
 
-## Intended workflow
+## What is implemented
 
-`official source registry -> polite fetch/cache -> extraction -> validation -> identity matching -> staging -> release bundle -> human review -> dry-run diff -> approved transactional load`
+- A YAML university registry with stable university keys and official HTTPS sources.
+- Reusable CSS source adapters: one record selector and field selectors per
+  source page, rather than custom scraping code per university.
+- A common canonical field vocabulary for universities, programs, professors,
+  and scholarships.
+- Field-level evidence: source URL, collection timestamp, extractor, and excerpt.
+- Polite HTTP fetching: transparent User-Agent, robots.txt checks, per-host
+  minimum 2.5-second interval, 30-day response cache, bounded response size.
+- Validation warnings for missing required fields, missing evidence, and
+  human-review fields such as tuition, fees, deadlines, coverage, and dates.
+- Unit tests for registry validation, extraction/evidence, normalization, and
+  human-review flags.
 
-- **Discovery/fetch:** official university sources first; respect robots.txt, use a clear User-Agent, cache responses, and throttle requests per host.
-- **Extraction:** preserve source URL and evidence for each extracted record. Missing evidence means the field remains empty.
-- **Validation:** schema checks, source checks, required-field checks, duplicate detection, and special handling for high-risk fields.
-- **Matching:** distinguish exact identifiers from fuzzy name matches; ambiguous matches become review items.
-- **Staging:** separate tables/schema, isolated from application-facing data.
-- **Review:** export CSV/JSON with before/after values, sources, confidence, and reasons for review.
-- **Load:** additive-only changes, transactional execution, explicit target confirmation, and a rollback/restore plan.
+## Add a university
 
-## Implementation sequence
+1. Verify its official admissions, program, scholarship, or faculty page.
+2. Add a stable key and source URL to `pipeline/config/universities.yml`.
+3. Configure a record selector for one repeated card/row and field selectors
+   relative to that record.
+4. Map extracted labels to canonical field names using
+   `profinder_pipeline/normalize.py`. Unknown fields are flagged, not silently
+   added to the shared schema.
+5. Add a saved HTML fixture and extraction test for the new source adapter.
+6. Run the pipeline and review candidate evidence before any future staging.
 
-1. **Audit database routing and existing schema** without writing to any database.
-2. **Build a read-only inventory** of academic tables, source coverage, duplicates, and missing required values.
-3. **Implement source registry and fetch/cache layer** with host throttling and tests.
-4. **Implement validation and matching** with fixture-based tests; no application-table writes.
-5. **Add staging and release bundles** with stable checksums and human-review exports.
-6. **Add a dry-run loader** that reports proposed inserts and field-level conflicts without changing data.
-7. **Test against a disposable PostgreSQL database** seeded with synthetic fixtures.
-8. **Only after review:** configure a protected manual workflow for approved loads. Do not run a production load as part of routine CI.
+See `pipeline/config/universities.example.yml` for the adapter shape. The
+example domain is illustrative and must not be treated as a real source.
 
-## First implementation gate
+## Setup and test
 
-Before adding a loader, document and test the database target for every entry point. At present, the app's Vercel runtime routing and direct `new PrismaClient()` scripts may use different database targets. This must be resolved before any import script is run against a live environment.
+```bash
+python -m venv pipeline/.venv
+# Activate the environment, then:
+python -m pip install -r pipeline/requirements.txt
+PYTHONPATH=pipeline python -m unittest discover -s pipeline/tests -v
+```
 
-### Read-only inventory (implemented)
+To collect from a configured university:
 
-The first tool is `scripts/audit-academic-data.ts`, exposed as `npm run audit:academic-data`. It reports aggregate counts and source-coverage gaps only. It refuses to run unless you explicitly opt in and confirm the exact SQLite file path; it also refuses to run on Vercel. It makes no create/update/delete calls and does not print personal records or connection credentials.
+```bash
+PYTHONPATH=pipeline python -m profinder_pipeline.cli --university <stable-key>
+```
 
-Run it only against a local copy or a disposable test database that matches the current SQLite Prisma schema:
+Output defaults to `pipeline/output/candidates.jsonl`. Cache files live in
+`pipeline/.cache/`; both paths are ignored by Git.
 
-`npm run audit:academic-data -- --allow-read-only-audit --expected-target=sqlite:/absolute/path/to/repository/prisma/dev.db`
+## Safety boundaries
 
-Replace the example path with the exact absolute path to the SQLite file selected by your local `DATABASE_URL`. The script intentionally cannot audit a persistent Neon database from this branch because the current Prisma schema is SQLite. Do not switch the schema or point the app at Neon as part of this inventory step.
+- Only explicit HTTPS source URLs are accepted.
+- The fetcher checks robots.txt and fails closed if it cannot verify access,
+  except when robots.txt returns HTTP 404.
+- Do not add login-gated, personal, or non-public data sources.
+- Do not bypass access controls, rate limits, or anti-bot protections.
+- Missing data stays missing. Do not infer tuition, fees, deadlines, eligibility,
+  scholarship coverage, current employment, or contact details.
+- Aggregator records are not proof of current university affiliation.
+- Every candidate is unverified until reviewed.
+- This pipeline has no database loader and cannot modify live ProFinderNow data.
+
+## Current limitations
+
+- CSS selectors are source-specific and need review; there is no universal
+  selector that can reliably parse every university site.
+- PDF parsing, JavaScript-rendered pages, authenticated portals, identity
+  resolution, duplicate matching, release signing, staging, and loading are not
+  implemented yet.
+- JSON-LD is not yet promoted into canonical fields.
+- The registry currently contains no invented university entries. Add verified
+  official sources and tested adapters in small batches.
+
+## Development status
+
+The pipeline is being developed on `feat/review-first-data-pipeline`. Keep it
+separate from `main` until the unit tests, adapter fixtures, and review flow
+are complete. Do not connect it to the production database as part of routine
+collection.
