@@ -30,8 +30,11 @@ stages are not enabled by this first implementation.
   minimum 2.5-second interval, 30-day response cache, bounded response size.
 - Validation warnings for missing required fields, missing evidence, and
   human-review fields such as tuition, fees, deadlines, coverage, and dates.
-- Unit tests for registry validation, extraction/evidence, normalization, and
-  human-review flags.
+- Deterministic candidate fingerprints and within-run duplicate removal.
+- Atomic snapshot output: each successful run replaces the previous JSONL file;
+  failed collection or serialization leaves the last successful snapshot intact.
+- Unit tests for registry validation, extraction/evidence, normalization,
+  human-review flags, deduplication, and repeatable output.
 
 ## Add a university
 
@@ -63,7 +66,10 @@ To collect from a configured university:
 PYTHONPATH=pipeline python -m profinder_pipeline.cli --university <stable-key>
 ```
 
-Output defaults to `pipeline/output/candidates.jsonl`. Cache files live in
+Output defaults to `pipeline/output/candidates.jsonl`. Each successful run writes
+  a fresh snapshot rather than appending; identical normalized records are
+  deduplicated within the run and receive a stable `candidate_id`. If collection
+  fails or returns no candidates, the previous snapshot is preserved. Cache files live in
 `pipeline/.cache/`; both paths are ignored by Git.
 
 ## Safety boundaries
