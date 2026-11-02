@@ -335,3 +335,46 @@ def extract_with_adapter(
     if adapter_type == "jsonld":
         return extract_jsonld_candidates(university_key, source, entity_type, adapter.get("field_map"))
     raise ValueError(f"Unsupported adapter type: {adapter_type}")
+
+
+def discover_sitemap_urls(
+    xml_text: str,
+    sitemap_url: str,
+    include_patterns: list[str] | None = None,
+    exclude_patterns: list[str] | None = None,
+    same_origin_only: bool = True,
+    max_urls: int = 5000,
+) -> list[str]:
+    """Extract bounded URL locations from sitemap XML; never fetch discovered URLs."""
+    import xml.etree.ElementTree as ET
+    from urllib.parse import urlparse
+
+    if max_urls < 1:
+        raise ValueError("max_urls must be at least 1.")
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError as exc:
+        raise ValueError(f"Invalid sitemap XML: {exc}") from exc
+
+    origin = urlparse(sitemap_url)
+    include = [re.compile(pattern, re.IGNORECASE) for pattern in (include_patterns or [])]
+    exclude = [re.compile(pattern, re.IGNORECASE) for pattern in (exclude_patterns or [])]
+    results: list[str] = []
+    for element in root.iter():
+        if element.tag.rsplit("}", 1)[-1].lower() != "loc" or not element.text:
+            continue
+        target = urljoin(sitemap_url, element.text.strip())
+        parsed = urlparse(target)
+        if parsed.scheme != "https" or not parsed.hostname:
+            continue
+        if same_origin_only and (parsed.hostname or "").lower() != (origin.hostname or "").lower():
+            continue
+        if include and not any(pattern.search(target) for pattern in include):
+            continue
+        if any(pattern.search(target) for pattern in exclude):
+            continue
+        if target not in results:
+            results.append(target)
+        if len(results) >= max_urls:
+            break
+    return results
