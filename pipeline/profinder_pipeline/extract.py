@@ -219,7 +219,7 @@ def extract_pdf_candidates(
 
     if not page_texts:
         warnings.append("pdf_no_text_extracted_ocr_may_be_required")
-    description = "\\n\\n".join(page_texts)
+    description = "\n\n".join(page_texts)
     final_url = source["final_url"]
     collected_at = source["collected_at"]
     values = {"name": document_name.strip(), "description": description} if description else {"name": document_name.strip()}
