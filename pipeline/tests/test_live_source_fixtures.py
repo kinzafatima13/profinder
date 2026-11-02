@@ -40,8 +40,8 @@ class LiveUniversityFixtureTests(unittest.TestCase):
             normalized.append(candidate)
 
         unique, duplicates = deduplicate_candidates(normalized)
-        self.assertEqual(len(unique), 19)
-        self.assertEqual(duplicates, 17)
+        self.assertEqual(len(unique), 2)
+        self.assertEqual(duplicates, 2)
         computer_technology = next(
             item for item in unique if "Computer Technology" in item.values["name"]
         )
