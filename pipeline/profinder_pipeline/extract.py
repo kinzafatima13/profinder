@@ -64,6 +64,42 @@ def extract_candidates(
     return candidates
 
 
+def _expanded_table_rows(table: Any) -> list[list[Any]]:
+    """Expand HTML row/col spans into a stable rectangular cell grid."""
+    expanded: list[list[Any]] = []
+    carry: dict[int, tuple[Any, int]] = {}
+    for tr in table.find_all("tr"):
+        cells = tr.find_all(["th", "td"], recursive=False)
+        if not cells and not carry:
+            expanded.append([])
+            continue
+        row: list[Any] = []
+        next_carry: dict[int, tuple[Any, int]] = {}
+        col = 0
+        for cell, remaining in carry.items():
+            while len(row) <= cell:
+                row.append(None)
+            row[cell] = remaining[0]
+            if remaining[1] > 1:
+                next_carry[cell] = (remaining[0], remaining[1] - 1)
+        for node in cells:
+            while col < len(row) and row[col] is not None:
+                col += 1
+            colspan = max(1, int(node.get("colspan", 1) or 1))
+            rowspan = max(1, int(node.get("rowspan", 1) or 1))
+            for offset in range(colspan):
+                target = col + offset
+                while len(row) <= target:
+                    row.append(None)
+                row[target] = node
+                if rowspan > 1:
+                    next_carry[target] = (node, rowspan - 1)
+            col += colspan
+        expanded.append(row)
+        carry = next_carry
+    return expanded
+
+
 def extract_table_candidates(
     university_key: str,
     source: dict[str, str],
@@ -72,19 +108,14 @@ def extract_table_candidates(
     header_row: int = 0,
     column_map: dict[str, str] | None = None,
 ) -> list[Candidate]:
-    """Extract tabular catalogs by mapping visible header labels to canonical fields.
-
-    column_map optionally maps canonical field names to zero-based column indexes.
-    Without it, headers are normalized through the shared alias vocabulary.
-    Rows without a usable name are ignored rather than guessed.
-    """
+    """Extract HTML catalogs, expanding rowspan/colspan before mapping columns."""
     soup = BeautifulSoup(source["body"], "html.parser")
     candidates: list[Candidate] = []
     for table_index, table in enumerate(soup.select(table_selector)):
-        rows = table.find_all("tr")
+        rows = _expanded_table_rows(table)
         if header_row >= len(rows):
             continue
-        headers = [_text(cell) for cell in rows[header_row].find_all(["th", "td"], recursive=False)]
+        headers = [_text(cell) for cell in rows[header_row]]
         if not headers:
             continue
         indexes: dict[str, int] = {}
@@ -96,14 +127,13 @@ def extract_table_candidates(
                 if key and key not in indexes:
                     indexes[key] = index
 
-        for row_index, row in enumerate(rows[header_row + 1 :], start=header_row + 1):
-            cells = row.find_all(["th", "td"], recursive=False)
+        for row_index, cells in enumerate(rows[header_row + 1 :], start=header_row + 1):
             if not cells:
                 continue
             values: dict[str, str] = {}
             evidence: dict[str, Evidence] = {}
             for field_name, column_index in indexes.items():
-                if column_index >= len(cells):
+                if column_index >= len(cells) or cells[column_index] is None:
                     continue
                 cell = cells[column_index]
                 value = _text(cell)
