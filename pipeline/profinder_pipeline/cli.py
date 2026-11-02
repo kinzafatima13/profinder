@@ -6,6 +6,8 @@ from pathlib import Path
 
 from .extract import extract_candidates
 from .fetch import PoliteFetcher
+from .models import Candidate
+from .normalize import normalize_values
 from .registry import load_registry
 from .validate import validate_candidate
 
@@ -42,6 +44,14 @@ def main() -> None:
                 source["field_selectors"],
             )
             for candidate in candidates:
+                values, normalization_warnings = normalize_values(candidate.entity_type, candidate.values)
+                candidate = Candidate(
+                    candidate.entity_type,
+                    candidate.university_key,
+                    values,
+                    {key: value for key, value in candidate.evidence.items() if key in values},
+                    candidate.warnings + normalization_warnings,
+                )
                 candidate = validate_candidate(candidate)
                 stream.write(json.dumps(candidate.to_dict(), ensure_ascii=False) + "\n")
                 count += 1
