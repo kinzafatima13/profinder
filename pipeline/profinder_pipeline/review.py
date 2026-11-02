@@ -105,6 +105,21 @@ def build_release_bundle(
                 raise ReviewError(f"Decision for {candidate_id} must be approved or rejected.")
             if not reviewer:
                 raise ReviewError(f"Reviewer is required for candidate: {candidate_id}")
+            source_record = next((item for item in records if item["candidate_id"] == candidate_id), None)
+            if source_record is None:
+                raise ReviewError(f"Decision CSV contains unknown candidate ID: {candidate_id}")
+            expected_snapshot_fields = {
+                "entity_type": source_record["entity_type"],
+                "university_key": source_record["university_key"],
+                "values_json": json.dumps(source_record["values"], ensure_ascii=False, sort_keys=True),
+                "evidence_json": json.dumps(source_record["evidence"], ensure_ascii=False, sort_keys=True),
+                "warnings_json": json.dumps(source_record["warnings"], ensure_ascii=False),
+            }
+            for field_name, expected_value in expected_snapshot_fields.items():
+                if (row.get(field_name) or "") != expected_value:
+                    raise ReviewError(
+                        f"Review CSV changed protected source field {field_name} for candidate {candidate_id}."
+                    )
             decisions[candidate_id] = {
                 "decision": decision,
                 "reviewer": reviewer,
