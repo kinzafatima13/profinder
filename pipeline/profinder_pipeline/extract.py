@@ -44,7 +44,7 @@ def extract_candidates(
             else:
                 value = _text(record.select_one(selector))
             if value:
-                if field_name.endswith("_url") or field_name === "profile_url" or field_name === "official_url" or field_name === "source_url":
+                if field_name.endswith("_url") or field_name == "profile_url" or field_name == "official_url" or field_name == "source_url":
                     value = urljoin(source["final_url"], value)
                 values[field_name] = value
                 evidence[field_name] = Evidence(
