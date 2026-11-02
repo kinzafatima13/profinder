@@ -6,9 +6,12 @@ import urllib.error
 from pathlib import Path
 
 from profinder_pipeline.extract import (
+    discover_links,
     extract_article_list_candidates,
     extract_candidates,
+    extract_jsonld_candidates,
     extract_table_candidates,
+    extract_with_adapter,
 )
 from profinder_pipeline.fetch import FetchError, PoliteFetcher
 from profinder_pipeline.models import Candidate, Evidence
@@ -97,6 +100,48 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(candidates[0].values["name"], "Computer Science")
         values, warnings = normalize_values("program", candidates[0].values)
         self.assertEqual(values["description"], "Research-led postgraduate study")
+
+
+    def test_jsonld_adapter_extracts_common_schema_fields(self):
+        source = {
+            "body": '''<script type="application/ld+json">
+            {"@context":"https://schema.org","@graph":[
+              {"@type":"Course","name":"MSc Data Science","description":"Graduate program",
+               "url":"/programs/data-science","educationalLevel":"Master"},
+              {"@type":"Person","name":"Dr Example","email":"person@example.edu"}
+            ]}</script>''',
+            "final_url": "https://university.example/admissions",
+            "collected_at": "2026-11-02T00:00:00+00:00",
+        }
+        candidates = extract_jsonld_candidates("u1", source, "program")
+        self.assertEqual(len(candidates), 2)
+        self.assertEqual(candidates[0].values["name"], "MSc Data Science")
+        self.assertEqual(candidates[0].values["official_url"], "https://university.example/programs/data-science")
+        self.assertIn("name", candidates[0].evidence)
+
+    def test_adapter_dispatch_supports_table_and_jsonld(self):
+        source = {
+            "body": '<table><tr><th>Name</th></tr><tr><td>MSc AI</td></tr></table>',
+            "final_url": "https://university.example/programs",
+            "collected_at": "2026-11-02T00:00:00+00:00",
+        }
+        table = extract_with_adapter("u1", source, "program", {"type": "table"})
+        self.assertEqual(table[0].values["name"], "MSc AI")
+        json_source = {**source, "body": '<script type="application/ld+json">{"name":"MSc AI"}</script>'}
+        structured = extract_with_adapter("u1", json_source, "program", {"type": "jsonld"})
+        self.assertEqual(structured[0].values["name"], "MSc AI")
+
+    def test_link_discovery_is_https_same_origin_and_filterable(self):
+        source = {
+            "body": '<a href="/graduate/programs">Programs</a>'
+                    '<a href="https://other.example.edu/faculty">External</a>'
+                    '<a href="http://university.example/insecure">HTTP</a>'
+                    '<a href="/news/latest">News</a>',
+            "final_url": "https://university.example/admissions",
+            "collected_at": "2026-11-02T00:00:00+00:00",
+        }
+        links = discover_links(source, include_patterns=[r"programs"])
+        self.assertEqual(links, ["https://university.example/graduate/programs"])
 
     def test_normalization_maps_common_source_labels(self):
         values, warnings = normalize_values(
