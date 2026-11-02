@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .extract import extract_candidates
+from .extract import extract_with_adapter
 from .fetch import PoliteFetcher
 from .models import Candidate
 from .normalize import canonical_key, normalize_values
@@ -30,8 +30,20 @@ def main() -> None:
     # Collect everything before replacing the previous snapshot. If fetching or
     # extraction fails, the last successful output remains untouched.
     for source in university.get("sources", []):
-        required = ("url", "entity_type", "record_selector", "field_selectors")
+        required = ("url", "entity_type")
         missing = [key for key in required if not source.get(key)]
+        adapter = source.get("adapter") or {
+            "type": "css",
+            "record_selector": source.get("record_selector"),
+            "field_selectors": source.get("field_selectors"),
+        }
+        if not isinstance(adapter, dict):
+            raise SystemExit(f"Invalid adapter configuration for {source.get('url')}. No snapshot was written.")
+        adapter_type = str(adapter.get("type", "css")).lower()
+        adapter_required = {"css": ("record_selector", "field_selectors"), "table": (), "article_list": (), "jsonld": ()}
+        if adapter_type not in adapter_required:
+            raise SystemExit(f"Unsupported adapter type '{adapter_type}' for {source.get('url')}'. No snapshot was written.")
+        missing.extend(key for key in adapter_required[adapter_type] if not adapter.get(key))
         if missing:
             raise SystemExit(
                 f"Invalid source configuration for {source.get('url', '(no URL)')}: "
@@ -39,13 +51,12 @@ def main() -> None:
             )
 
         page = fetcher.fetch(source["url"])
-        extracted = extract_candidates(
-            args.university,
-            page,
-            source["entity_type"],
-            source["record_selector"],
-            source["field_selectors"],
-        )
+        try:
+            extracted = extract_with_adapter(args.university, page, source["entity_type"], adapter)
+        except (TypeError, ValueError) as exc:
+            raise SystemExit(
+                f"Invalid adapter configuration for {source.get('url')}: {exc}. No snapshot was written."
+            ) from exc
         for candidate in extracted:
             values, normalization_warnings = normalize_values(candidate.entity_type, candidate.values)
             normalized = Candidate(
