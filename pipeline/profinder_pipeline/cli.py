@@ -33,8 +33,10 @@ def main() -> None:
         required = ("url", "entity_type", "record_selector", "field_selectors")
         missing = [key for key in required if not source.get(key)]
         if missing:
-            print(f"SKIP {source.get('url', '(no URL)')}: missing adapter settings {missing}")
-            continue
+            raise SystemExit(
+                f"Invalid source configuration for {source.get('url', '(no URL)')}: "
+                f"missing adapter settings {missing}. No snapshot was written."
+            )
 
         page = fetcher.fetch(source["url"])
         extracted = extract_candidates(
