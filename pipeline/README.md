@@ -85,7 +85,7 @@ Output defaults to `pipeline/output/candidates.jsonl`. Each successful run write
 - Every candidate is unverified until reviewed.
 - This pipeline has no database loader and cannot modify live ProFinderNow data.
 
-## Current limitations
+## Current university source research (2026-11-02)\n\n`config/university-source-research.yml` records three official source families for adapter work: CDUT's postgraduate admissions guide (HTML), Yangtze University's postgraduate catalog PDF and scholarship announcement (PDF + HTML), and Shanghai Maritime University's 2027 master's catalog (HTML). This is a research manifest, not an executable registry. No live selectors have been approved and no candidate data is asserted from these sources yet. The HTML table extractor is covered by synthetic fixtures, including bilingual headers; it still needs saved, reviewed HTML fixtures from each university before a live adapter can be marked verified. Yangtze University's catalog is PDF, and PDF extraction is not implemented; that source remains explicitly blocked rather than being silently skipped.\n\n## Current limitations
 
 - CSS selectors are source-specific and need review; there is no universal
   selector that can reliably parse every university site.
