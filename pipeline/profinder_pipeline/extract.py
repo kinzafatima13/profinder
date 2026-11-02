@@ -195,7 +195,7 @@ def extract_pdf_candidates(
         raise ValueError(f"PDF has {len(reader.pages)} pages; configured limit is {max_pages}.")
 
     page_texts: list[str] = []
-    warnings: list[str] = []
+    warnings: list[str] = ["pdf_text_extraction_review_required"]
     remaining = max_chars
     for page_number, page in enumerate(reader.pages, start=1):
         try:
