@@ -1,0 +1,61 @@
+name: Academic data audit safety test
+
+on:
+  pull_request:
+    paths:
+      - "scripts/audit-academic-data.ts"
+      - "pipeline/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/academic-data-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sqlite-audit-fixture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate --schema prisma/schema.prisma
+
+      - name: Create disposable SQLite fixture
+        env:
+          DATABASE_URL: "file:./audit-test.db"
+        run: npx prisma db push --schema prisma/schema.prisma --skip-generate
+
+      - name: Record disposable database checksum before audit
+        id: before
+        run: echo "sha256=$(sha256sum prisma/audit-test.db | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+
+      - name: Run read-only audit against disposable fixture
+        env:
+          DATABASE_URL: "file:./audit-test.db"
+        run: >
+          npm run audit:academic-data --
+          --allow-read-only-audit
+          --expected-target=sqlite:${{ github.workspace }}/prisma/audit-test.db
+
+      - name: Confirm audit did not modify the disposable database
+        env:
+          BEFORE_SHA256: ${{ steps.before.outputs.sha256 }}
+        run: |
+          test -f prisma/audit-test.db
+          AFTER_SHA256="$(sha256sum prisma/audit-test.db | cut -d ' ' -f 1)"
+          test "$BEFORE_SHA256" = "$AFTER_SHA256"
+          git diff --exit-code
+          git diff --cached --exit-code

@@ -1,0 +1,52 @@
+{
+  "captured_at_utc": "2026-11-02",
+  "user_agent": "ProFinderNowAcademicResearchBot/0.1",
+  "robots_txt": "404 Not Found on checked hosts; no disallow directives supplied.",
+  "fixtures": [
+    {
+      "university": "Shanghai Maritime University",
+      "url": "https://en.shmtu.edu.cn/2026/1023/c6283a333085/page.htm",
+      "file": "shmtu.html",
+      "status": "captured_sanitized_dom_fragment",
+      "http_status": 200,
+      "content_type": "text/html",
+      "observed_structure": "Representative rows from bilingual master's catalog with title/header, rowspans and spacer rows."
+    },
+    {
+      "university": "Yangtze University",
+      "url": "https://english.yangtzeu.edu.cn/info/1022/1101.htm",
+      "file": "yangtze_scholarship.html",
+      "status": "captured_sanitized_dom_fragment",
+      "http_status": 200,
+      "content_type": "text/html",
+      "observed_structure": "Scholarship title plus embedded PDF viewer reference; detailed scholarship text is a PDF, not rendered text in HTML."
+    },
+    {
+      "university": "Chengdu University of Technology",
+      "url": "https://www.cdut.edu.cn/en/info/1028/1932.htm",
+      "alternate_official_url": "https://cie.cdut.edu.cn/info/1059/1741.htm",
+      "file": null,
+      "status": "blocked_by_origin",
+      "http_status": 412,
+      "observed_structure": "Both official CDUT hosts returned HTTP 412 to direct fetches, including browser-like headers and homepage-cookie attempt; no HTML fixture or live extraction."
+    },
+    {
+      "university": "Yangtze University",
+      "url": "https://english.yangtzeu.edu.cn/__local/2/CF/C5/E2273866BC27B03F241A8A5BDFA_562AF240_1769837.pdf",
+      "file": null,
+      "status": "pdf_downloaded_not_parsed",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "observed_structure": "24 MB postgraduate catalog PDF downloaded for format check; PDF extraction not implemented and binary intentionally not committed."
+    },
+    {
+      "university": "Yangtze University",
+      "url": "https://english.yangtzeu.edu.cn/__local/D/E1/A1/0AFC61D4A6CB6487EC5F91E637B_7D2C7DD5_6EE773.pdf",
+      "file": null,
+      "status": "official_pdf_text_indexed_binary_fetch_unavailable",
+      "http_status": null,
+      "content_type": "application/pdf",
+      "observed_structure": "Official Silk Road Scholarship brochure; browser PDF text extraction exposes 10 pages of selectable text. Direct binary download into the development runtime failed, so pypdf has not yet been run against the original binary. This is distinct from the Type A PDF."
+    }
+  ]
+}
