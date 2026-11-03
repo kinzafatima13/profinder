@@ -7,6 +7,7 @@ from pathlib import Path
 
 from profinder_pipeline.extract import (
     discover_links,
+    extract_document_urls,
     extract_article_list_candidates,
     extract_candidates,
     extract_jsonld_candidates,
@@ -466,6 +467,47 @@ class PipelineTests(unittest.TestCase):
         </urlset>"""
         self.assertEqual(discover_sitemap_urls(xml, "https://university.example/sitemap.xml", max_urls=1),
                          ["https://university.example/1"])
+
+
+    def test_pdf_discovery_finds_markup_and_script_links_safely(self):
+        source = {
+            "body": """
+              <a href="/docs/guide.pdf?download=1">Guide</a>
+              <iframe src="/docs/embedded.pdf"></iframe>
+              <embed src="http://university.example/insecure.pdf">
+              <a href="https://other.example/foreign.pdf">External</a>
+              <script>const brochure = '/docs/scripted.pdf';</script>
+              <a href="/not-a-document">Other</a>
+            """,
+            "final_url": "https://university.example/admissions",
+            "collected_at": "2026-11-02T00:00:00+00:00",
+        }
+        urls = extract_document_urls(source, max_results=5)
+        self.assertEqual(urls, [
+            "https://university.example/docs/guide.pdf?download=1",
+            "https://university.example/docs/embedded.pdf",
+            "https://university.example/docs/scripted.pdf",
+        ])
+
+    def test_pdf_discovery_applies_filters_deduplication_and_hard_cap(self):
+        source = {
+            "body": """
+              <a href="/2027/a.pdf">A</a>
+              <a href="/2027/a.pdf">A duplicate</a>
+              <a href="/2027/b.pdf">B</a>
+              <a href="/2026/c.pdf">C</a>
+            """,
+            "final_url": "https://university.example/admissions",
+            "collected_at": "2026-11-02T00:00:00+00:00",
+        }
+        urls = extract_document_urls(
+            source,
+            include_patterns=[r"/2027/"],
+            max_results=1,
+        )
+        self.assertEqual(urls, ["https://university.example/2027/a.pdf"])
+        with self.assertRaises(ValueError):
+            extract_document_urls(source, max_results=26)
 
 
 if __name__ == "__main__":
