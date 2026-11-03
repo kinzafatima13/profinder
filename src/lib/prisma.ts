@@ -7,7 +7,7 @@ function getDatabaseUrl(): string {
     throw new Error("DATABASE_URL is required. Configure a PostgreSQL connection string.");
   }
 
-  if (!/^postgres(ql)?:\\/\\//i.test(url)) {
+  if (!(url.startsWith("postgres://") || url.startsWith("postgresql://"))) {
     throw new Error("DATABASE_URL must be a PostgreSQL connection string. SQLite fallback is disabled.");
   }
 
