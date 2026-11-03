@@ -38,6 +38,10 @@ jobs:
           DATABASE_URL: "file:./audit-test.db"
         run: npx prisma db push --schema prisma/schema.prisma --skip-generate
 
+      - name: Record disposable database checksum before audit
+        id: before
+        run: echo "sha256=$(sha256sum prisma/audit-test.db | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+
       - name: Run read-only audit against disposable fixture
         env:
           DATABASE_URL: "file:./audit-test.db"
@@ -46,7 +50,12 @@ jobs:
           --allow-read-only-audit
           --expected-target=sqlite:${{ github.workspace }}/prisma/audit-test.db
 
-      - name: Confirm audit did not modify fixture schema or create unexpected files
+      - name: Confirm audit did not modify the disposable database
+        env:
+          BEFORE_SHA256: ${{ steps.before.outputs.sha256 }}
         run: |
           test -f prisma/audit-test.db
-          git status --short
+          AFTER_SHA256="$(sha256sum prisma/audit-test.db | cut -d ' ' -f 1)"
+          test "$BEFORE_SHA256" = "$AFTER_SHA256"
+          git diff --exit-code
+          git diff --cached --exit-code
