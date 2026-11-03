@@ -182,7 +182,7 @@ def extract_document_urls(
             raw_candidates.append(value)
 
     # Script scanning is intentionally limited to literal quoted .pdf URLs.
-    pattern = re.compile(r"""["']([^"'<>\\s]+\.pdf(?:\?[^"'<>\\s]*)?(?:#[^"'<>\\s]*)?)["']""", re.IGNORECASE)
+    pattern = re.compile(r"""["']([^"'<> \s]+\.pdf(?:\?[^"'<> \s]*)?(?:#[^"'<> \s]*)?)["']""", re.IGNORECASE)
     raw_candidates.extend(match.group(1) for match in pattern.finditer(source["body"]))
 
     found: list[str] = []
