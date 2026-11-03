@@ -4,9 +4,13 @@ import path from "path";
 const ALLOWED_EXTENSIONS = new Set(["pdf", "png", "jpg", "jpeg", "webp", "doc", "docx"]);
 
 export function safeDocumentName(name: string) {
-  const base = path.basename(name).replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
-  const cleaned = base.replace(/^\.+/, "") || "document";
-  const extension = cleaned.split(".").pop()?.toLowerCase() || "";
+  const base = path.basename(name).replace(/[^a-zA-Z0-9._-]/g, "_");
+  const lastDot = base.lastIndexOf(".");
+  const rawExtension = lastDot > 0 ? base.slice(lastDot) : "";
+  const extension = rawExtension.slice(1).toLowerCase();
+  const maxStemLength = Math.max(1, 80 - rawExtension.length);
+  const stem = (lastDot > 0 ? base.slice(0, lastDot) : base).slice(0, maxStemLength);
+  const cleaned = `${stem.replace(/^\.+/, "") || "document"}${rawExtension}`;
   if (!ALLOWED_EXTENSIONS.has(extension)) return null;
   if (cleaned.includes("..") || cleaned.includes("/") || cleaned.includes("\\")) return null;
   return cleaned;

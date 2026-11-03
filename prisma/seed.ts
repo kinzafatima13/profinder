@@ -10,6 +10,31 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
+  const isProduction =
+    process.env.NODE_ENV === "production" ||
+    process.env.VERCEL === "1" ||
+    process.env.VERCEL_ENV === "production";
+
+  if (isProduction) {
+    throw new Error("Demo seed is blocked in production and Vercel environments.");
+  }
+
+  const databaseUrl = process.env.DATABASE_URL || "";
+  const isPostgres = databaseUrl.startsWith("postgres://") || databaseUrl.startsWith("postgresql://");
+  const isLocalPostgres = (() => {
+    if (!isPostgres) return false;
+    try {
+      const host = new URL(databaseUrl).hostname;
+      return host === "localhost" || host === "127.0.0.1" || host === "::1";
+    } catch {
+      return false;
+    }
+  })();
+
+  if (isPostgres && (!isLocalPostgres || process.env.ALLOW_DEMO_SEED_ON_LOCAL_POSTGRES !== "true")) {
+    throw new Error("Demo seed refuses remote PostgreSQL. For a disposable local PostgreSQL database only, explicitly set ALLOW_DEMO_SEED_ON_LOCAL_POSTGRES=true.");
+  }
+
   if (process.env.ALLOW_DEMO_SEED !== "true") {
     console.log("Seed skipped: destructive/demo seed is disabled. Set ALLOW_DEMO_SEED=true only for an empty development database.");
     return;
