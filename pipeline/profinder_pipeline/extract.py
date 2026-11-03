@@ -153,14 +153,56 @@ def extract_table_candidates(
 
 
 
-def extract_document_urls(source: dict[str, str]) -> list[str]:
-    """Discover PDF document URLs referenced by links or embedded page scripts."""
-    pattern = re.compile(r"""["']([^"'<>\s]+\.pdf(?:\?[^"'<>\s]*)?)["']""", re.IGNORECASE)
+def extract_document_urls(
+    source: dict[str, str],
+    include_patterns: list[str] | None = None,
+    exclude_patterns: list[str] | None = None,
+    same_origin_only: bool = True,
+    max_results: int = 5,
+) -> list[str]:
+    """Discover bounded HTTPS PDF candidates from HTML markup and embedded scripts.
+
+    Discovery is local-only: it never fetches a discovered URL. Same-origin is
+    enforced by default, and callers must explicitly opt in before downloading.
+    """
+    from urllib.parse import urlparse
+
+    if max_results < 1 or max_results > 25:
+        raise ValueError("max_results must be between 1 and 25.")
+    origin = urlparse(source["final_url"])
+    include = [re.compile(pattern, re.IGNORECASE) for pattern in (include_patterns or [])]
+    exclude = [re.compile(pattern, re.IGNORECASE) for pattern in (exclude_patterns or [])]
+    soup = BeautifulSoup(source["body"], "html.parser")
+    raw_candidates: list[str] = []
+
+    for node in soup.select("a[href], iframe[src], embed[src], object[data], link[href]"):
+        attr = "data" if node.name == "object" else ("src" if node.name in {"iframe", "embed"} else "href")
+        value = str(node.get(attr, "")).strip()
+        if value:
+            raw_candidates.append(value)
+
+    # Script scanning is intentionally limited to literal quoted .pdf URLs.
+    pattern = re.compile(r"""["']([^"'<>\\s]+\\.pdf(?:\\?[^"'<>\\s]*)?(?:#[^"'<>\\s]*)?)["']""", re.IGNORECASE)
+    raw_candidates.extend(match.group(1) for match in pattern.finditer(source["body"]))
+
     found: list[str] = []
-    for match in pattern.finditer(source["body"]):
-        url = urljoin(source["final_url"], match.group(1))
-        if url not in found:
-            found.append(url)
+    for raw in raw_candidates:
+        target = urljoin(source["final_url"], raw)
+        parsed = urlparse(target)
+        if parsed.scheme != "https" or not parsed.hostname:
+            continue
+        if not parsed.path.lower().endswith(".pdf"):
+            continue
+        if same_origin_only and (parsed.hostname or "").lower() != (origin.hostname or "").lower():
+            continue
+        if include and not any(item.search(target) for item in include):
+            continue
+        if any(item.search(target) for item in exclude):
+            continue
+        if target not in found:
+            found.append(target)
+        if len(found) >= max_results:
+            break
     return found
 
 
