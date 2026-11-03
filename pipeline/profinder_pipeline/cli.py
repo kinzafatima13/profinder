@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
-from .extract import extract_with_adapter
+from .extract import extract_document_urls, extract_with_adapter
 from .fetch import PoliteFetcher
 from .models import Candidate
 from .normalize import canonical_key, normalize_values
@@ -67,6 +68,53 @@ def main() -> None:
                 candidate.warnings + normalization_warnings,
             )
             candidates.append(validate_candidate(normalized))
+
+        # PDF discovery is opt-in per reviewed source. Discovery is same-origin,
+        # HTTPS-only and bounded; only these explicitly enabled candidates are fetched.
+        pdf_config = source.get("discover_pdfs", False)
+        if pdf_config:
+            if pdf_config is True:
+                pdf_config = {}
+            if not isinstance(pdf_config, dict):
+                raise SystemExit(f"discover_pdfs must be true or an object for {source['url']}.")
+            max_documents = int(pdf_config.get("max_documents", 3))
+            if max_documents < 1 or max_documents > 5:
+                raise SystemExit("discover_pdfs.max_documents must be between 1 and 5.")
+            pdf_urls = extract_document_urls(
+                page,
+                include_patterns=pdf_config.get("include_patterns"),
+                exclude_patterns=pdf_config.get("exclude_patterns"),
+                same_origin_only=True,
+                max_results=max_documents,
+            )
+            for pdf_url in pdf_urls:
+                filename = unquote(Path(urlparse(pdf_url).path).name)
+                document_name = filename[:-4] if filename.lower().endswith(".pdf") else filename
+                if not document_name:
+                    document_name = "Discovered PDF document"
+                pdf_page = fetcher.fetch_pdf(
+                    pdf_url,
+                    max_bytes=int(pdf_config.get("max_bytes", 20000000)),
+                )
+                pdf_adapter = {
+                    "type": "pdf",
+                    "document_name": document_name,
+                    "max_pages": int(pdf_config.get("max_pages", 200)),
+                    "max_chars": int(pdf_config.get("max_chars", 50000)),
+                }
+                pdf_candidates = extract_with_adapter(
+                    args.university, pdf_page, source["entity_type"], pdf_adapter
+                )
+                for candidate in pdf_candidates:
+                    values, normalization_warnings = normalize_values(candidate.entity_type, candidate.values)
+                    normalized = Candidate(
+                        candidate.entity_type,
+                        candidate.university_key,
+                        values,
+                        {canonical_key(key): value for key, value in candidate.evidence.items() if canonical_key(key) in values},
+                        candidate.warnings + normalization_warnings + ["discovered_pdf_requires_human_review"],
+                    )
+                    candidates.append(validate_candidate(normalized))
 
     if not candidates:
         raise SystemExit(
