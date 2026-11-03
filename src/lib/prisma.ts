@@ -24,3 +24,9 @@ export const prisma =
   });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+// Kept for compatibility with existing callers. Schema changes are managed
+// through reviewed Prisma migrations, never through request-time DDL.
+export async function ensureSchema(): Promise<void> {
+  return;
+}
