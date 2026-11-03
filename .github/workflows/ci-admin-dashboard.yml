@@ -5,9 +5,11 @@ on:
   push:
     branches:
       - feat/admin-dashboard-phase1
+      - fix/neon-audit-blockers
   pull_request:
     branches:
       - feat/admin-dashboard-phase1
+      - fix/neon-postgres-runtime
 
 jobs:
   validate:
