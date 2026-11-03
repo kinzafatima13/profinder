@@ -17,7 +17,7 @@ jobs:
           cache: npm
       - name: Install and build
         env:
-          DATABASE_URL: file:./dev.db
+          DATABASE_URL: postgresql://build:build@127.0.0.1:5432/build?schema=public
           NEXTAUTH_SECRET: ci-secret
           NEXTAUTH_URL: http://localhost:3000
         run: |

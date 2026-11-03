@@ -1,6 +1,5 @@
 // PROFINDER — Database Schema
-// Temporary: using bundled SQLite (prisma/dev.db) on Vercel.
-// Switch provider back to postgresql when reconnecting a persistent DB.
+// Persistent PostgreSQL database (Neon in production).
 
 generator client {
   provider      = "prisma-client-js"
@@ -8,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

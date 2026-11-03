@@ -1,57 +1,32 @@
-import fs from "fs";
-import path from "path";
 import { PrismaClient } from "@prisma/client";
 
-function resolveBundledDb() {
-  const candidates = [
-    path.join(process.cwd(), "prisma", "dev.db"),
-    path.join(process.cwd(), ".next", "server", "prisma", "dev.db"),
-    "/var/task/prisma/dev.db",
-  ];
-  return candidates.find((candidate) => fs.existsSync(candidate));
-}
+function getDatabaseUrl(): string {
+  const url = process.env.DATABASE_URL;
 
-function resolveDatabaseUrl() {
-  // Force SQLite on Vercel using the bundled file. Ignore any Neon/Postgres URL.
-  if (process.env.VERCEL) {
-    const bundled = resolveBundledDb();
-    const target = "/tmp/profinder.db";
-    try {
-      if (!fs.existsSync(target) && bundled) {
-        fs.copyFileSync(bundled, target);
-      }
-    } catch (e) {
-      console.error("Failed to copy bundled db:", e);
-    }
-    return `file:${target}`;
+  if (!url) {
+    throw new Error("DATABASE_URL is required. Configure a PostgreSQL connection string.");
   }
 
-  const configured = process.env.DATABASE_URL || "";
-  if (configured.startsWith("file:")) return configured;
+  if (!(url.startsWith("postgres://") || url.startsWith("postgresql://"))) {
+    throw new Error("DATABASE_URL must be a PostgreSQL connection string. SQLite fallback is disabled.");
+  }
 
-  const bundled = resolveBundledDb();
-  return bundled ? `file:${bundled}` : "file:./prisma/dev.db";
+  return url;
 }
-
-// Override before PrismaClient is created
-const dbUrl = resolveDatabaseUrl();
-process.env.DATABASE_URL = dbUrl;
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    datasources: { db: { url: dbUrl } },
+    datasources: { db: { url: getDatabaseUrl() } },
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-export function ensureSchema() {
-  return Promise.resolve();
+// Kept for compatibility with existing callers. Schema changes are managed
+// through reviewed Prisma migrations, never through request-time DDL.
+export async function ensureSchema(): Promise<void> {
+  return;
 }
-
-void ensureSchema().catch((error) => {
-  console.error("Schema ensure failed:", error);
-});
